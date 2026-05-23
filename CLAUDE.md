@@ -1,0 +1,291 @@
+# MyBooks Web - Project Context
+
+## Overview
+
+A simple Vue 3 web app to read/write book summaries stored in a JSON file on Dropbox. Weekly usage, plain-text editing, no offline requirement. Fully functional MVP with complete CRUD operations, table sorting/filtering, and Dropbox sync.
+
+## Project Status: COMPLETE MVP ✅
+
+**All core features implemented and working:**
+
+- Full Dropbox OAuth authentication (PKCE flow)
+- Complete book management (create, read, update, delete with undo)
+- Advanced table view with sorting and 3-state filtering
+- Details drawer (right-side panel)
+- Edit form (fullscreen overlay) with validations
+- Toast notifications for success/delete events
+- Dropbox sync for all operations
+
+## Tech Stack
+
+**Frontend:**
+
+- Vue 3 with Single-File Components
+- Vite (dev server on port 5173 with strictPort: true)
+- Plain CSS with CSS variables for theming
+- Custom table logic using Vue computed properties (not TanStack Table)
+
+**Backend/Data:**
+
+- Dropbox OAuth 2.0 with PKCE flow
+- Official Dropbox SDK (`dropbox` npm package)
+- Tokens stored in localStorage
+- Source of truth: `mybooks.json` file on Dropbox (Map<String, Book>)
+
+## Data Structure
+
+**Book object:**
+
+```typescript
+type Book = {
+  title: string; // Display title
+  author: string; // Author name
+  date: string; // Read date (YYYY-MM, YYYY, or "?")
+  dnf: boolean; // Did Not Finish flag
+  notes: string; // User notes/summary (multi-line)
+  meta?: BookMeta; // Optional metadata
+};
+
+type BookMeta = {
+  GoodreadsID?: string;
+  ISBN?: string;
+  pubDate?: string; // Publication date (ISO_LOCAL_DATE)
+  pages?: number;
+  duration?: number; // Audiobook duration in minutes (presence = is audiobook)
+};
+```
+
+**Key constraint:** Dropbox map key must be normalized title (exact Kotlin algorithm):
+
+1. Lowercase
+2. Remove diacritics (NFD normalization, strip marks)
+3. Replace non-alphanumeric chars (except spaces) with spaces
+4. Collapse multiple spaces into one
+5. Trim
+
+Example: "À Tue ... Et À Toi" → "a tue et a toi"
+
+**In-app:** Books stored in Vue reactive array with `_key` property for normalized title.
+
+## File Structure
+
+```
+src/
+├── main.js                    # Vue app entry point
+├── App.vue                    # Root component, auth state management
+├── components/
+│   ├── AuthScreen.vue         # Login/auth UI
+│   ├── AuthCallback.vue       # OAuth redirect handler
+│   ├── BookList.vue           # Main table view with filters/sort
+│   ├── DetailsDrawer.vue      # Right-side read-only book details
+│   └── EditForm.vue           # Fullscreen edit/create form
+└── services/
+    └── dropbox.js             # Dropbox API service layer
+```
+
+## Key Implementation Details
+
+### BookList.vue (Main Table)
+
+- **Columns:** Author, Title, Date, Duration, Pages, DNF, Actions (all sortable except Actions)
+- **Sorting:** Click column header to toggle ascending/descending
+  - Date sort special: extract digits only, handle non-standard dates like "??", "New Zealand"
+  - Pages/Duration: treat null as 0
+  - Author/Title/DNF: standard alphabetical
+- **Filters:**
+  - Global search: searches title, author, date (case-insensitive)
+  - Author dropdown: select unique author or "All"
+  - Format dropdown: All / Audiobook / Paper (based on meta.duration presence)
+  - Status dropdown: All / Finished / DNF
+- **Row count display:** Shows "filtered / total"
+- **Audiobook highlighting:** Purple background for rows with duration
+- **Row interactions:**
+  - Click row → Opens DetailsDrawer
+  - Click same row again → Closes drawer
+  - Edit icon → Opens EditForm
+  - Delete icon → Removes book, shows undo toast (5 sec auto-dismiss)
+
+### EditForm.vue (Edit/Create)
+
+- **Fields:** Title (required), Author (with autocomplete), Date, Notes, DNF checkbox, Metadata section
+- **Validations:**
+  - Title required and non-empty (trimmed)
+  - Change detection: save only enabled if something actually changed
+  - Duration format: `Xh` or `Xh:MM` (e.g., "7h34")
+  - Date auto-formatting: pads months/days with zeros on blur
+  - Author autocomplete: filtered list of existing authors
+- **Notes field:** Textarea with auto-grow behavior, min-height 300px
+- **Metadata:** Always visible (not collapsible), optional fields
+- **Save button:** Shows "Saving..." state, uploads to Dropbox
+- **Cancel button:** Prompts if unsaved changes
+- **Error banner:** Displays at top if save fails
+
+### DetailsDrawer.vue (Read-only)
+
+- 400px wide, full height, slides in from right with 0.15s animation
+- Shows: title, author, date, duration, pages, DNF status, notes (scrollable), collapsible metadata
+- Close button in header
+- Edit button in footer
+- Clicking another table row updates drawer without closing
+
+### dropbox.js (Service Layer)
+
+- `downloadBooks()`: Fetches mybooks.json, returns Map<String, Book> or empty object for new users
+- `uploadBooks(booksMap)`: Uploads entire books map to Dropbox as JSON
+- Uses localStorage for token persistence
+- PKCE flow with DropboxAuth helpers (`getAuthenticationUrl`, `getAccessTokenFromCode`)
+
+## Important Patterns & Decisions
+
+### Reactive State Management
+
+- `books` ref: array of book objects with `_key` property
+- Filter refs: `dnfFilter`, `audiobookFilter`, `authorFilter`, `globalFilter`
+- Sort ref: `sorting` array with `{id, desc}` objects
+- Selection: `selectedBook`, `drawerOpen`, `editFormOpen`
+
+### Computed Properties
+
+- `uniqueAuthors`: sorted array of unique authors for dropdown
+- `filteredAndSortedBooks`: applies all filters and sort, main reactive source for table
+
+### Form State Handling
+
+- `EditForm` uses `watch` with `immediate: true` to load book values
+- Deep copy of original data to track changes
+- Key prop on component to force remount when switching between edit/new
+
+### Reactivity Gotchas Fixed
+
+- Use `Object.assign(books.value[index], {...})` for in-place mutations to trigger reactivity
+- Use `toRefs(props)` for proper prop destructuring in templates
+- Use `nextTick()` before measuring DOM (e.g., textarea auto-grow)
+
+### Undo Implementation
+
+- Delete immediately removes from state and uploads to Dropbox
+- Undo stores book in `undoData` ref with 5-second timeout
+- If undo clicked, restores book and re-uploads to Dropbox
+
+### Title Normalization
+
+- Applied when saving new/renamed books to create the map key
+- Must match Kotlin algorithm exactly (see implementation in BookList.vue `normalizeTitle` function)
+
+## CSS Variables (Theme)
+
+```css
+--bg-primary: #0a1123; /* Main background */
+--bg-secondary: #1a2a3a; /* Cards/elevated surfaces */
+--bg-hover: #2a3a4a; /* Hover state */
+--text-primary: #f5f5f5; /* Main text */
+--text-secondary: #a0a0a0; /* Muted text */
+--accent-primary: #00d9ff; /* Cyan - buttons, highlights */
+--accent-secondary: #a855f7; /* Purple - audiobook indicator */
+--warning: #ff6b6b; /* Red - DNF, delete */
+--success: #51cf66; /* Green - save success */
+--border: #2a3a4a; /* Borders, dividers */
+--shadow: rgba(0, 0, 0, 0.3); /* Shadows */
+```
+
+## Setup & Running
+
+**Prerequisites:**
+
+- Node.js (npm)
+- Dropbox account
+- Dropbox App with OAuth credentials
+
+**Environment:**
+Create `.secrets` file with:
+
+```
+VITE_DROPBOX_APP_KEY=your_app_key
+VITE_DROPBOX_APP_SECRET=your_app_secret
+```
+
+**Dropbox App Configuration:**
+
+- Create a Dropbox app at https://www.dropbox.com/developers/apps
+- Set OAuth redirect URI to: `{your-domain}/auth-callback.html`
+  - Local dev: `http://localhost:5173/auth-callback.html`
+  - GitHub Pages: `https://username.github.io/mybooks-web/auth-callback.html`
+  - Other hosts: `https://your-domain.com/auth-callback.html`
+- The app automatically serves `/auth-callback.html` in dev mode via Vite middleware
+- At build time, `vite-auth-callback-plugin.js` copies `index.html` to `auth-callback.html` in dist/
+
+**Vite Configuration:**
+
+- For local dev or custom domain: `base: '/'` (default)
+- For GitHub Pages: Change `base: '/'` to `base: '/mybooks-web/'` (use your repo name)
+- See `vite.config.js` for the setting
+
+**Auth Callback Handling:**
+
+- Vite plugin (`vite-auth-callback-plugin.js`) automatically handles OAuth callback
+- In dev: serves `/auth-callback.html` the same as `/`
+- In build: copies `index.html` to `auth-callback.html` in dist/
+- No manual maintenance needed — stays in sync with index.html automatically
+
+**Commands:**
+
+```bash
+npm install
+npm run dev        # Start dev server on http://localhost:5173
+npm run build      # Build for production (outputs to dist/)
+npm run preview    # Preview production build locally
+```
+
+**Deployment to GitHub Pages:**
+
+1. Set `base: '/mybooks-web/'` in vite.config.js
+2. Update Dropbox app redirect URI to: `https://username.github.io/mybooks-web/auth-callback.html`
+3. Build: `npm run build`
+4. Push `dist/` folder to gh-pages branch
+5. Enable GitHub Pages in repo settings (source: gh-pages branch)
+
+## Known Limitations & Future Enhancements
+
+**Not implemented (low priority):**
+
+- Duplicate title detection/warning
+- Real-time date field validation (auto-insert dashes while typing)
+- Collapsible metadata section
+- Resizable drawer
+- Per-column text filters (Title search)
+- Keyboard navigation shortcuts
+- Accessibility improvements (ARIA labels, focus management)
+- Goodreads integration (metadata fetching)
+
+**Architecture decisions:**
+
+- No offline mode: weekly usage, simplifies implementation
+- No backend: Dropbox API called directly from frontend
+- No database: JSON file is source of truth
+- Custom table logic instead of TanStack Table: sufficient for ~300 books, avoids extra dependency
+- Immediate delete with undo instead of confirmation: fast, undo is safety net
+
+## Workflow
+
+1. **Login:** User connects Dropbox, gets OAuth token (stored in localStorage)
+2. **Load:** App fetches mybooks.json on mount, populates books array
+3. **Browse:** User views books in table, can sort/filter/search
+4. **View Details:** Click row → opens DetailsDrawer
+5. **Edit:** Click Edit icon or button → opens EditForm fullscreen
+6. **Save:** Form validates, uploads to Dropbox, updates table
+7. **Delete:** Click Delete icon → removes from state, uploads, shows undo toast
+8. **Undo:** Click undo button → restores book, re-uploads
+
+## Testing Notes
+
+- All features tested manually in browser
+- Toast notifications auto-dismiss after 3-5 seconds
+- Undo timeout is 5 seconds before auto-clearing
+- App handles new users gracefully (creates empty state)
+- Dropbox sync is required for all operations (no offline support)
+- Table handles ~300 books smoothly with scrolling
+- Date sorting handles non-standard dates ("??", "New Zealand") by treating as 0
+
+## Important: Do Not Use TanStack Table
+
+The original spec mentioned TanStack Table, but we implemented the table logic with Vue computed properties instead. This decision was made to avoid unnecessary complexity for our use case. If significant table features are needed in the future (multi-column sorting, column visibility, pagination), consider refactoring to TanStack Table at that time.

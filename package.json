@@ -1,0 +1,23 @@
+{
+  "name": "mybooks-web",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "node load-secrets.js dev",
+    "build": "node load-secrets.js build",
+    "preview": "vite preview",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@tanstack/vue-table": "^8.21.3",
+    "dotenv": "^17.4.2",
+    "dropbox": "^10.34.0",
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.0",
+    "prettier": "^3.0.0",
+    "vite": "^5.0.0"
+  }
+}
