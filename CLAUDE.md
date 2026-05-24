@@ -93,8 +93,18 @@ src/
   - Pages/Duration: treat null as 0
   - Author/Title/DNF: standard alphabetical
 - **Filters:**
-  - Global search: searches title, author, date (case-insensitive)
-  - Author dropdown: select unique author or "All"
+  - Global search: text input with dropdown to select which fields to search
+    - "Anything": searches title, author, date, notes
+    - "Title": searches only titles
+    - "Author": searches only authors
+    - "Title + Author": searches both fields
+    - "Date": searches only dates
+    - "Notes": searches only notes
+  - **Desktop:** Search field selector, Format, and Status filters visible in one row
+  - **Mobile:** Filters collapsible behind ☰ toggle button (hamburger icon)
+    - Toggle button shows purple background when expanded
+    - When collapsed: only search input visible
+    - When expanded: search field selector, Format, and Status filters stack vertically
   - Format dropdown: All / Audiobook / Paper (based on meta.duration presence)
   - Status dropdown: All / Finished / DNF
 - **Row count display:** Shows "filtered / total"
@@ -140,13 +150,13 @@ src/
 ### Reactive State Management
 
 - `books` ref: array of book objects with `_key` property
-- Filter refs: `dnfFilter`, `audiobookFilter`, `authorFilter`, `globalFilter`
+- Filter refs: `dnfFilter`, `audiobookFilter`, `searchFieldsFilter`, `globalFilter`
+- UI state: `filtersOpen` (mobile filters collapse toggle)
 - Sort ref: `sorting` array with `{id, desc}` objects
 - Selection: `selectedBook`, `drawerOpen`, `editFormOpen`
 
 ### Computed Properties
 
-- `uniqueAuthors`: sorted array of unique authors for dropdown
 - `filteredAndSortedBooks`: applies all filters and sort, main reactive source for table
 
 ### Form State Handling

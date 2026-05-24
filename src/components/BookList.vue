@@ -46,41 +46,74 @@
             placeholder="Search books..."
             class="search-input"
           />
-          <span class="row-count"
-            >{{ filteredAndSortedBooks.length }} / {{ books.length }}</span
+          <button
+            class="filters-toggle-btn"
+            :class="{ active: filtersOpen }"
+            @click="filtersOpen = !filtersOpen"
+            title="Toggle filters"
           >
+            ☰
+          </button>
         </div>
-        <div class="filters">
-          <div class="filter-group">
-            <label>Author:</label>
-            <select v-model="authorFilter" class="filter-select">
-              <option value="">All</option>
-              <option
-                v-for="author in uniqueAuthors"
-                :key="author"
-                :value="author"
-              >
-                {{ author }}
-              </option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label>Format:</label>
-            <select v-model="audiobookFilter" class="filter-select">
-              <option value="all">All</option>
-              <option value="audiobook">Audiobook</option>
-              <option value="paper">Paper</option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label>Status:</label>
-            <select v-model="dnfFilter" class="filter-select">
-              <option value="all">All</option>
-              <option value="finished">Finished</option>
-              <option value="dnf">DNF</option>
-            </select>
+        <div v-if="filtersOpen" class="filters-collapsible">
+          <select v-model="searchFieldsFilter" class="filter-select">
+            <option value="anything">Search: Anything</option>
+            <option value="title">Search: Title</option>
+            <option value="author">Search: Author</option>
+            <option value="title+author">Search: Title + Author</option>
+            <option value="date">Search: Date</option>
+            <option value="notes">Search: Notes</option>
+          </select>
+          <div class="filters">
+            <div class="filter-group">
+              <label>Format:</label>
+              <select v-model="audiobookFilter" class="filter-select">
+                <option value="all">All</option>
+                <option value="audiobook">Audiobook</option>
+                <option value="paper">Paper</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Status:</label>
+              <select v-model="dnfFilter" class="filter-select">
+                <option value="all">All</option>
+                <option value="finished">Finished</option>
+                <option value="dnf">DNF</option>
+              </select>
+            </div>
           </div>
         </div>
+        <div v-else class="filters-desktop">
+          <select v-model="searchFieldsFilter" class="filter-select">
+            <option value="anything">Search: Anything</option>
+            <option value="title">Search: Title</option>
+            <option value="author">Search: Author</option>
+            <option value="title+author">Search: Title + Author</option>
+            <option value="date">Search: Date</option>
+            <option value="notes">Search: Notes</option>
+          </select>
+          <div class="filters">
+            <div class="filter-group">
+              <label>Format:</label>
+              <select v-model="audiobookFilter" class="filter-select">
+                <option value="all">All</option>
+                <option value="audiobook">Audiobook</option>
+                <option value="paper">Paper</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Status:</label>
+              <select v-model="dnfFilter" class="filter-select">
+                <option value="all">All</option>
+                <option value="finished">Finished</option>
+                <option value="dnf">DNF</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <span class="row-count"
+          >{{ filteredAndSortedBooks.length }} / {{ books.length }}</span
+        >
       </div>
 
       <div class="table-scroll">
@@ -185,7 +218,8 @@ const error = ref(null);
 const globalFilter = ref('');
 const dnfFilter = ref('all'); // 'all', 'dnf', 'finished'
 const audiobookFilter = ref('all'); // 'all', 'audiobook', 'paper'
-const authorFilter = ref('');
+const searchFieldsFilter = ref('anything'); // 'anything', 'title', 'author', 'title+author', 'date', 'notes'
+const filtersOpen = ref(false);
 const sorting = ref([{ id: 'date', desc: true }]);
 const selectedBook = ref(null);
 const drawerOpen = ref(false);
@@ -206,13 +240,6 @@ const columns = [
   { id: 'actions', header: 'Actions', enableSorting: false },
 ];
 
-const uniqueAuthors = computed(() => {
-  const authors = new Set(
-    books.value.map((b) => b.author).filter((a) => a && a.trim())
-  );
-  return Array.from(authors).sort();
-});
-
 const filteredAndSortedBooks = computed(() => {
   let filtered = books.value;
 
@@ -230,19 +257,32 @@ const filteredAndSortedBooks = computed(() => {
     filtered = filtered.filter((b) => !b.meta?.duration);
   }
 
-  // Apply author filter
-  if (authorFilter.value) {
-    filtered = filtered.filter((b) => b.author === authorFilter.value);
-  }
-
   if (globalFilter.value) {
     const query = globalFilter.value.toLowerCase();
     filtered = filtered.filter((b) => {
-      return (
-        b.title?.toLowerCase().includes(query) ||
-        b.author?.toLowerCase().includes(query) ||
-        b.date?.toLowerCase().includes(query)
-      );
+      switch (searchFieldsFilter.value) {
+        case 'title':
+          return b.title?.toLowerCase().includes(query);
+        case 'author':
+          return b.author?.toLowerCase().includes(query);
+        case 'title+author':
+          return (
+            b.title?.toLowerCase().includes(query) ||
+            b.author?.toLowerCase().includes(query)
+          );
+        case 'date':
+          return b.date?.toLowerCase().includes(query);
+        case 'notes':
+          return b.notes?.toLowerCase().includes(query);
+        case 'anything':
+        default:
+          return (
+            b.title?.toLowerCase().includes(query) ||
+            b.author?.toLowerCase().includes(query) ||
+            b.date?.toLowerCase().includes(query) ||
+            b.notes?.toLowerCase().includes(query)
+          );
+      }
     });
   }
 
@@ -615,6 +655,43 @@ h1 {
   align-items: center;
   gap: 1rem;
   flex: 1;
+  min-width: 0;
+}
+
+.filters-toggle-btn {
+  display: none;
+  background-color: var(--accent-primary);
+  color: var(--bg-primary);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.filters-toggle-btn:hover {
+  opacity: 0.9;
+}
+
+.filters-toggle-btn.active {
+  background-color: var(--accent-secondary);
+}
+
+.filters-collapsible {
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.filters-desktop {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
 }
 
 .search-input {
@@ -870,5 +947,57 @@ h1 {
 
 .undo-btn:hover {
   background-color: rgba(255, 255, 255, 0.3);
+}
+
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .search-bar {
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .search-input {
+    flex: 1;
+  }
+
+  .filters-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .filters-desktop {
+    display: none;
+  }
+
+  .filters-collapsible {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .filters {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .filter-group {
+    width: 100%;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
+
+  .row-count {
+    display: block;
+    text-align: right;
+  }
 }
 </style>
