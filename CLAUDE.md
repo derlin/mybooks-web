@@ -351,6 +351,18 @@ npm run preview    # Preview production build locally
 - Table handles ~300 books smoothly with scrolling
 - Date sorting handles non-standard dates ("??", "New Zealand") by treating as 0
 
+## Code Formatting
+
+All code must be formatted per Prettier configuration (`.prettierrc`). After edits, running `npm run format` should not change anything. Key rules:
+
+- 2 spaces for indentation (no tabs)
+- Single quotes for strings
+- Semicolons required
+- Trailing commas in ES5 contexts
+- Line length: reasonable defaults, no strict limit
+
+This is enforced to keep diffs clean and reduce noise in git history.
+
 ## Important: Do Not Use TanStack Table
 
 The original spec mentioned TanStack Table, but we implemented the table logic with Vue computed properties instead. This decision was made to avoid unnecessary complexity for our use case. If significant table features are needed in the future (multi-column sorting, column visibility, pagination), consider refactoring to TanStack Table at that time.

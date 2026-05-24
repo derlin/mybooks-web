@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import authCallbackPlugin from './vite-auth-callback-plugin.js';
+import path from 'path';
 
 const requiredEnvVars = ['VITE_DROPBOX_APP_KEY', 'VITE_DROPBOX_APP_SECRET'];
 const missing = requiredEnvVars.filter((v) => !process.env[v]);
@@ -13,6 +14,11 @@ if (missing.length > 0) {
 export default defineConfig({
   base: process.env.VITE_BASE || '/',
   plugins: [vue(), authCallbackPlugin()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
     port: 5173,
     strictPort: true,

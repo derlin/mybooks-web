@@ -1,7 +1,7 @@
 <template>
   <div class="auth-container">
     <div class="auth-card">
-      <h1>MyBooks Web</h1>
+      <img src="@/assets/logo.svg" alt="MyBooks" class="logo" />
       <p class="subtitle">Manage your book collection</p>
 
       <button @click="authenticate" :disabled="loading" class="auth-button">
@@ -111,6 +111,13 @@ h1 {
   font-size: 2rem;
   margin-bottom: 0.5rem;
   color: var(--accent-primary);
+}
+
+.logo {
+  height: 100px;
+  width: auto;
+  margin-bottom: 1.5rem;
+  filter: drop-shadow(0 0 18px var(--accent-primary));
 }
 
 .subtitle {

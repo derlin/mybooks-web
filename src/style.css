@@ -72,3 +72,12 @@ textarea:focus {
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.1);
 }
+
+/* Logo styling */
+.logo {
+  width: auto;
+}
+
+.logo-header {
+  height: 50px;
+}

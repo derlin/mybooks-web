@@ -1,7 +1,10 @@
 <template>
   <div class="form-wrapper">
     <div class="form-header">
-      <h1>{{ isNewBook ? 'Add New Book' : 'Edit Book' }}</h1>
+      <div class="form-header-title">
+        <img src="@/assets/logo.svg" alt="MyBooks" class="logo logo-header" />
+        <h1>{{ isNewBook ? 'Add' : 'Edit' }}</h1>
+      </div>
       <div class="form-header-actions">
         <button
           class="goodreads-btn"
@@ -435,7 +438,7 @@ watch(
     gap: 0.75rem;
   }
 
-  .form-header h1 {
+  .form-header-title {
     margin-bottom: 0.5rem;
   }
 
@@ -448,11 +451,17 @@ watch(
   }
 }
 
+.form-header-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
 .form-header h1 {
   margin: 0;
   color: var(--accent-primary);
   font-size: 1.8rem;
-  flex: 1;
 }
 
 .form-header-actions {

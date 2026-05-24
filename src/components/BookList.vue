@@ -16,7 +16,7 @@
 
   <div v-if="!editFormOpen" class="book-list-container">
     <div class="header">
-      <h1>My Books</h1>
+      <img src="@/assets/logo.svg" alt="MyBooks" class="logo logo-header" />
       <div class="header-actions">
         <button @click="openNewBook" class="add-btn" title="Add new book">
           +
