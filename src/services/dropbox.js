@@ -1,6 +1,7 @@
 import { Dropbox, DropboxAuth } from 'dropbox';
 
 let dbx = null;
+let authExpiredCallback = null;
 
 const DROPBOX_APP_KEY = import.meta.env.VITE_DROPBOX_APP_KEY;
 const REDIRECT_URI = `${window.location.origin}/auth-callback.html`;
@@ -23,7 +24,12 @@ export function getDropbox() {
 }
 
 export function getStoredToken() {
-  return localStorage.getItem('dropbox_token');
+  const auth = getStoredAuth();
+  return auth?.accessToken || null;
+}
+
+export function setAuthExpiredCallback(callback) {
+  authExpiredCallback = callback;
 }
 
 export async function getAuthUrl() {
@@ -41,6 +47,30 @@ export async function getAuthUrl() {
   return authUrl;
 }
 
+function storeTokens(accessToken, refreshToken, expiresIn) {
+  const expiresAt = Date.now() + expiresIn * 1000;
+  localStorage.setItem(
+    'dropbox_auth',
+    JSON.stringify({
+      accessToken,
+      refreshToken,
+      expiresAt,
+    })
+  );
+}
+
+function getStoredAuth() {
+  const auth = localStorage.getItem('dropbox_auth');
+  return auth ? JSON.parse(auth) : null;
+}
+
+export function isTokenExpired() {
+  const auth = getStoredAuth();
+  if (!auth?.expiresAt) return true;
+  // Refresh if within 5 minutes of expiration
+  return Date.now() > auth.expiresAt - 5 * 60 * 1000;
+}
+
 export async function exchangeCodeForToken(code) {
   const auth = getAuth();
   const codeVerifier = sessionStorage.getItem('dropbox_code_verifier');
@@ -53,25 +83,72 @@ export async function exchangeCodeForToken(code) {
 
   try {
     const response = await auth.getAccessTokenFromCode(REDIRECT_URI, code);
-    const token = response.result.access_token;
-    localStorage.setItem('dropbox_token', token);
+    const { access_token, refresh_token, expires_in } = response.result;
+    storeTokens(access_token, refresh_token, expires_in);
     sessionStorage.removeItem('dropbox_code_verifier');
-    return token;
+    return access_token;
   } catch (err) {
     throw new Error(err.error || 'Failed to exchange code for token');
   }
+}
+
+export async function refreshAccessToken() {
+  const auth = getStoredAuth();
+
+  if (!auth?.refreshToken) {
+    throw new Error('No refresh token available');
+  }
+
+  const dbxAuth = getAuth();
+
+  try {
+    const response = await dbxAuth.refreshAccessToken(auth.refreshToken);
+    const { access_token, expires_in } = response.result;
+    storeTokens(access_token, auth.refreshToken, expires_in);
+    initDropbox(access_token);
+    return access_token;
+  } catch (err) {
+    // Refresh failed, clear tokens and trigger re-auth
+    localStorage.removeItem('dropbox_auth');
+    if (authExpiredCallback) {
+      authExpiredCallback();
+    }
+    throw new Error('Failed to refresh token');
+  }
+}
+
+async function ensureTokenValid() {
+  if (isTokenExpired()) {
+    await refreshAccessToken();
+  }
+}
+
+async function handleDropboxError(err, retryFn) {
+  if (err.status === 401) {
+    try {
+      await refreshAccessToken();
+      return retryFn();
+    } catch (refreshErr) {
+      throw refreshErr;
+    }
+  }
+  throw err;
 }
 
 export async function downloadBooks() {
   if (!dbx) throw new Error('Dropbox not initialized');
 
   try {
+    await ensureTokenValid();
     const metadata = await dbx.filesDownload({ path: '/mybooks.json' });
     const text = await metadata.result.fileBlob.text();
     return JSON.parse(text);
   } catch (err) {
     if (err.status === 409 && err.error.error_summary?.includes('not_found')) {
       return {};
+    }
+    if (err.status === 401) {
+      return handleDropboxError(err, () => downloadBooks());
     }
     throw err;
   }
@@ -81,9 +158,17 @@ export async function uploadBooks(booksData) {
   if (!dbx) throw new Error('Dropbox not initialized');
 
   const content = JSON.stringify(booksData, null, 2);
-  await dbx.filesUpload({
-    path: '/mybooks.json',
-    contents: new Blob([content], { type: 'application/json' }),
-    mode: { '.tag': 'overwrite' },
-  });
+  try {
+    await ensureTokenValid();
+    await dbx.filesUpload({
+      path: '/mybooks.json',
+      contents: new Blob([content], { type: 'application/json' }),
+      mode: { '.tag': 'overwrite' },
+    });
+  } catch (err) {
+    if (err.status === 401) {
+      return handleDropboxError(err, () => uploadBooks(booksData));
+    }
+    throw err;
+  }
 }

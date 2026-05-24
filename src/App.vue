@@ -11,12 +11,18 @@ import { ref, onMounted } from 'vue';
 import AuthScreen from './components/AuthScreen.vue';
 import BookList from './components/BookList.vue';
 import AuthCallback from './components/AuthCallback.vue';
-import { initDropbox, getStoredToken } from './services/dropbox';
+import { initDropbox, getStoredToken, setAuthExpiredCallback } from './services/dropbox';
 
 const isAuthenticated = ref(false);
 const isAuthCallback = ref(false);
 
+const handleAuthExpired = () => {
+  handleLogout();
+};
+
 onMounted(() => {
+  setAuthExpiredCallback(handleAuthExpired);
+
   // Check if this is the auth callback page
   if (window.location.pathname.endsWith('/auth-callback.html') && window.location.search.includes('code=')) {
     isAuthCallback.value = true;
@@ -36,7 +42,7 @@ const handleAuth = (token) => {
 
 const handleLogout = () => {
   isAuthenticated.value = false;
-  localStorage.removeItem('dropbox_token');
+  localStorage.removeItem('dropbox_auth');
 };
 </script>
 

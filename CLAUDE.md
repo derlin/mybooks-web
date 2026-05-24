@@ -4,15 +4,23 @@
 
 A simple Vue 3 web app to read/write book summaries stored in a JSON file on Dropbox. Weekly usage, plain-text editing, no offline requirement. Fully functional MVP with complete CRUD operations, table sorting/filtering, and Dropbox sync.
 
-## Project Status: COMPLETE MVP ✅
+## Development Principles
 
-**All core features implemented and working:**
+- **Code quality:** Follow best practices for readability, maintainability, and performance. Use clear naming, minimize complexity, and avoid premature optimization.
+- **Simplicity first:** The simplest solution that works is the best solution. Avoid over-engineering, unnecessary abstractions, or "what if" features. Three similar lines beat a premature abstraction.
+- **Security matters:** Always consider security implications of changes. Validate at system boundaries (user input, external APIs), avoid command injection/XSS/SQL injection patterns, and use secure defaults. Prefer built-in framework features over custom implementations.
+- **Don't reinvent wheels:** Before implementing something from scratch, check if a built-in solution exists (framework features, standard library, well-maintained packages). Reduces bugs, maintenance burden, and keeps the codebase lean.
+- **CLAUDE.md is authoritative:** This file reflects the current state of the codebase. Update it on every session when code changes, architectural decisions shift, or new patterns emerge. Stale docs are worse than no docs.
 
-- Full Dropbox OAuth authentication (PKCE flow)
-- Complete book management (create, read, update, delete with undo)
+## Features
+
+**Full-featured book management:**
+
+- Full Dropbox OAuth authentication (PKCE flow with automatic token refresh)
+- Complete CRUD operations (create, read, update, delete with undo)
 - Advanced table view with sorting and 3-state filtering
-- Details drawer (right-side panel)
-- Edit form (fullscreen overlay) with validations
+- Details drawer (right-side panel) with swipe-to-dismiss on mobile
+- Edit form (fullscreen overlay) with validations and localStorage auto-save
 - Goodreads metadata import (fetch title, author, ISBN, pages, publication date)
 - Toast notifications for success/delete events
 - Dropbox sync for all operations
@@ -171,10 +179,24 @@ src/
 
 ### dropbox.js (Service Layer)
 
-- `downloadBooks()`: Fetches mybooks.json, returns Map<String, Book> or empty object for new users
-- `uploadBooks(booksMap)`: Uploads entire books map to Dropbox as JSON
-- Uses localStorage for token persistence
-- PKCE flow with DropboxAuth helpers (`getAuthenticationUrl`, `getAccessTokenFromCode`)
+**Token Management:**
+- Stores tokens in single localStorage key `dropbox_auth` (JSON object with `accessToken`, `refreshToken`, `expiresAt`)
+- `exchangeCodeForToken(code)`: Exchanges OAuth code for tokens, stores both access and refresh tokens with expiration time
+- `refreshAccessToken()`: Uses refresh token to get new access token when expired. Clears auth and triggers re-auth callback on failure
+- `setAuthExpiredCallback(callback)`: Registers callback for when token refresh fails (used by App.vue to logout)
+- `isTokenExpired()`: Checks if access token expired (within 5-minute safety buffer)
+- **Proactive refresh:** Every API call checks token expiration first via `ensureTokenValid()`, refreshes if needed before attempting request
+- **Fallback 401 handling:** If API returns 401, attempts refresh and retries request once
+
+**API Functions:**
+- `downloadBooks()`: Fetches mybooks.json with automatic token refresh, returns Map<String, Book> or empty object for new users
+- `uploadBooks(booksMap)`: Uploads entire books map to Dropbox as JSON with automatic token refresh
+- `getAuthUrl()`: Returns OAuth URL with PKCE flow (`offline` scope for refresh tokens)
+
+**Token Lifecycle:**
+- Access tokens expire after ~4 hours (Dropbox default)
+- Refresh tokens are long-lived (10 years or until app disconnected) but will eventually expire
+- If refresh token expires, user is logged out (triggers auth-expired callback, which clears localStorage)
 
 ### GoodreadsModal.vue (Metadata Import Dialog)
 
@@ -357,6 +379,10 @@ npm run format     # Format code with Prettier
 - Accessibility improvements (ARIA labels, focus management)
 - Goodreads integration (metadata fetching)
 
+**Known issues:**
+
+- **Refresh token expiration:** Dropbox refresh tokens are long-lived (~10 years) but eventually expire. If a user doesn't visit for months/years and the refresh token expires, they'll be logged out on next API call with no explanation. Could add better error messaging or periodic token validation, but low priority for current use case (weekly usage).
+
 **Architecture decisions:**
 
 - No offline mode: weekly usage, simplifies implementation
@@ -364,6 +390,7 @@ npm run format     # Format code with Prettier
 - No database: JSON file is source of truth
 - Custom table logic instead of TanStack Table: sufficient for ~300 books, avoids extra dependency
 - Immediate delete with undo instead of confirmation: fast, undo is safety net
+- Proactive token refresh: checks expiration before each API call (5-minute safety buffer) to avoid 401 errors
 
 ## URL Hash Navigation
 
