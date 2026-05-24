@@ -17,10 +17,8 @@
           <div class="info-prose">
             by <span class="highlight">{{ book.author || '—' }}</span>
           </div>
-          <div v-if="book.meta?.pubDate" class="info-prose">
-            First published on {{ formatPublishedDate(book.meta.pubDate) }}
-          </div>
-          <div class="info-prose">Read on {{ formatReadDate(book.date) }}</div>
+          <div v-if="book.meta?.pubDate" class="info-prose">First published on {{ formatDate(book.meta.pubDate) }}</div>
+          <div class="info-prose">Read on {{ formatDate(book.date) }}</div>
 
           <div v-if="hasAttributes" class="attributes">
             <span v-if="book.meta?.pages" class="pill"> {{ book.meta.pages }} pages </span>
@@ -74,6 +72,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useDrag } from '../composables/useDrag';
+import { formatDate, formatDuration } from '../utils/formatting';
 
 const props = defineProps({
   book: {
@@ -115,52 +114,6 @@ const openGoodreadsLink = () => {
     const url = `https://www.goodreads.com/book/show/${props.book.meta.GoodreadsID}`;
     window.open(url, '_blank');
   }
-};
-
-const formatDuration = (minutes) => {
-  if (!minutes) return '';
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${h}:${String(m).padStart(2, '0')}:00`;
-};
-
-const formatReadDate = (dateStr) => {
-  if (!dateStr) return '—';
-  if (dateStr === '?') return '?';
-
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-  const parts = dateStr.split('-');
-  if (parts.length === 3) {
-    const year = parts[0];
-    const month = parseInt(parts[1]) - 1;
-    const day = parts[2];
-    return `${months[month]} ${day}, ${year}`;
-  } else if (parts.length === 2) {
-    const year = parts[0];
-    const month = parseInt(parts[1]) - 1;
-    return `${months[month]} ${year}`;
-  }
-  return dateStr;
-};
-
-const formatPublishedDate = (dateStr) => {
-  if (!dateStr) return '—';
-
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-  const parts = dateStr.split('-');
-  if (parts.length === 3) {
-    const year = parts[0];
-    const month = parseInt(parts[1]) - 1;
-    const day = parts[2];
-    return `${months[month]} ${day}, ${year}`;
-  } else if (parts.length === 2) {
-    const year = parts[0];
-    const month = parseInt(parts[1]) - 1;
-    return `${months[month]} ${year}`;
-  }
-  return dateStr;
 };
 
 const close = () => {
@@ -302,16 +255,6 @@ const close = () => {
   background-color: rgba(255, 107, 107, 0.15);
   border-color: var(--warning);
   color: var(--warning);
-}
-
-.dnf-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  background-color: rgba(255, 107, 107, 0.2);
-  color: var(--warning);
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 600;
 }
 
 .notes-section {

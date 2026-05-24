@@ -72,60 +72,24 @@
           </button>
         </div>
         <div v-if="filtersOpen" class="filters-collapsible">
-          <select v-model="searchFieldsFilter" class="filter-select">
-            <option value="anything">Search: Anything</option>
-            <option value="title">Search: Title</option>
-            <option value="author">Search: Author</option>
-            <option value="title+author">Search: Title + Author</option>
-            <option value="date">Search: Date</option>
-            <option value="notes">Search: Notes</option>
-          </select>
-          <div class="filters">
-            <div class="filter-group">
-              <label>Format:</label>
-              <select v-model="audiobookFilter" class="filter-select">
-                <option value="all">All</option>
-                <option value="audiobook">Audiobook</option>
-                <option value="paper">Paper</option>
-              </select>
-            </div>
-            <div class="filter-group">
-              <label>Status:</label>
-              <select v-model="dnfFilter" class="filter-select">
-                <option value="all">All</option>
-                <option value="finished">Finished</option>
-                <option value="dnf">DNF</option>
-              </select>
-            </div>
-          </div>
+          <BookFilters
+            :search-fields-filter="searchFieldsFilter"
+            :audiobook-filter="audiobookFilter"
+            :dnf-filter="dnfFilter"
+            @update:search-fields-filter="searchFieldsFilter = $event"
+            @update:audiobook-filter="audiobookFilter = $event"
+            @update:dnf-filter="dnfFilter = $event"
+          />
         </div>
         <div v-else class="filters-desktop">
-          <select v-model="searchFieldsFilter" class="filter-select">
-            <option value="anything">Search: Anything</option>
-            <option value="title">Search: Title</option>
-            <option value="author">Search: Author</option>
-            <option value="title+author">Search: Title + Author</option>
-            <option value="date">Search: Date</option>
-            <option value="notes">Search: Notes</option>
-          </select>
-          <div class="filters">
-            <div class="filter-group">
-              <label>Format:</label>
-              <select v-model="audiobookFilter" class="filter-select">
-                <option value="all">All</option>
-                <option value="audiobook">Audiobook</option>
-                <option value="paper">Paper</option>
-              </select>
-            </div>
-            <div class="filter-group">
-              <label>Status:</label>
-              <select v-model="dnfFilter" class="filter-select">
-                <option value="all">All</option>
-                <option value="finished">Finished</option>
-                <option value="dnf">DNF</option>
-              </select>
-            </div>
-          </div>
+          <BookFilters
+            :search-fields-filter="searchFieldsFilter"
+            :audiobook-filter="audiobookFilter"
+            :dnf-filter="dnfFilter"
+            @update:search-fields-filter="searchFieldsFilter = $event"
+            @update:audiobook-filter="audiobookFilter = $event"
+            @update:dnf-filter="dnfFilter = $event"
+          />
         </div>
         <span class="row-count"
           ><span class="row-count-filtered">{{ filteredAndSortedBooks.length }}</span>
@@ -212,8 +176,11 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { downloadBooks, uploadBooks, checkFileRevision } from '../services/dropbox';
+import { formatDuration } from '../utils/formatting';
+import { booksToMap, buildBookMeta } from '../utils/books';
 import DetailsDrawer from './DetailsDrawer.vue';
 import EditForm from './EditForm.vue';
+import BookFilters from './BookFilters.vue';
 
 const props = defineProps(['filesChanged']);
 const emit = defineEmits(['logout', 'files-refreshed']);
@@ -352,11 +319,10 @@ const extractDateNumbers = (dateStr) => {
   return dateStr.replace(/\D/g, '');
 };
 
-const formatDuration = (minutes) => {
-  if (!minutes) return '';
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${h}:${String(m).padStart(2, '0')}`;
+const dismissMessageAfter = (ms = 3000) => {
+  setTimeout(() => {
+    successMessage.value = null;
+  }, ms);
 };
 
 const handleSearchKeyboard = (keyboardEvent) => {
@@ -456,9 +422,7 @@ const deleteBook = async (book) => {
   }
 
   try {
-    const booksCopy = {
-      ...Object.fromEntries(books.value.map((b) => [b._key, { ...b }])),
-    };
+    const booksCopy = booksToMap(books.value);
 
     // Store for undo
     undoData.value = {
@@ -498,9 +462,7 @@ const undoDelete = async () => {
   if (!undoData.value) return;
 
   try {
-    const booksCopy = {
-      ...Object.fromEntries(books.value.map((b) => [b._key, { ...b }])),
-    };
+    const booksCopy = booksToMap(books.value);
 
     // Restore book
     booksCopy[undoData.value.key] = undoData.value.book;
@@ -520,9 +482,7 @@ const undoDelete = async () => {
     successMessage.value = 'Book restored';
 
     // Auto-dismiss after 3 seconds
-    setTimeout(() => {
-      successMessage.value = null;
-    }, 3000);
+    dismissMessageAfter(3000);
   } catch (err) {
     error.value = err.message || 'Failed to restore book';
   }
@@ -546,10 +506,7 @@ const handleEditSave = async (editedBook) => {
 
   isSaving.value = true;
   try {
-    const booksCopy = {
-      ...Object.fromEntries(books.value.map((b) => [b._key, { ...b }])),
-    };
-
+    const booksCopy = booksToMap(books.value);
     const key = isNewBook.value ? normalizeTitle(editedBook.title) : selectedBook.value._key;
 
     // Remove old key if renaming
@@ -563,13 +520,7 @@ const handleEditSave = async (editedBook) => {
       date: editedBook.date,
       dnf: editedBook.dnf,
       notes: editedBook.notes,
-      meta: {
-        pages: editedBook.meta.pages,
-        duration: editedBook.meta.duration,
-        GoodreadsID: editedBook.meta.GoodreadsID,
-        ISBN: editedBook.meta.ISBN,
-        pubDate: editedBook.meta.pubDate,
-      },
+      meta: buildBookMeta(editedBook.meta),
     };
 
     await uploadBooks(booksCopy);
@@ -582,7 +533,6 @@ const handleEditSave = async (editedBook) => {
     } else {
       const bookIndex = books.value.findIndex((b) => b._key === selectedBook.value._key);
       if (bookIndex >= 0) {
-        // Update the existing book object in place to maintain reactivity
         Object.assign(books.value[bookIndex], {
           ...booksCopy[key],
           _key: key,
@@ -594,10 +544,7 @@ const handleEditSave = async (editedBook) => {
     successMessage.value = isNewBook.value ? 'Book added successfully' : 'Book saved successfully';
     closeForm();
 
-    // Auto-dismiss success message after 3 seconds
-    setTimeout(() => {
-      successMessage.value = null;
-    }, 3000);
+    dismissMessageAfter(3000);
   } catch (err) {
     error.value = err.message || 'Failed to save book';
   } finally {
@@ -614,7 +561,7 @@ watch(
         await loadBooksFromDropbox();
         console.log(`[Books] Reloaded ${books.value.length} books from Dropbox`);
         successMessage.value = 'Books updated from Dropbox';
-        setTimeout(() => (successMessage.value = null), 3000);
+        dismissMessageAfter(3000);
       } catch (err) {
         error.value = err.message || 'Failed to refresh books';
         console.error('[Books] Error reloading from Dropbox:', err);
@@ -774,8 +721,6 @@ h1 {
 
 .filters-collapsible {
   display: none;
-  flex-direction: column;
-  gap: 1rem;
   width: 100%;
 }
 
@@ -853,39 +798,6 @@ h1 {
   display: flex;
   gap: 1rem;
   align-items: center;
-}
-
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.filter-group label {
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.filter-select {
-  padding: 0.5rem 0.75rem;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-
-.filter-select:hover {
-  border-color: var(--accent-primary);
-}
-
-.filter-select:focus {
-  outline: none;
-  border-color: var(--accent-primary);
 }
 
 .checkbox-label {
@@ -1115,21 +1027,6 @@ h1 {
 
   .filters-collapsible {
     display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    width: 100%;
-  }
-
-  .filters {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .filter-group {
-    width: 100%;
-  }
-
-  .filter-select {
     width: 100%;
   }
 

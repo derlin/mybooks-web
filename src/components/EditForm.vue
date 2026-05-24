@@ -174,6 +174,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, toRefs, onMounted, onUnmounted } from 'vue';
+import { buildBookMeta } from '../utils/books';
 import GoodreadsModal from './GoodreadsModal.vue';
 
 const props = defineProps({
@@ -402,10 +403,10 @@ const cancel = () => {
 
 const durationToMinutes = (durationStr) => {
   if (!durationStr) return null;
-  const match = durationStr.match(/^(\d+)h(\d{1,2})$/);
+  const match = durationStr.match(durationRegex);
   if (!match) return null;
   const hours = parseInt(match[1]);
-  const minutes = parseInt(match[2]);
+  const minutes = match[2] ? parseInt(match[2]) : 0;
   return hours * 60 + minutes;
 };
 
@@ -416,12 +417,8 @@ const save = () => {
   emit('save', {
     ...formData.value,
     meta: {
-      ...formData.value.meta,
+      ...buildBookMeta(formData.value.meta),
       duration: durationToMinutes(formData.value.meta.duration),
-      pages: formData.value.meta.pages || null,
-      GoodreadsID: formData.value.meta.GoodreadsID || null,
-      ISBN: formData.value.meta.ISBN || null,
-      pubDate: formData.value.meta.pubDate || null,
     },
   });
 };

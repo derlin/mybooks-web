@@ -99,17 +99,29 @@ src/
 │   ├── AuthScreen.vue         # Login/auth UI
 │   ├── AuthCallback.vue       # OAuth redirect handler
 │   ├── BookList.vue           # Main table view with filters/sort
+│   ├── BookFilters.vue        # Reusable filter controls (search, format, status)
 │   ├── DetailsDrawer.vue      # Right-side read-only book details
 │   ├── EditForm.vue           # Fullscreen edit/create form
 │   └── GoodreadsModal.vue     # Modal dialog for Goodreads URL input
 ├── composables/
 │   └── useDrag.js             # Touch/mouse drag gesture tracking for swipe interactions
+├── utils/
+│   ├── formatting.js          # Date and duration formatting utilities
+│   └── books.js               # Book data transformation helpers
 └── services/
     ├── dropbox.js             # Dropbox API service layer
     └── goodreads.js           # Goodreads metadata extraction service
 ```
 
 ## Key Implementation Details
+
+### BookFilters.vue (Filter Controls)
+
+- Reusable component for search field selector, format, and status filters
+- Uses `v-model` with computed properties for two-way binding
+- Displays as single row on desktop, stacked on mobile
+- Emits `update:searchFieldsFilter`, `update:audiobookFilter`, `update:dnfFilter` events
+- Used by BookList in both desktop and mobile filter sections
 
 ### BookList.vue (Main Table)
 
@@ -169,6 +181,25 @@ src/
 - **Error banner:** Displays at top if save fails
 - **Date field:** Auto-filled with today's date when creating new book
 
+### Utilities
+
+#### formatting.js
+
+- `formatDate(dateStr)`: Converts ISO date strings to readable format (e.g., "Jan 24, 2025")
+  - Handles YYYY-MM-DD, YYYY-MM, and single-year formats
+  - Used by DetailsDrawer for both read and published dates
+- `formatDuration(minutes)`: Converts minutes to h:mm format (e.g., "7:34")
+  - Used by BookList and DetailsDrawer for audiobook duration display
+
+#### books.js
+
+- `booksToMap(books)`: Converts books array to normalized map structure for Dropbox
+  - Eliminates repetitive `Object.fromEntries(books.map(...))` patterns
+  - Used by BookList in deleteBook, undoDelete, and handleEditSave
+- `buildBookMeta(meta)`: Normalizes metadata object with null defaults
+  - Ensures consistent meta structure with only approved fields
+  - Used by BookList and EditForm during save operations
+
 ### DetailsDrawer.vue (Read-only)
 
 - 400px wide, full height, slides in from right with 0.15s animation
@@ -182,6 +213,7 @@ src/
 ### dropbox.js (Service Layer)
 
 **Token Management:**
+
 - Stores tokens in single localStorage key `dropbox_auth` (JSON object with `accessToken`, `refreshToken`, `expiresAt`)
 - `exchangeCodeForToken(code)`: Exchanges OAuth code for tokens, stores both access and refresh tokens with expiration time
 - `refreshAccessToken()`: Uses refresh token to get new access token when expired. Clears auth and triggers re-auth callback on failure
@@ -191,17 +223,20 @@ src/
 - **Fallback 401 handling:** If API returns 401, attempts refresh and retries request once
 
 **API Functions:**
+
 - `downloadBooks()`: Fetches mybooks.json with automatic token refresh, stores file `rev` for concurrency control, returns Map<String, Book> or empty object for new users
 - `uploadBooks(booksMap)`: Uploads entire books map to Dropbox as JSON with automatic token refresh. **Explicitly serializes only approved fields** (`title`, `author`, `date`, `dnf`, `notes`, `meta`) — any other properties (internal Vue tracking, accidental mutations) are automatically excluded
 - `getAuthUrl()`: Returns OAuth URL with PKCE flow (`offline` scope for refresh tokens)
 - `checkFileRevision()`: Compares stored file revision with current revision on Dropbox. Returns `true` if file changed, `false` if unchanged. Used to detect concurrent edits from other sessions
 
 **Token Lifecycle:**
+
 - Access tokens expire after ~4 hours (Dropbox default)
 - Refresh tokens are long-lived (10 years or until app disconnected) but will eventually expire
 - If refresh token expires, user is logged out (triggers auth-expired callback, which clears localStorage)
 
 **Concurrency Control:**
+
 - File revision (`rev`) is stored in localStorage when downloading books
 - **On tab visibility change:** Check revision (cheap metadata call). If changed, refetch books silently
 - **Before save/delete:** Check revision. If changed, reload books and prevent operation with error message "Books were updated by another session. Please review changes and try again."
@@ -378,6 +413,7 @@ npm run format     # Format code with Prettier
 ## Progressive Web App (PWA)
 
 **Installable on mobile:**
+
 - Web app manifest at `/public/manifest.json` defines app name, icons, theme colors, and standalone display mode
 - Icons: `icon-192.png` and `icon-512.png` (generated from favicon.svg)
 - On Android: open app in Chrome → menu (⋮) → "Install app" → adds to home screen as standalone window
