@@ -252,16 +252,20 @@ const close = () => {
 
 .drawer-content {
   flex: 1;
-  overflow-y: auto;
   padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .header-section {
   margin-bottom: 2rem;
+  flex-shrink: 0;
 }
 
 .actions-section {
   margin-bottom: 2rem;
+  flex-shrink: 0;
 }
 
 .info-prose {
@@ -311,13 +315,17 @@ const close = () => {
 }
 
 .notes-section {
-  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin-bottom: 1.5rem;
 }
 
 .notes-section h3 {
   margin: 0 0 1rem 0;
   color: var(--accent-primary);
   font-size: 1rem;
+  flex-shrink: 0;
 }
 
 .notes-content {
@@ -329,13 +337,14 @@ const close = () => {
   line-height: 1.6;
   white-space: pre-wrap;
   word-wrap: break-word;
-  max-height: 300px;
   overflow-y: auto;
   font-size: 0.9rem;
+  max-height: 60vh;
 }
 
 .metadata-section {
   margin-bottom: 1rem;
+  flex-shrink: 0;
 }
 
 .collapsible-header {
