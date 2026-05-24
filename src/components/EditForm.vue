@@ -425,6 +425,27 @@ watch(
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   gap: 1rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .form-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .form-header h1 {
+    margin-bottom: 0.5rem;
+  }
+
+  .form-header-actions {
+    flex-direction: column;
+  }
+
+  .form-header-actions button {
+    width: 100%;
+  }
 }
 
 .form-header h1 {
@@ -477,6 +498,12 @@ watch(
 .cancel-btn:hover {
   background-color: var(--accent-primary);
   color: var(--bg-primary);
+}
+
+@media (max-width: 600px) {
+  .cancel-btn {
+    display: none;
+  }
 }
 
 .form-wrapper-inner {
@@ -634,9 +661,12 @@ watch(
   padding: 1.5rem 2rem;
   border-top: 1px solid var(--border);
   flex-shrink: 0;
-  background-color: transparent;
+  background-color: var(--bg-primary);
   justify-content: center;
   width: 100%;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
 }
 
 .btn-cancel,
@@ -652,21 +682,29 @@ watch(
 }
 
 @media (max-width: 600px) {
+  .form-footer {
+    flex-direction: column;
+    padding: 1rem;
+    gap: 0.5rem;
+  }
+
   .btn-cancel,
   .btn-save {
     flex: 1;
-    width: auto;
-    min-width: 100px;
+    width: 100%;
+    min-width: unset;
   }
 }
 
 .btn-cancel {
   background-color: transparent;
-  color: var(--text-primary);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 .btn-cancel:hover {
-  background-color: var(--bg-hover);
+  background-color: var(--accent-primary);
+  color: var(--bg-primary);
 }
 
 .btn-save {

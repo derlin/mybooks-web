@@ -60,6 +60,7 @@
       </div>
 
       <div class="drawer-footer">
+        <button class="back-button" @click="close">Close</button>
         <button class="edit-button" @click="$emit('edit')">Edit Book</button>
       </div>
     </div>
@@ -306,5 +307,33 @@ const close = () => {
 
 .edit-button:hover {
   opacity: 0.9;
+}
+
+.back-button {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background-color: transparent;
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary);
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.back-button:hover {
+  background-color: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+@media (max-width: 600px) {
+  .drawer-overlay {
+    right: 0;
+  }
+
+  .drawer {
+    width: 100%;
+  }
 }
 </style>
