@@ -40,12 +40,22 @@
     <div v-else class="table-wrapper">
       <div class="controls">
         <div class="search-bar">
-          <input
-            v-model="globalFilter"
-            type="text"
-            placeholder="Search books..."
-            class="search-input"
-          />
+          <div class="search-input-wrapper">
+            <input
+              v-model="globalFilter"
+              type="text"
+              placeholder="Search books..."
+              class="search-input"
+            />
+            <button
+              v-if="globalFilter"
+              class="clear-search-btn"
+              @click="globalFilter = ''"
+              title="Clear search"
+            >
+              ✕
+            </button>
+          </div>
           <button
             class="filters-toggle-btn"
             :class="{ active: filtersOpen }"
@@ -112,7 +122,11 @@
           </div>
         </div>
         <span class="row-count"
-          >{{ filteredAndSortedBooks.length }} / {{ books.length }}</span
+          ><span class="row-count-filtered">{{
+            filteredAndSortedBooks.length
+          }}</span>
+          <span class="row-count-separator">/</span>
+          {{ books.length }}</span
         >
       </div>
 
@@ -233,10 +247,10 @@ const isSaving = ref(false);
 const columns = [
   { id: 'author', header: 'Author', enableSorting: true },
   { id: 'title', header: 'Title', enableSorting: true },
-  { id: 'date', header: 'Date', enableSorting: true },
+  { id: 'date', header: 'Read', enableSorting: true },
   { id: 'duration', header: 'Duration', enableSorting: true },
   { id: 'pages', header: 'Pages', enableSorting: true },
-  { id: 'dnf', header: 'DNF', enableSorting: true },
+  { id: 'dnf', header: 'DNF?', enableSorting: true },
   { id: 'actions', header: 'Actions', enableSorting: false },
 ];
 
@@ -658,6 +672,12 @@ h1 {
   min-width: 0;
 }
 
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
 .filters-toggle-btn {
   display: none;
   background-color: var(--accent-primary);
@@ -695,8 +715,8 @@ h1 {
 }
 
 .search-input {
-  flex: 1;
-  padding: 0.75rem 1rem;
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
   background-color: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -708,10 +728,45 @@ h1 {
   color: var(--text-secondary);
 }
 
-.row-count {
+.clear-search-btn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
   color: var(--text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.clear-search-btn:hover {
+  color: var(--text-primary);
+}
+
+.row-count {
+  color: #fff;
   font-size: 0.9rem;
   white-space: nowrap;
+  min-width: 5.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.row-count-filtered {
+  color: var(--accent-primary);
+}
+
+.row-count-separator {
+  color: var(--text-secondary);
+  margin: 0 0.4rem;
 }
 
 .filters {
@@ -782,8 +837,11 @@ h1 {
 }
 
 .books-table thead {
-  background-color: var(--bg-tertiary);
+  background-color: var(--bg-secondary);
   border-bottom: 2px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .books-table th {
@@ -816,11 +874,11 @@ h1 {
 }
 
 .books-table tbody tr.audiobook {
-  background-color: rgba(168, 85, 247, 0.08);
+  background-color: rgba(33, 150, 243, 0.15);
 }
 
 .books-table tbody tr.audiobook:hover {
-  background-color: rgba(168, 85, 247, 0.15);
+  background-color: rgba(33, 150, 243, 0.28);
 }
 
 .books-table tbody tr:not(.audiobook):hover {

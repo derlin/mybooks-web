@@ -8,26 +8,29 @@
 
       <div class="drawer-content">
         <div class="header-section">
-          <div class="meta-row">
-            <span class="label">Author:</span>
-            <span class="value">{{ book.author || '—' }}</span>
+          <div class="info-prose">
+            by <span class="highlight">{{ book.author || '—' }}</span>
           </div>
-          <div class="meta-row">
-            <span class="label">Date:</span>
-            <span class="value">{{ book.date || '—' }}</span>
+          <div v-if="book.meta?.pubDate" class="info-prose">
+            First published on {{ formatPublishedDate(book.meta.pubDate) }}
           </div>
-          <div v-if="book.meta?.duration" class="meta-row">
-            <span class="label">Duration:</span>
-            <span class="value">{{ formatDuration(book.meta.duration) }}</span>
+          <div class="info-prose">Read on {{ formatReadDate(book.date) }}</div>
+
+          <div v-if="hasAttributes" class="attributes">
+            <span v-if="book.meta?.pages" class="pill">
+              {{ book.meta.pages }} pages
+            </span>
+            <span v-if="book.meta?.duration" class="pill">
+              {{ formatDuration(book.meta.duration) }}
+            </span>
+            <span v-if="book.dnf" class="pill dnf">DNF</span>
           </div>
-          <div v-if="book.meta?.pages" class="meta-row">
-            <span class="label">Pages:</span>
-            <span class="value">{{ book.meta.pages }}</span>
-          </div>
-          <div v-if="book.dnf" class="meta-row">
-            <span class="label">Status:</span>
-            <span class="value dnf-badge">DNF</span>
-          </div>
+        </div>
+
+        <div v-if="book.meta?.GoodreadsID" class="actions-section">
+          <button class="goodreads-link-btn" @click="openGoodreadsLink">
+            ↗ View on Goodreads
+          </button>
         </div>
 
         <div class="notes-section">
@@ -50,10 +53,6 @@
             <div v-if="book.meta?.ISBN" class="meta-row">
               <span class="label">ISBN:</span>
               <span class="value">{{ book.meta.ISBN }}</span>
-            </div>
-            <div v-if="book.meta?.pubDate" class="meta-row">
-              <span class="label">Publication Date:</span>
-              <span class="value">{{ book.meta.pubDate }}</span>
             </div>
           </div>
         </div>
@@ -87,14 +86,90 @@ const metaOpen = ref(false);
 
 const hasMetadata = computed(() => {
   const meta = props.book.meta;
-  return meta && (meta.GoodreadsID || meta.ISBN || meta.pubDate);
+  return meta && (meta.GoodreadsID || meta.ISBN);
 });
+
+const hasAttributes = computed(() => {
+  return props.book.meta?.pages || props.book.meta?.duration || props.book.dnf;
+});
+
+const openGoodreadsLink = () => {
+  if (props.book.meta?.GoodreadsID) {
+    const url = `https://www.goodreads.com/book/show/${props.book.meta.GoodreadsID}`;
+    window.open(url, '_blank');
+  }
+};
 
 const formatDuration = (minutes) => {
   if (!minutes) return '';
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return `${h}:${String(m).padStart(2, '0')}:00`;
+};
+
+const formatReadDate = (dateStr) => {
+  if (!dateStr) return '—';
+  if (dateStr === '?') return '?';
+
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    const year = parts[0];
+    const month = parseInt(parts[1]) - 1;
+    const day = parts[2];
+    return `${months[month]} ${day}, ${year}`;
+  } else if (parts.length === 2) {
+    const year = parts[0];
+    const month = parseInt(parts[1]) - 1;
+    return `${months[month]} ${year}`;
+  }
+  return dateStr;
+};
+
+const formatPublishedDate = (dateStr) => {
+  if (!dateStr) return '—';
+
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    const year = parts[0];
+    const month = parseInt(parts[1]) - 1;
+    const day = parts[2];
+    return `${months[month]} ${day}, ${year}`;
+  } else if (parts.length === 2) {
+    const year = parts[0];
+    const month = parseInt(parts[1]) - 1;
+    return `${months[month]} ${year}`;
+  }
+  return dateStr;
 };
 
 const close = () => {
@@ -193,24 +268,44 @@ const close = () => {
   margin-bottom: 2rem;
 }
 
-.meta-row {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-  align-items: flex-start;
+.actions-section {
+  margin-bottom: 2rem;
 }
 
-.label {
-  color: var(--text-secondary);
-  font-weight: 500;
-  min-width: 120px;
-  flex-shrink: 0;
-}
-
-.value {
+.info-prose {
   color: var(--text-primary);
-  word-break: break-word;
-  flex: 1;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+
+.info-prose .highlight {
+  font-weight: 700;
+}
+
+.attributes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.pill {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.pill.dnf {
+  background-color: rgba(255, 107, 107, 0.15);
+  border-color: var(--warning);
+  color: var(--warning);
 }
 
 .dnf-badge {
@@ -287,6 +382,26 @@ const close = () => {
   margin-bottom: 0.5rem;
 }
 
+.meta-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  align-items: flex-start;
+}
+
+.label {
+  color: var(--text-secondary);
+  font-weight: 500;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.value {
+  color: var(--text-primary);
+  word-break: break-word;
+  flex: 1;
+}
+
 .drawer-footer {
   padding: 1.5rem;
   border-top: 1px solid var(--border);
@@ -324,6 +439,23 @@ const close = () => {
 
 .back-button:hover {
   background-color: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+.goodreads-link-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: transparent;
+  color: var(--accent-secondary);
+  border: 1px solid var(--accent-secondary);
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.goodreads-link-btn:hover {
+  background-color: var(--accent-secondary);
   color: var(--bg-primary);
 }
 
