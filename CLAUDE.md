@@ -124,6 +124,7 @@ src/
     - When expanded: search field selector, Format, and Status filters stack vertically
   - Format dropdown: All / Audiobook / Paper (based on meta.duration presence)
   - Status dropdown: All / Finished / DNF
+  - **Mobile keyboard:** Pressing Enter/Search button on mobile keyboard closes keyboard (blur on `@keydown` and `@keyup` events, checks both `key === 'Enter'` and `keyCode === 13`)
 - **Row count display:** Shows "filtered / total"
 - **Audiobook highlighting:** Purple background for rows with duration
 - **Row interactions:**

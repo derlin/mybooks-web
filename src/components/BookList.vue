@@ -42,15 +42,15 @@
             <input
               ref="searchInput"
               v-model="globalFilter"
-              type="search"
-              inputmode="search"
-              enterkeyhint="search"
+              type="text"
               placeholder="Search books..."
               class="search-input"
-              @keydown.enter="searchInput?.blur()"
+              @keydown="handleSearchKeyboard"
+              @keyup="handleSearchKeyboard"
             />
             <button
               v-if="globalFilter"
+              type="button"
               class="clear-search-btn"
               @click="
                 globalFilter = '';
@@ -62,6 +62,7 @@
             </button>
           </div>
           <button
+            type="button"
             class="filters-toggle-btn"
             :class="{ active: filtersOpen }"
             @click="filtersOpen = !filtersOpen"
@@ -233,6 +234,7 @@ const successMessage = ref(null);
 const undoData = ref(null);
 const undoTimeout = ref(null);
 const isSaving = ref(false);
+const searchInput = ref(null);
 
 const columns = [
   { id: 'author', header: 'Author', enableSorting: true },
@@ -354,6 +356,12 @@ const formatDuration = (minutes) => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return `${h}:${String(m).padStart(2, '0')}`;
+};
+
+const handleSearchKeyboard = (keyboardEvent) => {
+  if (keyboardEvent.key === 'Enter' || keyboardEvent.keyCode === 13) {
+    searchInput.value?.blur();
+  }
 };
 
 const toggleSort = (columnId) => {
@@ -739,6 +747,15 @@ h1 {
 
 .search-input::placeholder {
   color: var(--text-secondary);
+}
+
+/* Hide browser's native clear button */
+.search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.search-input::-webkit-search-decoration {
+  display: none;
 }
 
 .clear-search-btn {
