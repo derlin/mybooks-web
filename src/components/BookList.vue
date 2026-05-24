@@ -18,9 +18,7 @@
     <div class="header">
       <img src="@/assets/logo.svg" alt="MyBooks" class="logo logo-header" />
       <div class="header-actions">
-        <button @click="openNewBook" class="add-btn" title="Add new book">
-          +
-        </button>
+        <button @click="openNewBook" class="add-btn" title="Add new book">+</button>
         <button @click="$emit('logout')" class="logout-btn">Logout</button>
       </div>
     </div>
@@ -41,18 +39,8 @@
       <div class="controls">
         <div class="search-bar">
           <div class="search-input-wrapper">
-            <input
-              v-model="globalFilter"
-              type="text"
-              placeholder="Search books..."
-              class="search-input"
-            />
-            <button
-              v-if="globalFilter"
-              class="clear-search-btn"
-              @click="globalFilter = ''"
-              title="Clear search"
-            >
+            <input v-model="globalFilter" type="text" placeholder="Search books..." class="search-input" />
+            <button v-if="globalFilter" class="clear-search-btn" @click="globalFilter = ''" title="Clear search">
               ✕
             </button>
           </div>
@@ -122,9 +110,7 @@
           </div>
         </div>
         <span class="row-count"
-          ><span class="row-count-filtered">{{
-            filteredAndSortedBooks.length
-          }}</span>
+          ><span class="row-count-filtered">{{ filteredAndSortedBooks.length }}</span>
           <span class="row-count-separator">/</span>
           {{ books.length }}</span
         >
@@ -142,10 +128,7 @@
               >
                 <div class="header-cell">
                   {{ column.header }}
-                  <span
-                    v-if="sorting[0]?.id === column.id"
-                    class="sort-indicator"
-                  >
+                  <span v-if="sorting[0]?.id === column.id" class="sort-indicator">
                     {{ sorting[0].desc ? '▼' : '▲' }}
                   </span>
                 </div>
@@ -164,9 +147,7 @@
               <td>{{ row.title }}</td>
               <td>{{ row.date || '—' }}</td>
               <td class="duration-cell">
-                {{
-                  row.meta?.duration ? formatDuration(row.meta?.duration) : '—'
-                }}
+                {{ row.meta?.duration ? formatDuration(row.meta?.duration) : '—' }}
               </td>
               <td class="pages-cell">
                 {{ row.meta?.pages || '—' }}
@@ -175,20 +156,8 @@
                 <span v-if="row.dnf" class="badge dnf">DNF</span>
               </td>
               <td class="actions-cell">
-                <button
-                  class="action-btn edit-btn"
-                  title="Edit"
-                  @click.stop="openEditForm(row)"
-                >
-                  ✎
-                </button>
-                <button
-                  class="action-btn delete-btn"
-                  title="Delete"
-                  @click.stop="deleteBook(row)"
-                >
-                  ×
-                </button>
+                <button class="action-btn edit-btn" title="Edit" @click.stop="openEditForm(row)">✎</button>
+                <button class="action-btn delete-btn" title="Delete" @click.stop="deleteBook(row)">×</button>
               </td>
             </tr>
           </tbody>
@@ -280,10 +249,7 @@ const filteredAndSortedBooks = computed(() => {
         case 'author':
           return b.author?.toLowerCase().includes(query);
         case 'title+author':
-          return (
-            b.title?.toLowerCase().includes(query) ||
-            b.author?.toLowerCase().includes(query)
-          );
+          return b.title?.toLowerCase().includes(query) || b.author?.toLowerCase().includes(query);
         case 'date':
           return b.date?.toLowerCase().includes(query);
         case 'notes':
@@ -489,9 +455,7 @@ const handleEditSave = async (editedBook) => {
       ...Object.fromEntries(books.value.map((b) => [b._key, { ...b }])),
     };
 
-    const key = isNewBook.value
-      ? normalizeTitle(editedBook.title)
-      : selectedBook.value._key;
+    const key = isNewBook.value ? normalizeTitle(editedBook.title) : selectedBook.value._key;
 
     // Remove old key if renaming
     if (!isNewBook.value && selectedBook.value._key !== key) {
@@ -521,9 +485,7 @@ const handleEditSave = async (editedBook) => {
         _key: key,
       });
     } else {
-      const bookIndex = books.value.findIndex(
-        (b) => b._key === selectedBook.value._key
-      );
+      const bookIndex = books.value.findIndex((b) => b._key === selectedBook.value._key);
       if (bookIndex >= 0) {
         // Update the existing book object in place to maintain reactivity
         Object.assign(books.value[bookIndex], {
@@ -534,9 +496,7 @@ const handleEditSave = async (editedBook) => {
     }
 
     error.value = null;
-    successMessage.value = isNewBook.value
-      ? 'Book added successfully'
-      : 'Book saved successfully';
+    successMessage.value = isNewBook.value ? 'Book added successfully' : 'Book saved successfully';
     editFormOpen.value = false;
 
     // Auto-dismiss success message after 3 seconds

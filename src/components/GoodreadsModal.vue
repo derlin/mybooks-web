@@ -23,27 +23,13 @@
             :disabled="loading"
             @keyup.enter="submit"
           />
-          <div v-if="loading" class="loading-text">
-            <span class="spinner"></span> Searching...
-          </div>
+          <div v-if="loading" class="loading-text"><span class="spinner"></span> Searching...</div>
         </label>
       </div>
 
       <div class="modal-footer">
-        <button
-          type="button"
-          class="btn-cancel"
-          @click="close"
-          :disabled="loading"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          class="btn-search"
-          @click="submit"
-          :disabled="!url.trim() || loading"
-        >
+        <button type="button" class="btn-cancel" @click="close" :disabled="loading">Cancel</button>
+        <button type="button" class="btn-search" @click="submit" :disabled="!url.trim() || loading">
           {{ loading ? 'Searching...' : 'Search' }}
         </button>
       </div>

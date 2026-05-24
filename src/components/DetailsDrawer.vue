@@ -17,9 +17,7 @@
           <div class="info-prose">Read on {{ formatReadDate(book.date) }}</div>
 
           <div v-if="hasAttributes" class="attributes">
-            <span v-if="book.meta?.pages" class="pill">
-              {{ book.meta.pages }} pages
-            </span>
+            <span v-if="book.meta?.pages" class="pill"> {{ book.meta.pages }} pages </span>
             <span v-if="book.meta?.duration" class="pill">
               {{ formatDuration(book.meta.duration) }}
             </span>
@@ -28,9 +26,7 @@
         </div>
 
         <div v-if="book.meta?.GoodreadsID" class="actions-section">
-          <button class="goodreads-link-btn" @click="openGoodreadsLink">
-            ↗ View on Goodreads
-          </button>
+          <button class="goodreads-link-btn" @click="openGoodreadsLink">↗ View on Goodreads</button>
         </div>
 
         <div class="notes-section">
@@ -111,20 +107,7 @@ const formatReadDate = (dateStr) => {
   if (!dateStr) return '—';
   if (dateStr === '?') return '?';
 
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   const parts = dateStr.split('-');
   if (parts.length === 3) {
@@ -143,20 +126,7 @@ const formatReadDate = (dateStr) => {
 const formatPublishedDate = (dateStr) => {
   if (!dateStr) return '—';
 
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   const parts = dateStr.split('-');
   if (parts.length === 3) {

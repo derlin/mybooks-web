@@ -6,11 +6,7 @@
         <h1>{{ isNewBook ? 'Add' : 'Edit' }}</h1>
       </div>
       <div class="form-header-actions">
-        <button
-          class="goodreads-btn"
-          @click="goodreadsModalOpen = true"
-          title="Import metadata from Goodreads"
-        >
+        <button class="goodreads-btn" @click="goodreadsModalOpen = true" title="Import metadata from Goodreads">
           From Goodreads
         </button>
         <button class="cancel-btn" @click="cancel">Cancel</button>
@@ -26,13 +22,7 @@
         <div class="form-section">
           <label class="form-label">
             <span class="label-text">Title *</span>
-            <input
-              v-model="formData.title"
-              type="text"
-              placeholder="Book title"
-              class="form-input"
-              required
-            />
+            <input v-model="formData.title" type="text" placeholder="Book title" class="form-input" required />
           </label>
 
           <label class="form-label">
@@ -47,10 +37,7 @@
                 @blur="closeAuthorDropdown"
                 required
               />
-              <div
-                v-if="showAuthorDropdown && filteredAuthors.length"
-                class="autocomplete-dropdown"
-              >
+              <div v-if="showAuthorDropdown && filteredAuthors.length" class="autocomplete-dropdown">
                 <div
                   v-for="author in filteredAuthors"
                   :key="author"
@@ -78,11 +65,7 @@
           </label>
 
           <label class="form-label">
-            <input
-              v-model="formData.dnf"
-              type="checkbox"
-              class="form-checkbox"
-            />
+            <input v-model="formData.dnf" type="checkbox" class="form-checkbox" />
             <span>Did Not Finish (DNF)</span>
           </label>
         </div>
@@ -131,50 +114,24 @@
 
             <label class="form-label">
               <span class="label-text">Goodreads ID</span>
-              <input
-                v-model="formData.meta.GoodreadsID"
-                type="text"
-                placeholder="Goodreads ID"
-                class="form-input"
-              />
+              <input v-model="formData.meta.GoodreadsID" type="text" placeholder="Goodreads ID" class="form-input" />
             </label>
 
             <label class="form-label">
               <span class="label-text">ISBN</span>
-              <input
-                v-model="formData.meta.ISBN"
-                type="text"
-                placeholder="ISBN"
-                class="form-input"
-              />
+              <input v-model="formData.meta.ISBN" type="text" placeholder="ISBN" class="form-input" />
             </label>
 
             <label class="form-label">
               <span class="label-text">Publication Date</span>
-              <input
-                v-model="formData.meta.pubDate"
-                type="text"
-                placeholder="YYYY-MM-DD"
-                class="form-input"
-              />
+              <input v-model="formData.meta.pubDate" type="text" placeholder="YYYY-MM-DD" class="form-input" />
             </label>
           </div>
         </div>
       </div>
       <div class="form-footer">
-        <button
-          type="button"
-          class="btn-cancel"
-          @click="cancel"
-          :disabled="isSaving"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          class="btn-save"
-          :disabled="!hasChanged || !isValid || isSaving"
-        >
+        <button type="button" class="btn-cancel" @click="cancel" :disabled="isSaving">Cancel</button>
+        <button type="submit" class="btn-save" :disabled="!hasChanged || !isValid || isSaving">
           {{ isSaving ? 'Saving...' : 'Save' }}
         </button>
       </div>
@@ -245,11 +202,7 @@ const durationRegex = /^(\d+)h(\d{1,2})?$/;
 const filteredAuthors = computed(() => {
   if (!formData.value.author) return [];
   const query = formData.value.author.toLowerCase();
-  const authors = new Set(
-    props.allBooks
-      .map((b) => b.author)
-      .filter((a) => a && a.toLowerCase().includes(query))
-  );
+  const authors = new Set(props.allBooks.map((b) => b.author).filter((a) => a && a.toLowerCase().includes(query)));
   return Array.from(authors).sort();
 });
 
@@ -258,8 +211,7 @@ const hasChanged = computed(() => {
 });
 
 const isValid = computed(() => {
-  if (!formData.value.title.trim() || !formData.value.author.trim())
-    return false;
+  if (!formData.value.title.trim() || !formData.value.author.trim()) return false;
   if (durationError.value) return false;
   return true;
 });

@@ -6,14 +6,12 @@ const realFetch = global.fetch;
 describe('Goodreads Service', () => {
   describe('validateUrl', () => {
     test('validates correct Goodreads URL with /book/show/', () => {
-      const url =
-        'https://www.goodreads.com/book/show/24885533-the-paper-menagerie-and-other-stories';
+      const url = 'https://www.goodreads.com/book/show/24885533-the-paper-menagerie-and-other-stories';
       expect(validateUrl(url)).toBe(true);
     });
 
     test('validates Goodreads URL with /en/book/show/', () => {
-      const url =
-        'https://www.goodreads.com/en/book/show/27208.The_Third_Policeman';
+      const url = 'https://www.goodreads.com/en/book/show/27208.The_Third_Policeman';
       expect(validateUrl(url)).toBe(true);
     });
 
@@ -88,15 +86,13 @@ describe('Goodreads Service', () => {
     });
 
     test('rejects invalid URL', async () => {
-      await expect(fetchBookMetadata('https://example.com')).rejects.toThrow(
-        'Invalid Goodreads URL'
-      );
+      await expect(fetchBookMetadata('https://example.com')).rejects.toThrow('Invalid Goodreads URL');
     });
 
     test('rejects URL without Goodreads ID', async () => {
-      await expect(
-        fetchBookMetadata('https://www.goodreads.com/author/show/123')
-      ).rejects.toThrow('Invalid Goodreads URL');
+      await expect(fetchBookMetadata('https://www.goodreads.com/author/show/123')).rejects.toThrow(
+        'Invalid Goodreads URL'
+      );
     });
 
     test('extracts Goodreads ID from URL', async () => {
@@ -105,9 +101,7 @@ describe('Goodreads Service', () => {
         text: async () => mockHtmlWithValidJsonLd,
       });
 
-      const metadata = await fetchBookMetadata(
-        'https://www.goodreads.com/book/show/24885533-the-paper-menagerie'
-      );
+      const metadata = await fetchBookMetadata('https://www.goodreads.com/book/show/24885533-the-paper-menagerie');
 
       expect(metadata.goodreadsId).toBe('24885533');
     });
@@ -118,9 +112,7 @@ describe('Goodreads Service', () => {
         text: async () => mockHtmlWithValidJsonLd,
       });
 
-      const metadata = await fetchBookMetadata(
-        'https://www.goodreads.com/book/show/123-test-book'
-      );
+      const metadata = await fetchBookMetadata('https://www.goodreads.com/book/show/123-test-book');
 
       expect(metadata).toEqual({
         title: 'Test Book',
@@ -138,9 +130,7 @@ describe('Goodreads Service', () => {
         text: async () => mockHtmlWithMultipleAuthors,
       });
 
-      const metadata = await fetchBookMetadata(
-        'https://www.goodreads.com/book/show/456-multi-author'
-      );
+      const metadata = await fetchBookMetadata('https://www.goodreads.com/book/show/456-multi-author');
 
       expect(metadata.author).toBe('Author One');
     });
@@ -160,9 +150,7 @@ describe('Goodreads Service', () => {
         text: async () => mockHtmlWithPubDate,
       });
 
-      const metadata = await fetchBookMetadata(
-        'https://www.goodreads.com/book/show/123-test'
-      );
+      const metadata = await fetchBookMetadata('https://www.goodreads.com/book/show/123-test');
 
       expect(metadata.pubDate).toBe('2016-03-08');
     });
@@ -182,9 +170,7 @@ describe('Goodreads Service', () => {
         text: async () => mockHtmlNoPages,
       });
 
-      const metadata = await fetchBookMetadata(
-        'https://www.goodreads.com/book/show/789-test'
-      );
+      const metadata = await fetchBookMetadata('https://www.goodreads.com/book/show/789-test');
 
       expect(metadata.pages).toBeNull();
     });
@@ -192,9 +178,9 @@ describe('Goodreads Service', () => {
     test('throws error when fetch fails', async () => {
       global.fetch.mockRejectedValueOnce(new Error('Network error'));
 
-      await expect(
-        fetchBookMetadata('https://www.goodreads.com/book/show/123-test')
-      ).rejects.toThrow('Failed to fetch Goodreads page');
+      await expect(fetchBookMetadata('https://www.goodreads.com/book/show/123-test')).rejects.toThrow(
+        'Failed to fetch Goodreads page'
+      );
     });
 
     test('throws error when page returns non-OK status', async () => {
@@ -204,9 +190,9 @@ describe('Goodreads Service', () => {
         statusText: 'Not Found',
       });
 
-      await expect(
-        fetchBookMetadata('https://www.goodreads.com/book/show/999-nonexistent')
-      ).rejects.toThrow('Failed to fetch page: 404 Not Found');
+      await expect(fetchBookMetadata('https://www.goodreads.com/book/show/999-nonexistent')).rejects.toThrow(
+        'Failed to fetch page: 404 Not Found'
+      );
     });
 
     test('throws error when JSON-LD block is missing', async () => {
@@ -215,9 +201,9 @@ describe('Goodreads Service', () => {
         text: async () => mockHtmlWithoutJsonLd,
       });
 
-      await expect(
-        fetchBookMetadata('https://www.goodreads.com/book/show/123-test')
-      ).rejects.toThrow('No book metadata found on this page');
+      await expect(fetchBookMetadata('https://www.goodreads.com/book/show/123-test')).rejects.toThrow(
+        'No book metadata found on this page'
+      );
     });
 
     test('throws error when required fields are missing', async () => {
@@ -226,9 +212,9 @@ describe('Goodreads Service', () => {
         text: async () => mockHtmlMissingFields,
       });
 
-      await expect(
-        fetchBookMetadata('https://www.goodreads.com/book/show/123-incomplete')
-      ).rejects.toThrow('Missing required metadata');
+      await expect(fetchBookMetadata('https://www.goodreads.com/book/show/123-incomplete')).rejects.toThrow(
+        'Missing required metadata'
+      );
     });
 
     test('throws error when text reading fails', async () => {
@@ -239,24 +225,19 @@ describe('Goodreads Service', () => {
         },
       });
 
-      await expect(
-        fetchBookMetadata('https://www.goodreads.com/book/show/123-test')
-      ).rejects.toThrow('Failed to read page content');
+      await expect(fetchBookMetadata('https://www.goodreads.com/book/show/123-test')).rejects.toThrow(
+        'Failed to read page content'
+      );
     });
 
     test('handles HTML entities in author name', async () => {
-      const htmlWithEntities = mockHtmlWithValidJsonLd.replace(
-        'Test Author',
-        'O&apos;Brien'
-      );
+      const htmlWithEntities = mockHtmlWithValidJsonLd.replace('Test Author', 'O&apos;Brien');
       global.fetch.mockResolvedValueOnce({
         ok: true,
         text: async () => htmlWithEntities,
       });
 
-      const metadata = await fetchBookMetadata(
-        'https://www.goodreads.com/book/show/123-test'
-      );
+      const metadata = await fetchBookMetadata('https://www.goodreads.com/book/show/123-test');
 
       expect(metadata.author).toBe("O'Brien");
     });
@@ -301,8 +282,7 @@ describe('Goodreads Service - Real Page Fetch', () => {
   });
 
   test('fetches metadata from a real Goodreads page', async () => {
-    const url =
-      'https://www.goodreads.com/en/book/show/27208.The_Third_Policeman';
+    const url = 'https://www.goodreads.com/en/book/show/27208.The_Third_Policeman';
     const metadata = await fetchBookMetadata(url);
 
     expect(metadata.title).toBe('The Third Policeman');
@@ -312,8 +292,6 @@ describe('Goodreads Service - Real Page Fetch', () => {
     expect(metadata.pages).toBeGreaterThan(0);
     expect(metadata.isbn).toBeTruthy();
     // pubDate may or may not be available
-    expect(
-      metadata.pubDate === null || typeof metadata.pubDate === 'string'
-    ).toBe(true);
+    expect(metadata.pubDate === null || typeof metadata.pubDate === 'string').toBe(true);
   }, 30000);
 });

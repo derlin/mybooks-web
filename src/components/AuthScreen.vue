@@ -14,8 +14,7 @@
       </div>
 
       <p class="info-text">
-        Your books are stored in a JSON file on your Dropbox account. We'll
-        authenticate via OAuth to sync them.
+        Your books are stored in a JSON file on your Dropbox account. We'll authenticate via OAuth to sync them.
       </p>
     </div>
   </div>
@@ -40,11 +39,7 @@ const authenticate = async () => {
     const left = (window.innerWidth - width) / 2;
     const top = (window.innerHeight - height) / 2;
 
-    const popup = window.open(
-      authUrl,
-      'dropbox-auth',
-      `width=${width},height=${height},left=${left},top=${top}`
-    );
+    const popup = window.open(authUrl, 'dropbox-auth', `width=${width},height=${height},left=${left},top=${top}`);
 
     const messageHandler = (event) => {
       if (event.data.type === 'auth-code') {

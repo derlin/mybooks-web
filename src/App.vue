@@ -18,10 +18,7 @@ const isAuthCallback = ref(false);
 
 onMounted(() => {
   // Check if this is the auth callback page
-  if (
-    window.location.pathname.endsWith('/auth-callback.html') &&
-    window.location.search.includes('code=')
-  ) {
+  if (window.location.pathname.endsWith('/auth-callback.html') && window.location.search.includes('code=')) {
     isAuthCallback.value = true;
   } else {
     const token = getStoredToken();
