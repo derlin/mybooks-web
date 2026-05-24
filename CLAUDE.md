@@ -281,7 +281,11 @@ src/
 
 **Prerequisites:**
 
-- Node.js (npm)
+- Node.js v24+ (see `.nvmrc` for pinned version)
+  - Recommended: Use [nvm](https://github.com/nvm-sh/nvm) to manage Node versions
+  - Run `nvm install` to use the version specified in `.nvmrc`
+  - Run `nvm use` before development (or add to shell profile for auto-activation)
+- npm (comes with Node.js)
 - Dropbox account
 - Dropbox App with OAuth credentials
 
@@ -319,10 +323,16 @@ VITE_DROPBOX_APP_SECRET=your_app_secret
 **Commands:**
 
 ```bash
+# Set up Node.js version (if using nvm)
+nvm install    # Install Node version from .nvmrc
+nvm use        # Activate Node version for this shell
+
+# Project setup and development
 npm install
 npm run dev        # Start dev server on http://localhost:5173
 npm run build      # Build for production (outputs to dist/)
 npm run preview    # Preview production build locally
+npm run format     # Format code with Prettier
 ```
 
 **Deployment to GitHub Pages:**
