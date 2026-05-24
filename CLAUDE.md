@@ -93,6 +93,8 @@ src/
 │   ├── DetailsDrawer.vue      # Right-side read-only book details
 │   ├── EditForm.vue           # Fullscreen edit/create form
 │   └── GoodreadsModal.vue     # Modal dialog for Goodreads URL input
+├── composables/
+│   └── useDrag.js             # Touch/mouse drag gesture tracking for swipe interactions
 └── services/
     ├── dropbox.js             # Dropbox API service layer
     └── goodreads.js           # Goodreads metadata extraction service
@@ -152,6 +154,7 @@ src/
 - Close button in header
 - Edit button in footer
 - Clicking another table row updates drawer without closing
+- **Mobile gesture:** Swipe right to dismiss (threshold: 70px). Drawer follows finger in real-time and snaps back if threshold not met.
 
 ### dropbox.js (Service Layer)
 
@@ -236,6 +239,15 @@ src/
 
 - Applied when saving new/renamed books to create the map key
 - Must match Kotlin algorithm exactly (see implementation in BookList.vue `normalizeTitle` function)
+
+### Gesture Interactions (Mobile)
+
+- **useDrag composable** (`src/composables/useDrag.js`): Reusable Vue composable for touch drag tracking
+  - Tracks touch start position, real-time movement, and release
+  - Returns `dragOffset` (current drag distance), `isDragging` state, and event handlers
+  - Configurable dismiss threshold (default 50px, currently 70px for DetailsDrawer)
+  - Used by DetailsDrawer for swipe-to-dismiss; designed for row swipe actions (future)
+- DetailsDrawer resets drag offset when opened/closed to prevent stale state
 
 ## CSS Variables (Theme)
 
@@ -359,7 +371,7 @@ All code must be formatted per Prettier configuration (`.prettierrc`). After edi
 - Single quotes for strings
 - Semicolons required
 - Trailing commas in ES5 contexts
-- Line length: reasonable defaults, no strict limit
+- Line length: 120 characters (`printWidth: 120`)
 
 This is enforced to keep diffs clean and reduce noise in git history.
 

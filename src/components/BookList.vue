@@ -171,6 +171,10 @@
       :isOpen="drawerOpen"
       @close="drawerOpen = false"
       @edit="openEditForm(selectedBook)"
+      @delete="
+        deleteBook(selectedBook);
+        drawerOpen = false;
+      "
     />
   </div>
 

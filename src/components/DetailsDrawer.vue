@@ -1,6 +1,12 @@
 <template>
   <div v-if="isOpen" class="drawer-overlay">
-    <div class="drawer">
+    <div
+      class="drawer"
+      :style="{ transform: `translateX(${dragOffset}px)` }"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
+    >
       <div class="drawer-header">
         <h2>{{ book.title }}</h2>
         <button class="close-btn" @click="close" title="Close">✕</button>
@@ -55,15 +61,19 @@
       </div>
 
       <div class="drawer-footer">
+        <div class="actions-row">
+          <button class="delete-button" @click="$emit('delete')">Delete</button>
+          <button class="edit-button" @click="$emit('edit')">Edit Book</button>
+        </div>
         <button class="back-button" @click="close">Close</button>
-        <button class="edit-button" @click="$emit('edit')">Edit Book</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useDrag } from '../composables/useDrag';
 
 const props = defineProps({
   book: {
@@ -76,9 +86,20 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['close', 'edit']);
+const emit = defineEmits(['close', 'edit', 'delete']);
 
 const metaOpen = ref(false);
+
+const { dragOffset, handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(() => close(), 70);
+
+watch(
+  () => props.isOpen,
+  (isOpen) => {
+    if (!isOpen) {
+      dragOffset.value = 0;
+    }
+  }
+);
 
 const hasMetadata = computed(() => {
   const meta = props.book.meta;
@@ -182,6 +203,7 @@ const close = () => {
   box-shadow: -4px 0 16px rgba(0, 0, 0, 0.3);
   z-index: 101;
   pointer-events: auto;
+  transition: transform 0.25s ease-out;
 }
 
 .drawer-header {
@@ -376,10 +398,34 @@ const close = () => {
   padding: 1.5rem;
   border-top: 1px solid var(--border);
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.actions-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.delete-button {
+  flex: 1;
+  padding: 0.75rem;
+  background-color: var(--warning);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.delete-button:hover {
+  opacity: 0.9;
 }
 
 .edit-button {
-  width: 100%;
+  flex: 1;
   padding: 0.75rem;
   background-color: var(--accent-primary);
   color: var(--bg-primary);
@@ -397,7 +443,6 @@ const close = () => {
 .back-button {
   width: 100%;
   padding: 0.75rem;
-  margin-bottom: 0.5rem;
   background-color: transparent;
   border: 1px solid var(--accent-primary);
   color: var(--accent-primary);
