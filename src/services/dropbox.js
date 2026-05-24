@@ -59,6 +59,14 @@ function storeTokens(accessToken, refreshToken, expiresIn) {
   );
 }
 
+function storeFileRevision(rev) {
+  localStorage.setItem('dropbox_file_rev', rev);
+}
+
+function getStoredFileRevision() {
+  return localStorage.getItem('dropbox_file_rev');
+}
+
 function getStoredAuth() {
   const auth = localStorage.getItem('dropbox_auth');
   return auth ? JSON.parse(auth) : null;
@@ -141,6 +149,7 @@ export async function downloadBooks() {
   try {
     await ensureTokenValid();
     const metadata = await dbx.filesDownload({ path: '/mybooks.json' });
+    storeFileRevision(metadata.result.rev);
     const text = await metadata.result.fileBlob.text();
     return JSON.parse(text);
   } catch (err) {
@@ -151,6 +160,24 @@ export async function downloadBooks() {
       return handleDropboxError(err, () => downloadBooks());
     }
     throw err;
+  }
+}
+
+export async function checkFileRevision() {
+  if (!dbx) throw new Error('Dropbox not initialized');
+
+  try {
+    await ensureTokenValid();
+    const metadata = await dbx.filesGetMetadata({ path: '/mybooks.json' });
+    const currentRev = metadata.result.rev;
+    const storedRev = getStoredFileRevision();
+    return currentRev !== storedRev;
+  } catch (err) {
+    if (err.status === 401) {
+      return handleDropboxError(err, () => checkFileRevision());
+    }
+    // If file doesn't exist or other error, assume no conflict
+    return false;
   }
 }
 

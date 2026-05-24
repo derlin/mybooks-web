@@ -19,7 +19,7 @@
       <img src="@/assets/logo.svg" alt="MyBooks" class="logo logo-header" />
       <div class="header-actions">
         <button @click="openNewBook" class="add-btn" title="Add new book">+</button>
-        <button @click="$emit('logout')" class="logout-btn">Logout</button>
+        <button @click="emit('logout')" class="logout-btn">Logout</button>
       </div>
     </div>
 
@@ -210,12 +210,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { downloadBooks, uploadBooks } from '../services/dropbox';
+import { ref, computed, onMounted, watch } from 'vue';
+import { downloadBooks, uploadBooks, checkFileRevision } from '../services/dropbox';
 import DetailsDrawer from './DetailsDrawer.vue';
 import EditForm from './EditForm.vue';
 
-defineEmits(['logout']);
+const props = defineProps(['filesChanged']);
+const emit = defineEmits(['logout', 'files-refreshed']);
 
 const books = ref([]);
 const loading = ref(true);
@@ -424,7 +425,36 @@ const closeForm = () => {
   setFormHash();
 };
 
+const loadBooksFromDropbox = async () => {
+  const data = await downloadBooks();
+  books.value = Object.entries(data).map(([key, book]) => ({
+    ...book,
+    _key: key,
+  }));
+};
+
+const checkRevisionBeforeOperation = async (operationName) => {
+  try {
+    const revisionChanged = await checkFileRevision();
+    if (revisionChanged) {
+      console.log(`[Books] ${operationName} aborted: file revision changed, reloading`);
+      await loadBooksFromDropbox();
+      error.value = 'Books were updated by another session. Please review changes and try again.';
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error(`[Books] Error checking revision before ${operationName}:`, err);
+    error.value = 'Failed to verify book state. Please try again.';
+    return false;
+  }
+};
+
 const deleteBook = async (book) => {
+  if (!(await checkRevisionBeforeOperation('delete'))) {
+    return;
+  }
+
   try {
     const booksCopy = {
       ...Object.fromEntries(books.value.map((b) => [b._key, { ...b }])),
@@ -509,6 +539,11 @@ const normalizeTitle = (title) => {
 };
 
 const handleEditSave = async (editedBook) => {
+  if (!(await checkRevisionBeforeOperation('save'))) {
+    isSaving.value = false;
+    return;
+  }
+
   isSaving.value = true;
   try {
     const booksCopy = {
@@ -570,13 +605,28 @@ const handleEditSave = async (editedBook) => {
   }
 };
 
+watch(
+  () => props.filesChanged,
+  async (changed) => {
+    if (changed) {
+      console.log('[Books] File revision changed, reloading from Dropbox');
+      try {
+        await loadBooksFromDropbox();
+        console.log(`[Books] Reloaded ${books.value.length} books from Dropbox`);
+        successMessage.value = 'Books updated from Dropbox';
+        setTimeout(() => (successMessage.value = null), 3000);
+      } catch (err) {
+        error.value = err.message || 'Failed to refresh books';
+        console.error('[Books] Error reloading from Dropbox:', err);
+      }
+      emit('files-refreshed');
+    }
+  }
+);
+
 onMounted(async () => {
   try {
-    const data = await downloadBooks();
-    books.value = Object.entries(data).map(([key, book]) => ({
-      ...book,
-      _key: key,
-    }));
+    await loadBooksFromDropbox();
     restoreFormFromHash();
   } catch (err) {
     error.value = err.message || 'Failed to load books';

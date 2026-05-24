@@ -7,6 +7,7 @@ A simple Vue 3 web app to read/write book summaries stored in a JSON file on Dro
 ## Development Principles
 
 - **Code quality:** Follow best practices for readability, maintainability, and performance. Use clear naming, minimize complexity, and avoid premature optimization.
+- **DRY:** Do NOT REPEAT YOURSELF, if something is used in many places, extract it to a common component.
 - **Simplicity first:** The simplest solution that works is the best solution. Avoid over-engineering, unnecessary abstractions, or "what if" features. Three similar lines beat a premature abstraction.
 - **Security matters:** Always consider security implications of changes. Validate at system boundaries (user input, external APIs), avoid command injection/XSS/SQL injection patterns, and use secure defaults. Prefer built-in framework features over custom implementations.
 - **Don't reinvent wheels:** Before implementing something from scratch, check if a built-in solution exists (framework features, standard library, well-maintained packages). Reduces bugs, maintenance burden, and keeps the codebase lean.
@@ -171,10 +172,11 @@ src/
 ### DetailsDrawer.vue (Read-only)
 
 - 400px wide, full height, slides in from right with 0.15s animation
-- Shows: title, author, date, duration, pages, DNF status, notes (scrollable), collapsible metadata
+- Shows: title, author, date, duration, pages, DNF status, notes, collapsible metadata
 - Close button in header
 - Edit button in footer
 - Clicking another table row updates drawer without closing
+- **Notes section:** Expands dynamically to fill available space (min 1.5rem gap before metadata). If notes are long (>60vh), scrolls internally. If short, takes only needed space.
 - **Mobile gesture:** Swipe right to dismiss (threshold: 70px). Drawer follows finger in real-time and snaps back if threshold not met.
 
 ### dropbox.js (Service Layer)
@@ -189,14 +191,21 @@ src/
 - **Fallback 401 handling:** If API returns 401, attempts refresh and retries request once
 
 **API Functions:**
-- `downloadBooks()`: Fetches mybooks.json with automatic token refresh, returns Map<String, Book> or empty object for new users
+- `downloadBooks()`: Fetches mybooks.json with automatic token refresh, stores file `rev` for concurrency control, returns Map<String, Book> or empty object for new users
 - `uploadBooks(booksMap)`: Uploads entire books map to Dropbox as JSON with automatic token refresh. **Explicitly serializes only approved fields** (`title`, `author`, `date`, `dnf`, `notes`, `meta`) — any other properties (internal Vue tracking, accidental mutations) are automatically excluded
 - `getAuthUrl()`: Returns OAuth URL with PKCE flow (`offline` scope for refresh tokens)
+- `checkFileRevision()`: Compares stored file revision with current revision on Dropbox. Returns `true` if file changed, `false` if unchanged. Used to detect concurrent edits from other sessions
 
 **Token Lifecycle:**
 - Access tokens expire after ~4 hours (Dropbox default)
 - Refresh tokens are long-lived (10 years or until app disconnected) but will eventually expire
 - If refresh token expires, user is logged out (triggers auth-expired callback, which clears localStorage)
+
+**Concurrency Control:**
+- File revision (`rev`) is stored in localStorage when downloading books
+- **On tab visibility change:** Check revision (cheap metadata call). If changed, refetch books silently
+- **Before save/delete:** Check revision. If changed, reload books and prevent operation with error message "Books were updated by another session. Please review changes and try again."
+- Prevents data loss from concurrent edits across multiple tabs/sessions without requiring manual conflict resolution
 
 ### GoodreadsModal.vue (Metadata Import Dialog)
 
@@ -365,6 +374,14 @@ npm run format     # Format code with Prettier
 3. Build: `npm run build`
 4. Push `dist/` folder to gh-pages branch
 5. Enable GitHub Pages in repo settings (source: gh-pages branch)
+
+## Progressive Web App (PWA)
+
+**Installable on mobile:**
+- Web app manifest at `/public/manifest.json` defines app name, icons, theme colors, and standalone display mode
+- Icons: `icon-192.png` and `icon-512.png` (generated from favicon.svg)
+- On Android: open app in Chrome → menu (⋮) → "Install app" → adds to home screen as standalone window
+- No service workers or offline support (aligns with "weekly usage, online-only" design)
 
 ## Known Limitations & Future Enhancements
 
