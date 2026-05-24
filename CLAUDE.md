@@ -190,7 +190,7 @@ src/
 
 **API Functions:**
 - `downloadBooks()`: Fetches mybooks.json with automatic token refresh, returns Map<String, Book> or empty object for new users
-- `uploadBooks(booksMap)`: Uploads entire books map to Dropbox as JSON with automatic token refresh
+- `uploadBooks(booksMap)`: Uploads entire books map to Dropbox as JSON with automatic token refresh. **Explicitly serializes only approved fields** (`title`, `author`, `date`, `dnf`, `notes`, `meta`) — any other properties (internal Vue tracking, accidental mutations) are automatically excluded
 - `getAuthUrl()`: Returns OAuth URL with PKCE flow (`offline` scope for refresh tokens)
 
 **Token Lifecycle:**

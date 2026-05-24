@@ -157,7 +157,20 @@ export async function downloadBooks() {
 export async function uploadBooks(booksData) {
   if (!dbx) throw new Error('Dropbox not initialized');
 
-  const content = JSON.stringify(booksData, null, 2);
+  // Only serialize approved fields, reject anything else
+  const cleanedData = {};
+  for (const [key, book] of Object.entries(booksData)) {
+    cleanedData[key] = {
+      title: book.title,
+      author: book.author,
+      date: book.date,
+      dnf: book.dnf,
+      notes: book.notes,
+      ...(book.meta && { meta: book.meta }),
+    };
+  }
+
+  const content = JSON.stringify(cleanedData, null, 2);
   try {
     await ensureTokenValid();
     await dbx.filesUpload({
