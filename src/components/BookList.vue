@@ -39,8 +39,25 @@
       <div class="controls">
         <div class="search-bar">
           <div class="search-input-wrapper">
-            <input v-model="globalFilter" type="text" placeholder="Search books..." class="search-input" />
-            <button v-if="globalFilter" class="clear-search-btn" @click="globalFilter = ''" title="Clear search">
+            <input
+              ref="searchInput"
+              v-model="globalFilter"
+              type="search"
+              inputmode="search"
+              enterkeyhint="search"
+              placeholder="Search books..."
+              class="search-input"
+              @keydown.enter="searchInput?.blur()"
+            />
+            <button
+              v-if="globalFilter"
+              class="clear-search-btn"
+              @click="
+                globalFilter = '';
+                searchInput?.blur();
+              "
+              title="Clear search"
+            >
               ✕
             </button>
           </div>
@@ -187,7 +204,7 @@
     :errorMessage="error"
     :isSaving="isSaving"
     @save="handleEditSave"
-    @cancel="editFormOpen = false"
+    @cancel="closeForm"
   />
 </template>
 
@@ -347,6 +364,30 @@ const toggleSort = (columnId) => {
   }
 };
 
+const setFormHash = (mode, bookKey) => {
+  if (!mode) {
+    window.location.hash = '';
+  } else if (mode === 'new') {
+    window.location.hash = 'new';
+  } else if (mode === 'edit' && bookKey) {
+    window.location.hash = bookKey;
+  }
+};
+
+const restoreFormFromHash = () => {
+  const hash = decodeURIComponent(window.location.hash.slice(1));
+  if (hash === 'new') {
+    openNewBook();
+  } else if (hash) {
+    const book = books.value.find((b) => b._key === hash);
+    if (book) {
+      openEditForm(book);
+    } else {
+      window.location.hash = '';
+    }
+  }
+};
+
 const openDrawer = (book) => {
   if (selectedBook.value?._key === book._key) {
     drawerOpen.value = !drawerOpen.value;
@@ -360,12 +401,19 @@ const openEditForm = (book) => {
   selectedBook.value = book;
   isNewBook.value = false;
   editFormOpen.value = true;
+  setFormHash('edit', book._key);
 };
 
 const openNewBook = () => {
   selectedBook.value = null;
   isNewBook.value = true;
   editFormOpen.value = true;
+  setFormHash('new');
+};
+
+const closeForm = () => {
+  editFormOpen.value = false;
+  setFormHash();
 };
 
 const deleteBook = async (book) => {
@@ -501,7 +549,7 @@ const handleEditSave = async (editedBook) => {
 
     error.value = null;
     successMessage.value = isNewBook.value ? 'Book added successfully' : 'Book saved successfully';
-    editFormOpen.value = false;
+    closeForm();
 
     // Auto-dismiss success message after 3 seconds
     setTimeout(() => {
@@ -521,6 +569,7 @@ onMounted(async () => {
       ...book,
       _key: key,
     }));
+    restoreFormFromHash();
   } catch (err) {
     error.value = err.message || 'Failed to load books';
   } finally {

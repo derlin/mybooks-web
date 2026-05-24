@@ -71,8 +71,18 @@
         </div>
 
         <div class="form-section notes-section">
-          <label class="form-label">
+          <div class="notes-header">
             <span class="label-text">Notes</span>
+            <button
+              type="button"
+              class="expand-notes-btn"
+              @click="toggleFullscreenNotes"
+              title="Fullscreen notes (Cmd+Enter on Mac, Ctrl+Enter on Windows/Linux)"
+            >
+              ⛶
+            </button>
+          </div>
+          <label class="form-label notes-label">
             <textarea
               ref="notesTextarea"
               v-model="formData.notes"
@@ -137,6 +147,23 @@
       </div>
     </form>
 
+    <div v-if="fullscreenNotesOpen" class="notes-fullscreen-modal-overlay" @click="toggleFullscreenNotes">
+      <div class="notes-fullscreen-modal" @click.stop>
+        <div class="notes-fullscreen-header">
+          <h2>Notes</h2>
+          <div class="notes-fullscreen-help">Cmd+Enter to close (or click outside)</div>
+          <button type="button" class="notes-fullscreen-close" @click="toggleFullscreenNotes">✕</button>
+        </div>
+        <textarea
+          ref="fullscreenNotesTextarea"
+          v-model="formData.notes"
+          placeholder="Your notes and summary..."
+          class="notes-fullscreen-textarea"
+          @input="autoGrowTextarea"
+        ></textarea>
+      </div>
+    </div>
+
     <GoodreadsModal
       :isOpen="goodreadsModalOpen"
       @close="goodreadsModalOpen = false"
@@ -146,7 +173,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, toRefs } from 'vue';
+import { ref, computed, watch, nextTick, toRefs, onMounted, onUnmounted } from 'vue';
 import GoodreadsModal from './GoodreadsModal.vue';
 
 const props = defineProps({
@@ -195,9 +222,18 @@ const originalData = ref({});
 const showAuthorDropdown = ref(false);
 const durationError = ref(null);
 const notesTextarea = ref(null);
+const fullscreenNotesTextarea = ref(null);
 const goodreadsModalOpen = ref(false);
+const fullscreenNotesOpen = ref(false);
+const notesSaveTimeout = ref(null);
+const formInitialized = ref(false);
 
+const NOTES_AUTO_SAVE_KEY = 'mybooks_editform_draft';
 const durationRegex = /^(\d+)h(\d{1,2})?$/;
+
+const getCurrentHash = () => {
+  return props.isNewBook ? 'new' : props.book?._key;
+};
 
 const filteredAuthors = computed(() => {
   if (!formData.value.author) return [];
@@ -282,6 +318,69 @@ const getTodayDate = () => {
   return `${year}-${month}-${day}`;
 };
 
+const toggleFullscreenNotes = () => {
+  fullscreenNotesOpen.value = !fullscreenNotesOpen.value;
+  if (fullscreenNotesOpen.value) {
+    nextTick(() => {
+      fullscreenNotesTextarea.value?.focus();
+    });
+  }
+};
+
+const handleKeyDown = (e) => {
+  const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+  const isToggleKey = isMac ? e.metaKey && e.code === 'Enter' : e.ctrlKey && e.code === 'Enter';
+
+  if (isToggleKey) {
+    e.preventDefault();
+    toggleFullscreenNotes();
+  }
+};
+
+const saveNotesToLocalStorage = () => {
+  try {
+    const draft = {
+      hash: getCurrentHash(),
+      notes: formData.value.notes,
+    };
+    localStorage.setItem(NOTES_AUTO_SAVE_KEY, JSON.stringify(draft));
+  } catch (err) {
+    // Silent fail for localStorage errors (quota exceeded, private mode, etc)
+  }
+};
+
+const restoreNotesFromLocalStorage = () => {
+  try {
+    const saved = localStorage.getItem(NOTES_AUTO_SAVE_KEY);
+    if (saved && !formData.value.notes) {
+      const draft = JSON.parse(saved);
+      if (draft.hash === getCurrentHash()) {
+        formData.value.notes = draft.notes;
+      }
+    }
+  } catch (err) {
+    // Silent fail for localStorage errors
+  }
+};
+
+const clearNotesFromLocalStorage = () => {
+  try {
+    localStorage.removeItem(NOTES_AUTO_SAVE_KEY);
+  } catch (err) {
+    // Silent fail for localStorage errors
+  }
+};
+
+const debounceAutoSaveNotes = () => {
+  if (notesSaveTimeout.value) {
+    clearTimeout(notesSaveTimeout.value);
+  }
+
+  notesSaveTimeout.value = setTimeout(() => {
+    saveNotesToLocalStorage();
+  }, 300);
+};
+
 const handleGoodreadsData = (metadata) => {
   formData.value.title = metadata.title;
   formData.value.author = metadata.author;
@@ -297,6 +396,7 @@ const handleGoodreadsData = (metadata) => {
 };
 
 const cancel = () => {
+  clearNotesFromLocalStorage();
   emit('cancel');
 };
 
@@ -312,6 +412,7 @@ const durationToMinutes = (durationStr) => {
 const save = () => {
   if (!isValid.value) return;
 
+  clearNotesFromLocalStorage();
   emit('save', {
     ...formData.value,
     meta: {
@@ -363,18 +464,43 @@ watch(
     }
     originalData.value = JSON.parse(JSON.stringify(formData.value));
     durationError.value = null;
+    formInitialized.value = false;
     nextTick(() => {
       autoGrowTextarea();
+      nextTick(() => {
+        formInitialized.value = true;
+      });
     });
   },
   { immediate: true, deep: true }
 );
+
+watch(
+  () => formData.value.notes,
+  () => {
+    if (formInitialized.value) {
+      debounceAutoSaveNotes();
+    }
+  }
+);
+
+onMounted(() => {
+  restoreNotesFromLocalStorage();
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+  if (notesSaveTimeout.value) {
+    clearTimeout(notesSaveTimeout.value);
+  }
+});
 </script>
 
 <style scoped>
 .form-wrapper {
   width: 100%;
-  height: 100%;
+  height: 100svh;
   background-color: var(--bg-primary);
   display: flex;
   flex-direction: column;
@@ -689,5 +815,151 @@ watch(
 .btn-save:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.notes-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.expand-notes-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 0.35rem 0.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: all 0.15s;
+}
+
+.expand-notes-btn:hover {
+  background-color: var(--bg-secondary);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.notes-label {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.notes-fullscreen-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.notes-fullscreen-modal {
+  position: relative;
+  width: 95%;
+  height: 95%;
+  max-width: 1200px;
+  background-color: var(--bg-primary);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.notes-fullscreen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  gap: 1rem;
+}
+
+.notes-fullscreen-header h2 {
+  margin: 0;
+  color: var(--accent-primary);
+  font-size: 1.2rem;
+  flex: 1;
+}
+
+.notes-fullscreen-help {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.notes-fullscreen-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.notes-fullscreen-close:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.notes-fullscreen-textarea {
+  flex: 1;
+  padding: 1.5rem;
+  background-color: var(--bg-secondary);
+  border: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: none;
+  line-height: 1.6;
+  outline: none;
+}
+
+.notes-fullscreen-textarea::placeholder {
+  color: var(--text-secondary);
+}
+
+@media (max-width: 600px) {
+  .notes-header {
+    flex-wrap: wrap;
+  }
+
+  .notes-fullscreen-modal {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    border-radius: 0;
+  }
+
+  .notes-fullscreen-header {
+    flex-wrap: wrap;
+  }
+
+  .notes-fullscreen-help {
+    display: none;
+  }
 }
 </style>

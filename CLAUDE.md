@@ -142,10 +142,22 @@ src/
   - Date auto-formatting: pads months/days with zeros on blur
   - Author autocomplete: filtered list of existing authors
 - **Notes field:** Textarea with auto-grow behavior, min-height 300px
+  - **Fullscreen notes mode:** Press Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux) to toggle fullscreen modal
+  - Expand button (⛶) next to Notes label to toggle fullscreen
+  - Modal overlay with fullscreen textarea for distraction-free editing
+  - Click outside modal or press shortcut again to close
+- **localStorage auto-save:** Notes auto-save to localStorage (300ms debounce) for both new books and edits
+  - Single localStorage key `mybooks_editform_draft` stores `{hash, notes}` dict
+  - Hash ensures drafts only restore in matching form context (prevents cross-contamination)
+  - Restores saved notes only if hash matches current form context
+  - Clears localStorage on successful save or cancel
+  - Prevents localStorage bloat (single entry, not one per book)
+  - Preserves draft recovery on page refresh (combined with URL hash context)
 - **Metadata:** Always visible (not collapsible), optional fields
 - **Save button:** Shows "Saving..." state, uploads to Dropbox
 - **Cancel button:** Prompts if unsaved changes
 - **Error banner:** Displays at top if save fails
+- **Date field:** Auto-filled with today's date when creating new book
 
 ### DetailsDrawer.vue (Read-only)
 
@@ -342,16 +354,43 @@ npm run preview    # Preview production build locally
 - Custom table logic instead of TanStack Table: sufficient for ~300 books, avoids extra dependency
 - Immediate delete with undo instead of confirmation: fast, undo is safety net
 
+## URL Hash Navigation
+
+Form context is preserved via URL hash for refresh resilience:
+
+- `/#new` - Creating a new book
+- `/#<book_key>` - Editing a specific book (e.g., `/#the-hobbit`)
+- No hash - Showing book list (home view)
+
+**Behavior:**
+
+- Opening a form updates the URL hash automatically
+- Closing a form clears the hash
+- Page refresh restores the form with the same context (book or new mode)
+- If editing a book that no longer exists, hash is cleared and user redirected to list
+- localStorage auto-save for notes works with URL hash for complete recovery on refresh
+
+**Example:**
+
+1. Click "Add Book" → URL becomes `/#new`, form opens
+2. Type notes and refresh page → Form reopens with notes intact (via localStorage)
+3. Close form → URL hash clears, shows list
+4. Click edit on a book → URL becomes `/#hobbit`, form opens with that book
+5. Refresh page → Form reopens with same book context
+
 ## Workflow
 
 1. **Login:** User connects Dropbox, gets OAuth token (stored in localStorage)
-2. **Load:** App fetches mybooks.json on mount, populates books array
+2. **Load:** App fetches mybooks.json on mount, populates books array, checks URL hash and restores form if needed
 3. **Browse:** User views books in table, can sort/filter/search
 4. **View Details:** Click row → opens DetailsDrawer
-5. **Edit:** Click Edit icon or button → opens EditForm fullscreen
-6. **Save:** Form validates, uploads to Dropbox, updates table
-7. **Delete:** Click Delete icon → removes from state, uploads, shows undo toast
-8. **Undo:** Click undo button → restores book, re-uploads
+5. **Edit:** Click Edit icon or button → opens EditForm, updates URL hash to `/#<book_key>`
+6. **New Book:** Click + button → opens EditForm for new book, updates URL hash to `/#new`
+7. **Refresh:** Page refresh preserves form context via URL hash
+8. **Save:** Form validates, uploads to Dropbox, updates table, clears URL hash
+9. **Cancel:** Closes form, clears URL hash (localStorage already cleared)
+10. **Delete:** Click Delete icon → removes from state, uploads, shows undo toast
+11. **Undo:** Click undo button → restores book, re-uploads
 
 ## Testing Notes
 
