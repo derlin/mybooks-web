@@ -2,7 +2,16 @@
   <div class="form-wrapper">
     <div class="form-header">
       <h1>{{ isNewBook ? 'Add New Book' : 'Edit Book' }}</h1>
-      <button class="cancel-btn" @click="cancel">Cancel</button>
+      <div class="form-header-actions">
+        <button
+          class="goodreads-btn"
+          @click="goodreadsModalOpen = true"
+          title="Import metadata from Goodreads"
+        >
+          From Goodreads
+        </button>
+        <button class="cancel-btn" @click="cancel">Cancel</button>
+      </div>
     </div>
 
     <div v-if="props.errorMessage" class="error-banner">
@@ -162,11 +171,18 @@
         </button>
       </div>
     </form>
+
+    <GoodreadsModal
+      :isOpen="goodreadsModalOpen"
+      @close="goodreadsModalOpen = false"
+      @metadata-fetched="handleGoodreadsData"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, nextTick, toRefs } from 'vue';
+import GoodreadsModal from './GoodreadsModal.vue';
 
 const props = defineProps({
   book: {
@@ -214,6 +230,7 @@ const originalData = ref({});
 const showAuthorDropdown = ref(false);
 const durationError = ref(null);
 const notesTextarea = ref(null);
+const goodreadsModalOpen = ref(false);
 
 const durationRegex = /^(\d+)h(\d{1,2})?$/;
 
@@ -295,6 +312,20 @@ const closeAuthorDropdown = () => {
   setTimeout(() => {
     showAuthorDropdown.value = false;
   }, 150);
+};
+
+const handleGoodreadsData = (metadata) => {
+  formData.value.title = metadata.title;
+  formData.value.author = metadata.author;
+  formData.value.meta.ISBN = metadata.isbn;
+  formData.value.meta.GoodreadsID = metadata.goodreadsId;
+  if (metadata.pages) {
+    formData.value.meta.pages = metadata.pages;
+  }
+  if (metadata.pubDate) {
+    formData.value.meta.pubDate = metadata.pubDate;
+  }
+  goodreadsModalOpen.value = false;
 };
 
 const cancel = () => {
@@ -388,12 +419,20 @@ watch(
   padding: 1.5rem;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  gap: 1rem;
 }
 
 .form-header h1 {
   margin: 0;
   color: var(--accent-primary);
   font-size: 1.8rem;
+  flex: 1;
+}
+
+.form-header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
 }
 
 .error-banner {
@@ -402,6 +441,21 @@ watch(
   padding: 1rem;
   border-bottom: 1px solid var(--warning);
   font-size: 0.9rem;
+}
+
+.goodreads-btn {
+  background-color: var(--accent-secondary);
+  border: 1px solid var(--accent-secondary);
+  color: var(--bg-primary);
+  padding: 0.5rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.goodreads-btn:hover {
+  opacity: 0.9;
 }
 
 .cancel-btn {

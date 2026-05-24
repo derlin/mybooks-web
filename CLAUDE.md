@@ -13,6 +13,7 @@ A simple Vue 3 web app to read/write book summaries stored in a JSON file on Dro
 - Advanced table view with sorting and 3-state filtering
 - Details drawer (right-side panel)
 - Edit form (fullscreen overlay) with validations
+- Goodreads metadata import (fetch title, author, ISBN, pages, publication date)
 - Toast notifications for success/delete events
 - Dropbox sync for all operations
 
@@ -31,6 +32,18 @@ A simple Vue 3 web app to read/write book summaries stored in a JSON file on Dro
 - Official Dropbox SDK (`dropbox` npm package)
 - Tokens stored in localStorage
 - Source of truth: `mybooks.json` file on Dropbox (Map<String, Book>)
+
+**Integrations:**
+
+- Goodreads metadata extraction via page scraping + JSON-LD parsing
+- CORS proxy (`api.codetabs.com`) for cross-origin fetches
+- HTML entity decoding via `html-entities` npm package
+
+**Testing:**
+
+- Jest test runner
+- Babel for ES module transpilation in Node.js
+- 22 tests covering goodreads service (unit + integration)
 
 ## Data Structure
 
@@ -78,9 +91,11 @@ src/
 │   ├── AuthCallback.vue       # OAuth redirect handler
 │   ├── BookList.vue           # Main table view with filters/sort
 │   ├── DetailsDrawer.vue      # Right-side read-only book details
-│   └── EditForm.vue           # Fullscreen edit/create form
+│   ├── EditForm.vue           # Fullscreen edit/create form
+│   └── GoodreadsModal.vue     # Modal dialog for Goodreads URL input
 └── services/
-    └── dropbox.js             # Dropbox API service layer
+    ├── dropbox.js             # Dropbox API service layer
+    └── goodreads.js           # Goodreads metadata extraction service
 ```
 
 ## Key Implementation Details
@@ -144,6 +159,46 @@ src/
 - `uploadBooks(booksMap)`: Uploads entire books map to Dropbox as JSON
 - Uses localStorage for token persistence
 - PKCE flow with DropboxAuth helpers (`getAuthenticationUrl`, `getAccessTokenFromCode`)
+
+### GoodreadsModal.vue (Metadata Import Dialog)
+
+- Modal dialog triggered by "From Goodreads" button in EditForm header
+- User enters Goodreads book URL
+- Real-time validation against URL format (must contain `/book/show/`)
+- Shows loading indicator while fetching
+- Displays error messages if fetch fails
+- Auto-closes on successful fetch
+
+### goodreads.js (Goodreads Integration Service)
+
+**Functions:**
+
+- `validateUrl(url)`: Checks if URL is a valid Goodreads book detail page
+- `fetchBookMetadata(url)`: Fetches and extracts metadata from Goodreads page
+- `extractGoodreadsId(url)`: Extracts numeric book ID from URL
+- `extractPublicationDate(html)`: Parses "First published" date from HTML
+
+**Metadata Extracted:**
+
+- `title`: Book title (HTML entities decoded)
+- `author`: First author if multiple (HTML entities decoded)
+- `isbn`: ISBN number
+- `pages`: Page count (null if not available)
+- `goodreadsId`: Goodreads book ID from URL
+- `pubDate`: Publication date in ISO format YYYY-MM-DD (null if not found)
+
+**Technical Details:**
+
+- Uses CORS proxy (`api.codetabs.com`) to fetch Goodreads pages
+- Parses JSON-LD structured data from page `<script type="application/ld+json">` block
+- Searches HTML for "First published: Month Day, Year" pattern
+- Decodes HTML entities (`&apos;`, `&quot;`, etc.) using `html-entities` package
+- Comprehensive error handling with descriptive messages
+
+**Tested via:**
+
+- 22 unit tests (mocked Goodreads responses)
+- 1 integration test (real Goodreads page fetch)
 
 ## Important Patterns & Decisions
 

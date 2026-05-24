@@ -17,4 +17,9 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
   },
+  build: {
+    rollupOptions: {
+      external: [/\.test\.js$/, /\.spec\.js$/],
+    },
+  },
 });
