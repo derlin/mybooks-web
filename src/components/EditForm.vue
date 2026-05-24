@@ -18,141 +18,146 @@
       {{ props.errorMessage }}
     </div>
 
-    <form @submit.prevent="save" class="form-content">
-      <div class="form-section">
-        <label class="form-label">
-          <span class="label-text">Title *</span>
-          <input
-            v-model="formData.title"
-            type="text"
-            placeholder="Book title"
-            class="form-input"
-            required
-          />
-        </label>
-
-        <label class="form-label">
-          <span class="label-text">Author *</span>
-          <div class="autocomplete-wrapper">
+    <form @submit.prevent="save" class="form-wrapper-inner">
+      <div class="form-content">
+        <div class="form-section">
+          <label class="form-label">
+            <span class="label-text">Title *</span>
             <input
-              v-model="formData.author"
+              v-model="formData.title"
               type="text"
-              placeholder="Author name"
+              placeholder="Book title"
               class="form-input"
-              @focus="showAuthorDropdown = true"
-              @blur="closeAuthorDropdown"
               required
             />
-            <div
-              v-if="showAuthorDropdown && filteredAuthors.length"
-              class="autocomplete-dropdown"
-            >
+          </label>
+
+          <label class="form-label">
+            <span class="label-text">Author *</span>
+            <div class="autocomplete-wrapper">
+              <input
+                v-model="formData.author"
+                type="text"
+                placeholder="Author name"
+                class="form-input"
+                @focus="showAuthorDropdown = true"
+                @blur="closeAuthorDropdown"
+                required
+              />
               <div
-                v-for="author in filteredAuthors"
-                :key="author"
-                class="autocomplete-item"
-                @click="
-                  formData.author = author;
-                  showAuthorDropdown = false;
-                "
+                v-if="showAuthorDropdown && filteredAuthors.length"
+                class="autocomplete-dropdown"
               >
-                {{ author }}
+                <div
+                  v-for="author in filteredAuthors"
+                  :key="author"
+                  class="autocomplete-item"
+                  @click="
+                    formData.author = author;
+                    showAuthorDropdown = false;
+                  "
+                >
+                  {{ author }}
+                </div>
               </div>
             </div>
-          </div>
-        </label>
+          </label>
 
-        <label class="form-label">
-          <span class="label-text">Date</span>
-          <input
-            v-model="formData.date"
-            type="text"
-            placeholder="YYYY-MM-DD or YYYY-MM or YYYY or ?"
-            class="form-input"
-            @blur="formatDate"
-          />
-        </label>
-
-        <label class="form-label">
-          <input v-model="formData.dnf" type="checkbox" class="form-checkbox" />
-          <span>Did Not Finish (DNF)</span>
-        </label>
-      </div>
-
-      <div class="form-section notes-section">
-        <label class="form-label">
-          <span class="label-text">Notes</span>
-          <textarea
-            ref="notesTextarea"
-            v-model="formData.notes"
-            placeholder="Your notes and summary..."
-            class="form-textarea"
-            @input="autoGrowTextarea"
-          ></textarea>
-        </label>
-      </div>
-
-      <div class="form-section">
-        <h3 class="section-title">Metadata</h3>
-
-        <div class="metadata-form">
           <label class="form-label">
-            <span class="label-text">Pages</span>
+            <span class="label-text">Date</span>
             <input
-              v-model.number="formData.meta.pages"
-              type="number"
-              placeholder="Page count"
+              v-model="formData.date"
+              type="text"
+              placeholder="YYYY-MM-DD or YYYY-MM or YYYY or ?"
               class="form-input"
-              min="0"
+              @blur="formatDate"
             />
           </label>
 
           <label class="form-label">
-            <span class="label-text">Duration (audiobook)</span>
             <input
-              v-model="formData.meta.duration"
-              type="text"
-              placeholder="7h34 or 2h0"
-              class="form-input"
-              @blur="formatDuration"
+              v-model="formData.dnf"
+              type="checkbox"
+              class="form-checkbox"
             />
-            <div v-if="durationError" class="error-message">
-              {{ durationError }}
-            </div>
-          </label>
-
-          <label class="form-label">
-            <span class="label-text">Goodreads ID</span>
-            <input
-              v-model="formData.meta.GoodreadsID"
-              type="text"
-              placeholder="Goodreads ID"
-              class="form-input"
-            />
-          </label>
-
-          <label class="form-label">
-            <span class="label-text">ISBN</span>
-            <input
-              v-model="formData.meta.ISBN"
-              type="text"
-              placeholder="ISBN"
-              class="form-input"
-            />
-          </label>
-
-          <label class="form-label">
-            <span class="label-text">Publication Date</span>
-            <input
-              v-model="formData.meta.pubDate"
-              type="text"
-              placeholder="YYYY-MM-DD"
-              class="form-input"
-            />
+            <span>Did Not Finish (DNF)</span>
           </label>
         </div>
-      </div>
 
+        <div class="form-section notes-section">
+          <label class="form-label">
+            <span class="label-text">Notes</span>
+            <textarea
+              ref="notesTextarea"
+              v-model="formData.notes"
+              placeholder="Your notes and summary..."
+              class="form-textarea"
+              @input="autoGrowTextarea"
+            ></textarea>
+          </label>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">Metadata</h3>
+
+          <div class="metadata-form">
+            <label class="form-label">
+              <span class="label-text">Pages</span>
+              <input
+                v-model.number="formData.meta.pages"
+                type="number"
+                placeholder="Page count"
+                class="form-input"
+                min="0"
+              />
+            </label>
+
+            <label class="form-label">
+              <span class="label-text">Duration (audiobook)</span>
+              <input
+                v-model="formData.meta.duration"
+                type="text"
+                placeholder="7h34 or 2h0"
+                class="form-input"
+                @blur="formatDuration"
+              />
+              <div v-if="durationError" class="error-message">
+                {{ durationError }}
+              </div>
+            </label>
+
+            <label class="form-label">
+              <span class="label-text">Goodreads ID</span>
+              <input
+                v-model="formData.meta.GoodreadsID"
+                type="text"
+                placeholder="Goodreads ID"
+                class="form-input"
+              />
+            </label>
+
+            <label class="form-label">
+              <span class="label-text">ISBN</span>
+              <input
+                v-model="formData.meta.ISBN"
+                type="text"
+                placeholder="ISBN"
+                class="form-input"
+              />
+            </label>
+
+            <label class="form-label">
+              <span class="label-text">Publication Date</span>
+              <input
+                v-model="formData.meta.pubDate"
+                type="text"
+                placeholder="YYYY-MM-DD"
+                class="form-input"
+              />
+            </label>
+          </div>
+        </div>
+      </div>
       <div class="form-footer">
         <button
           type="button"
@@ -474,12 +479,17 @@ watch(
   color: var(--bg-primary);
 }
 
+.form-wrapper-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .form-content {
   flex: 1;
   overflow-y: auto;
   padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
   width: 100%;
 }
 
@@ -624,23 +634,30 @@ watch(
   padding: 1.5rem 2rem;
   border-top: 1px solid var(--border);
   flex-shrink: 0;
-  background-color: var(--bg-secondary);
-  justify-content: flex-end;
-  margin: 0 auto;
+  background-color: transparent;
+  justify-content: center;
   width: 100%;
-  max-width: 700px;
 }
 
 .btn-cancel,
 .btn-save {
-  flex: 1;
-  padding: 0.75rem;
+  flex: 0 0 400px;
+  padding: 0.5rem 1.5rem;
   border: 1px solid var(--border);
   border-radius: 4px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 600px) {
+  .btn-cancel,
+  .btn-save {
+    flex: 1;
+    width: auto;
+    min-width: 100px;
+  }
 }
 
 .btn-cancel {
