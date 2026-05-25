@@ -1,4 +1,5 @@
 import { Dropbox, DropboxAuth } from 'dropbox';
+import { serializeBooks } from '../utils/books';
 
 let dbx = null;
 let authExpiredCallback = null;
@@ -184,18 +185,7 @@ export async function checkFileRevision() {
 export async function uploadBooks(booksData) {
   if (!dbx) throw new Error('Dropbox not initialized');
 
-  // Only serialize approved fields, reject anything else
-  const cleanedData = {};
-  for (const [key, book] of Object.entries(booksData)) {
-    cleanedData[key] = {
-      title: book.title,
-      author: book.author,
-      date: book.date,
-      dnf: book.dnf,
-      notes: book.notes,
-      ...(book.meta && { meta: book.meta }),
-    };
-  }
+  const cleanedData = serializeBooks(booksData);
 
   const content = JSON.stringify(cleanedData, null, 2);
   try {

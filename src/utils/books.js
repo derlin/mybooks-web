@@ -22,7 +22,7 @@ export const buildBookMeta = (meta) => ({
 
 /**
  * Serialize books map for Dropbox upload.
- * Includes only approved fields: title, author, date, dnf, notes, meta.
+ * Includes only approved fields: title, author, date, dnf, duration, notes, meta.
  * Excludes internal properties like _key and Vue tracking fields.
  * @param {Object} booksData - Map of books (key -> book object)
  * @returns {Object} Serialized books with only approved fields
@@ -30,15 +30,24 @@ export const buildBookMeta = (meta) => ({
 export const serializeBooks = (booksData) => {
   const cleaned = {};
   for (const [key, book] of Object.entries(booksData)) {
-    const serialized = {
-      title: book.title,
-      author: book.author,
-      date: book.date,
-      dnf: book.dnf,
-      notes: book.notes,
-    };
+    const serialized = {};
+    // Explicitly check valid fields, to avoid serializing "_key" and others
+    for (const field of ['title', 'author', 'date', 'dnf', 'notes']) {
+      if (book[field] !== null && book[field] !== undefined) {
+        serialized[field] = book[field];
+      }
+    }
     if (book.meta && Object.keys(book.meta).length > 0) {
-      serialized.meta = book.meta;
+      // Only include meta if it has at least one non-null, non-undefined value
+      const metaWithValues = {};
+      for (const [field, value] of Object.entries(book.meta)) {
+        if (value !== null && value !== undefined) {
+          metaWithValues[field] = value;
+        }
+      }
+      if (Object.keys(metaWithValues).length > 0) {
+        serialized.meta = metaWithValues;
+      }
     }
     cleaned[key] = serialized;
   }

@@ -342,4 +342,68 @@ describe('serializeBooks', () => {
     expect(book.meta.duration).toBe(720);
     expect(book.meta.ISBN).toBe('ABC-123');
   });
+
+  it('skips null and undefined values to minimize file size', () => {
+    const booksData = {
+      'sparse-book': {
+        title: 'Sparse',
+        author: 'Author',
+        date: '2021',
+        dnf: false,
+        notes: null, // Should be skipped
+        meta: undefined, // Should be skipped
+      },
+    };
+
+    const result = serializeBooks(booksData);
+    const book = result['sparse-book'];
+
+    expect(Object.keys(book)).toEqual(['title', 'author', 'date', 'dnf']);
+    expect(book.notes).toBeUndefined();
+    expect(book.meta).toBeUndefined();
+    expect(book.tags).toBeUndefined();
+  });
+
+  it('excludes meta if all its fields are null/undefined', () => {
+    const booksData = {
+      book: {
+        title: 'Book',
+        author: 'Author',
+        date: '2021',
+        dnf: false,
+        notes: 'Notes',
+        meta: {
+          pages: null,
+          duration: undefined,
+          ISBN: null,
+        },
+      },
+    };
+
+    const result = serializeBooks(booksData);
+    expect(result.book.meta).toBeUndefined();
+  });
+
+  it('includes meta with mixed null and non-null values', () => {
+    const booksData = {
+      book: {
+        title: 'Book',
+        author: 'Author',
+        date: '2021',
+        dnf: false,
+        notes: 'Notes',
+        meta: {
+          pages: 300,
+          duration: null,
+          ISBN: null,
+        },
+      },
+    };
+
+    const result = serializeBooks(booksData);
+    expect(result.book.meta).toBeDefined();
+    expect(result.book.meta.pages).toBe(300);
+    expect(result.book.meta.duration).toBeUndefined();
+    expect(result.book.meta.ISBN).toBeUndefined();
+  });
 });
