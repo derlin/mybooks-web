@@ -109,11 +109,15 @@ export async function refreshAccessToken() {
   }
 
   const dbxAuth = getAuth();
+  dbxAuth.setRefreshToken(auth.refreshToken);
 
   try {
-    const response = await dbxAuth.refreshAccessToken(auth.refreshToken);
-    const { access_token, expires_in } = response.result;
-    storeTokens(access_token, auth.refreshToken, expires_in);
+    // SDK requires scope parameter; empty array means keep existing scopes
+    await dbxAuth.refreshAccessToken([]);
+    const access_token = dbxAuth.getAccessToken();
+    const expiresAt = dbxAuth.getAccessTokenExpiresAt();
+    const expiresIn = expiresAt ? Math.floor((expiresAt.getTime() - Date.now()) / 1000) : 3600;
+    storeTokens(access_token, auth.refreshToken, expiresIn);
     initDropbox(access_token);
     return access_token;
   } catch (err) {
@@ -133,19 +137,20 @@ async function ensureTokenValid() {
 }
 
 async function handleDropboxError(err, retryFn) {
-  if (err.status === 401) {
-    try {
-      await refreshAccessToken();
-      return retryFn();
-    } catch (refreshErr) {
-      throw refreshErr;
-    }
+  try {
+    await refreshAccessToken();
+    return retryFn();
+  } catch (refreshErr) {
+    throw refreshErr;
   }
-  throw err;
+}
+
+function requireDropbox() {
+  if (!dbx) throw new Error('Dropbox not initialized');
 }
 
 export async function downloadBooks() {
-  if (!dbx) throw new Error('Dropbox not initialized');
+  requireDropbox();
 
   try {
     await ensureTokenValid();
@@ -165,7 +170,7 @@ export async function downloadBooks() {
 }
 
 export async function checkFileRevision() {
-  if (!dbx) throw new Error('Dropbox not initialized');
+  requireDropbox();
 
   try {
     await ensureTokenValid();
@@ -183,7 +188,7 @@ export async function checkFileRevision() {
 }
 
 export async function uploadBooks(booksData) {
-  if (!dbx) throw new Error('Dropbox not initialized');
+  requireDropbox();
 
   const cleanedData = serializeBooks(booksData);
 

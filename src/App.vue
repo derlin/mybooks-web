@@ -1,6 +1,7 @@
 <template>
   <div class="app">
     <AuthCallback v-if="isAuthCallback" />
+    <div v-else-if="isLoading" class="loading">Loading...</div>
     <AuthScreen v-else-if="!isAuthenticated" @authenticate="handleAuth" />
     <BookList v-else @logout="handleLogout" :files-changed="filesChanged" @files-refreshed="filesChanged = false" />
   </div>
@@ -22,11 +23,9 @@ import {
 
 const isAuthenticated = ref(false);
 const isAuthCallback = ref(false);
+const isLoading = ref(true);
 const filesChanged = ref(false);
 
-const handleAuthExpired = () => {
-  handleLogout();
-};
 
 const handleVisibilityChange = async () => {
   if (document.visibilityState === 'visible' && isAuthenticated.value) {
@@ -38,28 +37,30 @@ const handleVisibilityChange = async () => {
 };
 
 onMounted(async () => {
-  setAuthExpiredCallback(handleAuthExpired);
+  setAuthExpiredCallback(handleLogout);
   document.addEventListener('visibilitychange', handleVisibilityChange);
 
   // Check if this is the auth callback page
   if (window.location.pathname.endsWith('/auth-callback.html') && window.location.search.includes('code=')) {
     isAuthCallback.value = true;
   } else {
-    const token = getStoredToken();
+    let token = getStoredToken();
     if (token) {
-      isAuthenticated.value = true;
       // Refresh token if expired before initializing
       if (isTokenExpired()) {
         try {
-          await refreshAccessToken();
+          token = await refreshAccessToken();
         } catch (err) {
           console.error('Failed to refresh token on app load:', err);
           handleLogout();
+          return;
         }
       } else {
         initDropbox(token);
       }
+      isAuthenticated.value = true;
     }
+    isLoading.value = false;
   }
 });
 
@@ -78,5 +79,15 @@ const handleLogout = () => {
 .app {
   width: 100%;
   height: 100%;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-primary);
+  font-size: 1.1rem;
 }
 </style>
