@@ -96,8 +96,8 @@ export async function fetchBookMetadata(url) {
     throw new Error('Failed to parse book metadata from the page');
   }
 
-  if (!jsonLd.name || !jsonLd.author || !jsonLd.isbn) {
-    throw new Error('Missing required metadata (title, author, or ISBN) on this page');
+  if (!jsonLd.name || !jsonLd.author) {
+    throw new Error('Missing required metadata (title or author) on this page');
   }
 
   const authors = Array.isArray(jsonLd.author) ? jsonLd.author : [jsonLd.author];
@@ -113,7 +113,7 @@ export async function fetchBookMetadata(url) {
   return {
     title: decode(jsonLd.name),
     author: decode(authorName),
-    isbn: jsonLd.isbn,
+    ...(jsonLd.isbn && { isbn: jsonLd.isbn }),
     pages: jsonLd.numberOfPages || null,
     goodreadsId,
     pubDate,

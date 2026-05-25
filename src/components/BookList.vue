@@ -177,7 +177,9 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { downloadBooks, uploadBooks, checkFileRevision } from '../services/dropbox';
 import { formatDuration } from '../utils/formatting';
-import { booksToMap, buildBookMeta } from '../utils/books';
+import { booksToMap, buildBookMeta, normalizeTitle } from '../utils/books';
+import { checkDuplicateTitle } from '../utils/validation';
+import { filterAndSort } from '../utils/filtering';
 import DetailsDrawer from './DetailsDrawer.vue';
 import EditForm from './EditForm.vue';
 import BookFilters from './BookFilters.vue';
@@ -215,109 +217,18 @@ const columns = [
 ];
 
 const filteredAndSortedBooks = computed(() => {
-  let filtered = books.value;
+  if (sorting.value.length === 0) return books.value;
 
-  // Apply DNF filter
-  if (dnfFilter.value === 'dnf') {
-    filtered = filtered.filter((b) => b.dnf);
-  } else if (dnfFilter.value === 'finished') {
-    filtered = filtered.filter((b) => !b.dnf);
-  }
-
-  // Apply format filter
-  if (audiobookFilter.value === 'audiobook') {
-    filtered = filtered.filter((b) => b.meta?.duration);
-  } else if (audiobookFilter.value === 'paper') {
-    filtered = filtered.filter((b) => !b.meta?.duration);
-  }
-
-  if (globalFilter.value) {
-    const query = globalFilter.value.toLowerCase();
-    filtered = filtered.filter((b) => {
-      switch (searchFieldsFilter.value) {
-        case 'title':
-          return b.title?.toLowerCase().includes(query);
-        case 'author':
-          return b.author?.toLowerCase().includes(query);
-        case 'title+author':
-          return b.title?.toLowerCase().includes(query) || b.author?.toLowerCase().includes(query);
-        case 'date':
-          return b.date?.toLowerCase().includes(query);
-        case 'notes':
-          return b.notes?.toLowerCase().includes(query);
-        case 'anything':
-        default:
-          return (
-            b.title?.toLowerCase().includes(query) ||
-            b.author?.toLowerCase().includes(query) ||
-            b.date?.toLowerCase().includes(query) ||
-            b.notes?.toLowerCase().includes(query)
-          );
-      }
-    });
-  }
-
-  if (sorting.value.length > 0) {
-    const { id, desc } = sorting.value[0];
-    filtered = [...filtered].sort((a, b) => {
-      if (id === 'date') {
-        const aDigits = extractDateNumbers(a.date);
-        const bDigits = extractDateNumbers(b.date);
-        const aNum = parseInt(aDigits) || 0;
-        const bNum = parseInt(bDigits) || 0;
-
-        if (aNum !== bNum) {
-          return desc ? bNum - aNum : aNum - bNum;
-        }
-        const aTitle = a.title?.toLowerCase() || '';
-        const bTitle = b.title?.toLowerCase() || '';
-        return aTitle.localeCompare(bTitle);
-      }
-
-      if (id === 'pages') {
-        const aPages = a.meta?.pages || 0;
-        const bPages = b.meta?.pages || 0;
-
-        if (aPages !== bPages) {
-          return desc ? bPages - aPages : aPages - bPages;
-        }
-        return 0;
-      }
-
-      if (id === 'duration') {
-        const aDuration = a.meta?.duration || 0;
-        const bDuration = b.meta?.duration || 0;
-
-        if (aDuration !== bDuration) {
-          return desc ? bDuration - aDuration : aDuration - bDuration;
-        }
-        return 0;
-      }
-
-      let aVal = a[id];
-      let bVal = b[id];
-
-      if (aVal == null) aVal = '';
-      if (bVal == null) bVal = '';
-
-      if (typeof aVal === 'string') {
-        aVal = aVal.toLowerCase();
-        bVal = bVal.toLowerCase();
-      }
-
-      if (aVal < bVal) return desc ? 1 : -1;
-      if (aVal > bVal) return desc ? -1 : 1;
-      return 0;
-    });
-  }
-
-  return filtered;
+  const { id, desc } = sorting.value[0];
+  return filterAndSort(books.value, {
+    dnfFilter: dnfFilter.value,
+    audiobookFilter: audiobookFilter.value,
+    searchQuery: globalFilter.value,
+    searchField: searchFieldsFilter.value,
+    sortBy: id,
+    sortDesc: desc,
+  });
 });
-
-const extractDateNumbers = (dateStr) => {
-  if (!dateStr) return '';
-  return dateStr.replace(/\D/g, '');
-};
 
 const dismissMessageAfter = (ms = 3000) => {
   setTimeout(() => {
@@ -388,6 +299,7 @@ const openNewBook = () => {
 
 const closeForm = () => {
   editFormOpen.value = false;
+  error.value = null;
   setFormHash();
 };
 
@@ -488,18 +400,19 @@ const undoDelete = async () => {
   }
 };
 
-const normalizeTitle = (title) => {
-  return title
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-};
-
 const handleEditSave = async (editedBook) => {
   if (!(await checkRevisionBeforeOperation('save'))) {
+    isSaving.value = false;
+    return;
+  }
+
+  const duplicateCheck = checkDuplicateTitle(
+    editedBook.title,
+    books.value,
+    isNewBook.value ? undefined : selectedBook.value._key
+  );
+  if (duplicateCheck.isDuplicate) {
+    error.value = duplicateCheck.error;
     isSaving.value = false;
     return;
   }

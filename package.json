@@ -13,7 +13,6 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
-    "@tanstack/vue-table": "^8.21.3",
     "dotenv": "^17.4.2",
     "dropbox": "^10.34.0",
     "html-entities": "^2.6.0",

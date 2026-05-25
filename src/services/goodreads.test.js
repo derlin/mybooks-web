@@ -175,6 +175,29 @@ describe('Goodreads Service', () => {
       expect(metadata.pages).toBeNull();
     });
 
+    test('handles missing ISBN', async () => {
+      const mockHtmlNoIsbn = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <script type="application/ld+json">{"@context":"https://schema.org","@type":"Book","name":"Test Book","author":{"@type":"Person","name":"Test Author"},"numberOfPages":250}</script>
+          </head>
+          <body>Test</body>
+        </html>
+      `;
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        text: async () => mockHtmlNoIsbn,
+      });
+
+      const metadata = await fetchBookMetadata('https://www.goodreads.com/book/show/789-test');
+
+      expect(metadata.title).toBe('Test Book');
+      expect(metadata.author).toBe('Test Author');
+      expect(metadata.isbn).toBeUndefined();
+      expect(metadata.pages).toBe(250);
+    });
+
     test('throws error when fetch fails', async () => {
       global.fetch.mockRejectedValueOnce(new Error('Network error'));
 
@@ -290,7 +313,8 @@ describe('Goodreads Service - Real Page Fetch', () => {
     expect(metadata.goodreadsId).toBe('27208');
     expect(typeof metadata.pages).toBe('number');
     expect(metadata.pages).toBeGreaterThan(0);
-    expect(metadata.isbn).toBeTruthy();
+    // ISBN may or may not be available (optional)
+    expect(metadata.isbn === undefined || typeof metadata.isbn === 'string').toBe(true);
     // pubDate may or may not be available
     expect(metadata.pubDate === null || typeof metadata.pubDate === 'string').toBe(true);
   }, 30000);

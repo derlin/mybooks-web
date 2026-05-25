@@ -60,7 +60,7 @@
               type="text"
               placeholder="YYYY-MM-DD or YYYY-MM or YYYY or ?"
               class="form-input"
-              @blur="formatDate"
+              @blur="formatDateInput"
             />
           </label>
 
@@ -84,7 +84,7 @@
           </div>
           <label class="form-label notes-label">
             <textarea
-              ref="notesTextarea"
+              ref="inlineNotesTextarea"
               v-model="formData.notes"
               placeholder="Your notes and summary..."
               class="form-textarea"
@@ -115,7 +115,7 @@
                 type="text"
                 placeholder="7h34 or 2h0"
                 class="form-input"
-                @blur="formatDuration"
+                @blur="formatDurationInput"
               />
               <div v-if="durationError" class="error-message">
                 {{ durationError }}
@@ -175,6 +175,16 @@
 <script setup>
 import { ref, computed, watch, nextTick, toRefs, onMounted, onUnmounted } from 'vue';
 import { buildBookMeta } from '../utils/books';
+import {
+  getTodayDate,
+  formatDateString,
+  durationToMinutes,
+  minutesToDuration,
+  getFilteredAuthors,
+  validateDuration,
+  DURATION_REGEX,
+} from '../utils/validation';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/storage';
 import GoodreadsModal from './GoodreadsModal.vue';
 
 const props = defineProps({
@@ -222,25 +232,20 @@ const formData = ref({
 const originalData = ref({});
 const showAuthorDropdown = ref(false);
 const durationError = ref(null);
-const notesTextarea = ref(null);
+const inlineNotesTextarea = ref(null);
 const fullscreenNotesTextarea = ref(null);
 const goodreadsModalOpen = ref(false);
 const fullscreenNotesOpen = ref(false);
 const notesSaveTimeout = ref(null);
-const formInitialized = ref(false);
 
 const NOTES_AUTO_SAVE_KEY = 'mybooks_editform_draft';
-const durationRegex = /^(\d+)h(\d{1,2})?$/;
 
 const getCurrentHash = () => {
   return props.isNewBook ? 'new' : props.book?._key;
 };
 
 const filteredAuthors = computed(() => {
-  if (!formData.value.author) return [];
-  const query = formData.value.author.toLowerCase();
-  const authors = new Set(props.allBooks.map((b) => b.author).filter((a) => a && a.toLowerCase().includes(query)));
-  return Array.from(authors).sort();
+  return getFilteredAuthors(formData.value.author, props.allBooks);
 });
 
 const hasChanged = computed(() => {
@@ -253,52 +258,27 @@ const isValid = computed(() => {
   return true;
 });
 
-const formatDate = () => {
-  let date = formData.value.date.trim();
-  if (!date) return;
-
-  if (date === '?') return;
-
-  const parts = date.split('-');
-  if (parts.length === 1) {
-    if (/^\d{4}$/.test(parts[0])) return;
-  } else if (parts.length === 2) {
-    parts[1] = parts[1].padStart(2, '0');
-    formData.value.date = parts.join('-');
-  } else if (parts.length === 3) {
-    parts[1] = parts[1].padStart(2, '0');
-    parts[2] = parts[2].padStart(2, '0');
-    formData.value.date = parts.join('-');
-  }
+const formatDateInput = () => {
+  formData.value.date = formatDateString(formData.value.date);
 };
 
-const formatDuration = () => {
+const formatDurationInput = () => {
   const duration = formData.value.meta.duration.trim();
   if (!duration) {
     durationError.value = null;
     return;
   }
 
-  const match = duration.match(durationRegex);
-  if (!match) {
-    durationError.value = 'Format: Xh or Xh:MM (e.g., 7h34)';
-    return;
+  const result = validateDuration(duration);
+  durationError.value = result.error || null;
+  if (result.formatted) {
+    formData.value.meta.duration = result.formatted;
   }
-
-  const hours = parseInt(match[1]);
-  const minutes = match[2] ? parseInt(match[2]) : 0;
-
-  if (minutes > 59) {
-    durationError.value = 'Minutes must be 0-59';
-    return;
-  }
-
-  durationError.value = null;
-  formData.value.meta.duration = `${hours}h${String(minutes).padStart(2, '0')}`;
 };
 
-const autoGrowTextarea = () => {
-  const textarea = notesTextarea.value;
+const autoGrowTextarea = async () => {
+  await nextTick();
+  const textarea = inlineNotesTextarea.value;
   if (textarea) {
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
@@ -309,14 +289,6 @@ const closeAuthorDropdown = () => {
   setTimeout(() => {
     showAuthorDropdown.value = false;
   }, 150);
-};
-
-const getTodayDate = () => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 };
 
 const toggleFullscreenNotes = () => {
@@ -339,37 +311,22 @@ const handleKeyDown = (e) => {
 };
 
 const saveNotesToLocalStorage = () => {
-  try {
-    const draft = {
-      hash: getCurrentHash(),
-      notes: formData.value.notes,
-    };
-    localStorage.setItem(NOTES_AUTO_SAVE_KEY, JSON.stringify(draft));
-  } catch (err) {
-    // Silent fail for localStorage errors (quota exceeded, private mode, etc)
-  }
+  const draft = {
+    hash: getCurrentHash(),
+    notes: formData.value.notes,
+  };
+  safeSetItem(NOTES_AUTO_SAVE_KEY, draft);
 };
 
 const restoreNotesFromLocalStorage = () => {
-  try {
-    const saved = localStorage.getItem(NOTES_AUTO_SAVE_KEY);
-    if (saved && !formData.value.notes) {
-      const draft = JSON.parse(saved);
-      if (draft.hash === getCurrentHash()) {
-        formData.value.notes = draft.notes;
-      }
-    }
-  } catch (err) {
-    // Silent fail for localStorage errors
+  const draft = safeGetItem(NOTES_AUTO_SAVE_KEY);
+  if (draft && !formData.value.notes && draft.hash === getCurrentHash()) {
+    formData.value.notes = draft.notes;
   }
 };
 
 const clearNotesFromLocalStorage = () => {
-  try {
-    localStorage.removeItem(NOTES_AUTO_SAVE_KEY);
-  } catch (err) {
-    // Silent fail for localStorage errors
-  }
+  safeRemoveItem(NOTES_AUTO_SAVE_KEY);
 };
 
 const debounceAutoSaveNotes = () => {
@@ -399,15 +356,6 @@ const handleGoodreadsData = (metadata) => {
 const cancel = () => {
   clearNotesFromLocalStorage();
   emit('cancel');
-};
-
-const durationToMinutes = (durationStr) => {
-  if (!durationStr) return null;
-  const match = durationStr.match(durationRegex);
-  if (!match) return null;
-  const hours = parseInt(match[1]);
-  const minutes = match[2] ? parseInt(match[2]) : 0;
-  return hours * 60 + minutes;
 };
 
 const save = () => {
@@ -450,9 +398,7 @@ watch(
         notes: props.book.notes || '',
         meta: {
           pages: props.book.meta?.pages || null,
-          duration: props.book.meta?.duration
-            ? `${Math.floor(props.book.meta.duration / 60)}h${String(props.book.meta.duration % 60).padStart(2, '0')}`
-            : '',
+          duration: props.book.meta?.duration ? minutesToDuration(props.book.meta.duration) : '',
           GoodreadsID: props.book.meta?.GoodreadsID || '',
           ISBN: props.book.meta?.ISBN || '',
           pubDate: props.book.meta?.pubDate || '',
@@ -461,25 +407,12 @@ watch(
     }
     originalData.value = JSON.parse(JSON.stringify(formData.value));
     durationError.value = null;
-    formInitialized.value = false;
-    nextTick(() => {
-      autoGrowTextarea();
-      nextTick(() => {
-        formInitialized.value = true;
-      });
-    });
+    autoGrowTextarea();
   },
   { immediate: true, deep: true }
 );
 
-watch(
-  () => formData.value.notes,
-  () => {
-    if (formInitialized.value) {
-      debounceAutoSaveNotes();
-    }
-  }
-);
+watch(() => formData.value.notes, debounceAutoSaveNotes);
 
 onMounted(() => {
   restoreNotesFromLocalStorage();

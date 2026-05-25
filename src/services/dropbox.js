@@ -200,11 +200,12 @@ export async function uploadBooks(booksData) {
   const content = JSON.stringify(cleanedData, null, 2);
   try {
     await ensureTokenValid();
-    await dbx.filesUpload({
+    const metadata = await dbx.filesUpload({
       path: '/mybooks.json',
       contents: new Blob([content], { type: 'application/json' }),
       mode: { '.tag': 'overwrite' },
     });
+    storeFileRevision(metadata.result.rev);
   } catch (err) {
     if (err.status === 401) {
       return handleDropboxError(err, () => uploadBooks(booksData));
