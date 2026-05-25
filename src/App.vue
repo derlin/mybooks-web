@@ -11,7 +11,14 @@ import { ref, onMounted } from 'vue';
 import AuthScreen from './components/AuthScreen.vue';
 import BookList from './components/BookList.vue';
 import AuthCallback from './components/AuthCallback.vue';
-import { initDropbox, getStoredToken, setAuthExpiredCallback, checkFileRevision } from './services/dropbox';
+import {
+  initDropbox,
+  getStoredToken,
+  setAuthExpiredCallback,
+  checkFileRevision,
+  isTokenExpired,
+  refreshAccessToken,
+} from './services/dropbox';
 
 const isAuthenticated = ref(false);
 const isAuthCallback = ref(false);
@@ -30,7 +37,7 @@ const handleVisibilityChange = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   setAuthExpiredCallback(handleAuthExpired);
   document.addEventListener('visibilitychange', handleVisibilityChange);
 
@@ -41,7 +48,17 @@ onMounted(() => {
     const token = getStoredToken();
     if (token) {
       isAuthenticated.value = true;
-      initDropbox(token);
+      // Refresh token if expired before initializing
+      if (isTokenExpired()) {
+        try {
+          await refreshAccessToken();
+        } catch (err) {
+          console.error('Failed to refresh token on app load:', err);
+          handleLogout();
+        }
+      } else {
+        initDropbox(token);
+      }
     }
   }
 });
