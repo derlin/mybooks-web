@@ -1,11 +1,19 @@
 import { Dropbox, DropboxAuth } from 'dropbox';
 import { serializeBooks } from '../utils/books';
 
+// Initialized to null in production, but can be mocked in tests
 let dbx = null;
-let authExpiredCallback = null;
 
 const DROPBOX_APP_KEY = import.meta.env.VITE_DROPBOX_APP_KEY;
 const REDIRECT_URI = `${window.location.origin}/auth-callback.html`;
+
+function getDbx() {
+  return dbx;
+}
+
+function setDbx(value) {
+  dbx = value;
+}
 
 function getAuth() {
   return new DropboxAuth({
@@ -14,23 +22,20 @@ function getAuth() {
   });
 }
 
-export function initDropbox(token) {
-  dbx = new Dropbox({
-    accessToken: token,
-  });
+function initDropbox(token) {
+  if (!token) throw Error('Dropbox initialization requires a token');
+  setDbx(
+    new Dropbox({
+      accessToken: token,
+    })
+  );
 }
 
-export function getDropbox() {
-  return dbx;
-}
-
-export function getStoredToken() {
-  const auth = getStoredAuth();
-  return auth?.accessToken || null;
-}
-
-export function setAuthExpiredCallback(callback) {
-  authExpiredCallback = callback;
+export async function tryInitDropbox() {
+  if (!getStoredAuth()) return false;
+  ensureTokenValid();
+  initDropbox(getStoredAuth().accessToken);
+  return true;
 }
 
 export async function getAuthUrl() {
@@ -64,7 +69,7 @@ function storeFileRevision(rev) {
   localStorage.setItem('dropbox_file_rev', rev);
 }
 
-function getStoredFileRevision() {
+export function getStoredFileRevision() {
   return localStorage.getItem('dropbox_file_rev');
 }
 
@@ -94,6 +99,7 @@ export async function exchangeCodeForToken(code) {
     const response = await auth.getAccessTokenFromCode(REDIRECT_URI, code);
     const { access_token, refresh_token, expires_in } = response.result;
     storeTokens(access_token, refresh_token, expires_in);
+    initDropbox(access_token);
     sessionStorage.removeItem('dropbox_code_verifier');
     return access_token;
   } catch (err) {
@@ -123,9 +129,6 @@ export async function refreshAccessToken() {
   } catch (err) {
     // Refresh failed, clear tokens and trigger re-auth
     localStorage.removeItem('dropbox_auth');
-    if (authExpiredCallback) {
-      authExpiredCallback();
-    }
     throw new Error('Failed to refresh token');
   }
 }
@@ -146,15 +149,16 @@ async function handleDropboxError(err, retryFn) {
 }
 
 function requireDropbox() {
-  if (!dbx) throw new Error('Dropbox not initialized');
+  if (!getDbx()) throw new Error('Dropbox not initialized');
 }
 
 export async function downloadBooks() {
+  console.log('[Dropbox] Downloading books');
   requireDropbox();
 
   try {
     await ensureTokenValid();
-    const metadata = await dbx.filesDownload({ path: '/mybooks.json' });
+    const metadata = await getDbx().filesDownload({ path: '/mybooks.json' });
     storeFileRevision(metadata.result.rev);
     const text = await metadata.result.fileBlob.text();
     return JSON.parse(text);
@@ -170,11 +174,12 @@ export async function downloadBooks() {
 }
 
 export async function checkFileRevision() {
+  console.log('[Dropbox] Checking file revision');
   requireDropbox();
 
   try {
     await ensureTokenValid();
-    const metadata = await dbx.filesGetMetadata({ path: '/mybooks.json' });
+    const metadata = await getDbx().filesGetMetadata({ path: '/mybooks.json' });
     const currentRev = metadata.result.rev;
     const storedRev = getStoredFileRevision();
     return currentRev !== storedRev;
@@ -188,6 +193,7 @@ export async function checkFileRevision() {
 }
 
 export async function uploadBooks(booksData) {
+  console.log('[Dropbox] Uploading books');
   requireDropbox();
 
   const cleanedData = serializeBooks(booksData);
@@ -195,7 +201,7 @@ export async function uploadBooks(booksData) {
   const content = JSON.stringify(cleanedData, null, 2);
   try {
     await ensureTokenValid();
-    const metadata = await dbx.filesUpload({
+    const metadata = await getDbx().filesUpload({
       path: '/mybooks.json',
       contents: new Blob([content], { type: 'application/json' }),
       mode: { '.tag': 'overwrite' },

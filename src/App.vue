@@ -12,20 +12,12 @@ import { ref, onMounted } from 'vue';
 import AuthScreen from './components/AuthScreen.vue';
 import BookList from './components/BookList.vue';
 import AuthCallback from './components/AuthCallback.vue';
-import {
-  initDropbox,
-  getStoredToken,
-  setAuthExpiredCallback,
-  checkFileRevision,
-  isTokenExpired,
-  refreshAccessToken,
-} from './services/dropbox';
+import { tryInitDropbox, checkFileRevision } from './services/dropbox';
 
 const isAuthenticated = ref(false);
 const isAuthCallback = ref(false);
 const isLoading = ref(true);
 const filesChanged = ref(false);
-
 
 const handleVisibilityChange = async () => {
   if (document.visibilityState === 'visible' && isAuthenticated.value) {
@@ -37,36 +29,25 @@ const handleVisibilityChange = async () => {
 };
 
 onMounted(async () => {
-  setAuthExpiredCallback(handleLogout);
   document.addEventListener('visibilitychange', handleVisibilityChange);
 
   // Check if this is the auth callback page
   if (window.location.pathname.endsWith('/auth-callback.html') && window.location.search.includes('code=')) {
     isAuthCallback.value = true;
   } else {
-    let token = getStoredToken();
-    if (token) {
-      // Refresh token if expired before initializing
-      if (isTokenExpired()) {
-        try {
-          token = await refreshAccessToken();
-        } catch (err) {
-          console.error('Failed to refresh token on app load:', err);
-          handleLogout();
-          return;
-        }
-      } else {
-        initDropbox(token);
-      }
-      isAuthenticated.value = true;
+    try {
+      isAuthenticated.value = await tryInitDropbox();
+    } catch (err) {
+      console.error('Failed to login to dropbox:', err);
+      handleLogout();
+      return;
     }
     isLoading.value = false;
   }
 });
 
-const handleAuth = (token) => {
+const handleAuth = (_token) => {
   isAuthenticated.value = true;
-  initDropbox(token);
 };
 
 const handleLogout = () => {

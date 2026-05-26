@@ -26,10 +26,9 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Create .secrets file
+      - name: Create .env file
         run: |
-          echo "VITE_DROPBOX_APP_KEY=${{ secrets.VITE_DROPBOX_APP_KEY }}" > .secrets
-          echo "VITE_DROPBOX_APP_SECRET=${{ secrets.VITE_DROPBOX_APP_SECRET }}" >> .secrets
+          echo "VITE_DROPBOX_APP_KEY=${{ secrets.VITE_DROPBOX_APP_KEY }}" > .env
 
       - name: Install dependencies
         run: npm install
