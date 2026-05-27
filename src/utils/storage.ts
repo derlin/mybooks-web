@@ -1,4 +1,4 @@
-export function safeGetItem(key) {
+export function safeGetItem<T>(key: string): T | null {
   try {
     const item = localStorage.getItem(key);
     return item ? JSON.parse(item) : null;
@@ -7,7 +7,7 @@ export function safeGetItem(key) {
   }
 }
 
-export function safeSetItem(key, value) {
+export function safeSetItem<T>(key: string, value: T): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
@@ -15,7 +15,7 @@ export function safeSetItem(key, value) {
   }
 }
 
-export function safeRemoveItem(key) {
+export function safeRemoveItem(key: string): void {
   try {
     localStorage.removeItem(key);
   } catch {

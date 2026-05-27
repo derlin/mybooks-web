@@ -7,7 +7,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import AuthScreen from './components/AuthScreen.vue';
 import BookList from './components/BookList.vue';
@@ -46,7 +46,7 @@ onMounted(async () => {
   }
 });
 
-const handleAuth = (_token) => {
+const handleAuth = (_token: string) => {
   isAuthenticated.value = true;
 };
 

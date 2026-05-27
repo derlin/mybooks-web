@@ -5,11 +5,11 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 
 const processing = ref(true);
-const error = ref(null);
+const error = ref<string | null>(null);
 
 onMounted(() => {
   const params = new URLSearchParams(window.location.search);

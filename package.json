@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "format": "prettier --write .",
+    "typecheck": "vue-tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
@@ -20,10 +21,15 @@
   },
   "devDependencies": {
     "@babel/preset-env": "^7.29.5",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.0.0",
     "@vitejs/plugin-vue": "^6.0.6",
     "babel-jest": "^30.4.1",
     "jest": "^30.4.2",
     "prettier": "^3.0.0",
-    "vite": "^8.0.10"
+    "ts-jest": "^29.1.0",
+    "typescript": "~5.7",
+    "vite": "^8.0.10",
+    "vue-tsc": "^2.0.0"
   }
 }

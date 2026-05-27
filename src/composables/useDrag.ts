@@ -1,16 +1,24 @@
-import { ref } from 'vue';
+import { ref, Ref } from 'vue';
 
-export function useDrag(onDismiss, threshold = 50) {
+type DragState = {
+  dragOffset: Ref<number>;
+  isDragging: Ref<boolean>;
+  handleTouchStart: (e: TouchEvent) => void;
+  handleTouchMove: (e: TouchEvent) => void;
+  handleTouchEnd: (e: TouchEvent) => void;
+};
+
+export function useDrag(onDismiss: () => void, threshold: number = 50): DragState {
   const dragOffset = ref(0);
   const isDragging = ref(false);
   let startX = 0;
 
-  const handleTouchStart = (e) => {
+  const handleTouchStart = (e: TouchEvent): void => {
     startX = e.touches[0].clientX;
     isDragging.value = true;
   };
 
-  const handleTouchMove = (e) => {
+  const handleTouchMove = (e: TouchEvent): void => {
     if (!isDragging.value) return;
     const currentX = e.touches[0].clientX;
     const offset = currentX - startX;
@@ -20,7 +28,7 @@ export function useDrag(onDismiss, threshold = 50) {
     }
   };
 
-  const handleTouchEnd = (e) => {
+  const handleTouchEnd = (_e: TouchEvent): void => {
     isDragging.value = false;
 
     if (dragOffset.value > threshold) {

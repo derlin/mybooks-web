@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { formatDate, formatDuration } from './formatting';
 
 describe('formatDate', () => {

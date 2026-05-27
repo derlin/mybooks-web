@@ -20,13 +20,13 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import { getAuthUrl, exchangeCodeForToken } from '../services/dropbox';
 
 const emit = defineEmits(['authenticate']);
 const loading = ref(false);
-const error = ref(null);
+const error = ref<string | null>(null);
 
 const authenticate = async () => {
   loading.value = true;
@@ -41,7 +41,7 @@ const authenticate = async () => {
 
     const popup = window.open(authUrl, 'dropbox-auth', `width=${width},height=${height},left=${left},top=${top}`);
 
-    const messageHandler = (event) => {
+    const messageHandler = (event: any) => {
       if (event.data.type === 'auth-code') {
         window.removeEventListener('message', messageHandler);
         const code = event.data.code;
@@ -66,17 +66,17 @@ const authenticate = async () => {
         error.value = 'Authentication cancelled';
       }
     }, 500);
-  } catch (err) {
+  } catch (err: any) {
     error.value = err.message || 'Failed to initialize authentication';
     loading.value = false;
   }
 };
 
-const handleAuthCode = async (code) => {
+const handleAuthCode = async (code: string) => {
   try {
     const token = await exchangeCodeForToken(code);
     emit('authenticate', token);
-  } catch (err) {
+  } catch (err: any) {
     error.value = err.message || 'Authentication failed';
     loading.value = false;
   }

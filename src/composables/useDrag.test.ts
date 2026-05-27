@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useDrag } from './useDrag';
 
 describe('useDrag Composable', () => {

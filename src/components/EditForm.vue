@@ -172,9 +172,9 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, nextTick, toRefs, onMounted, onUnmounted } from 'vue';
-import { buildBookMeta } from '../utils/books';
+import type { Book, BookMeta } from '../types';
 import {
   getTodayDate,
   formatDateString,
@@ -182,61 +182,72 @@ import {
   minutesToDuration,
   getFilteredAuthors,
   validateDuration,
-  DURATION_REGEX,
 } from '../utils/validation';
 import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/storage';
 import GoodreadsModal from './GoodreadsModal.vue';
+import { GoodreadsMetadata } from '../services/goodreads';
 
-const props = defineProps({
-  book: {
-    type: Object,
-    default: null,
-  },
-  allBooks: {
-    type: Array,
-    required: true,
-  },
-  isNewBook: {
-    type: Boolean,
-    default: false,
-  },
-  errorMessage: {
-    type: String,
-    default: null,
-  },
-  isSaving: {
-    type: Boolean,
-    default: false,
-  },
-});
+const props = defineProps<{
+  book: Book | null;
+  allBooks: Book[];
+  isNewBook: boolean;
+  errorMessage?: string | null;
+  isSaving: boolean;
+}>();
+
+type FormData = Omit<Book, '_key' | 'meta'> & {
+  meta: Omit<BookMeta, 'duration'> & {
+    duration: string;
+  };
+};
+
+const newFormData = (book: Book | null | undefined = undefined): FormData => {
+  if (book) {
+    return {
+      title: book.title,
+      author: book.author,
+      date: book.date,
+      dnf: book.dnf || false,
+      notes: book.notes || '',
+      meta: {
+        pages: book.meta?.pages ? Number(book.meta.pages) : null,
+        duration: book.meta?.duration ? minutesToDuration(book.meta.duration) : '',
+        GoodreadsID: book.meta?.GoodreadsID || '',
+        ISBN: book.meta?.ISBN || '',
+        pubDate: book.meta?.pubDate || '',
+      },
+    };
+  }
+  return {
+    title: '',
+    author: '',
+    date: getTodayDate(),
+    dnf: false,
+    notes: '',
+    meta: {
+      pages: null,
+      duration: '',
+      GoodreadsID: '',
+      ISBN: '',
+      pubDate: '',
+    },
+  };
+};
 
 const { isSaving } = toRefs(props);
 
 const emit = defineEmits(['save', 'cancel']);
 
-const formData = ref({
-  title: '',
-  author: '',
-  date: '',
-  dnf: false,
-  notes: '',
-  meta: {
-    pages: null,
-    duration: '',
-    GoodreadsID: '',
-    ISBN: '',
-    pubDate: '',
-  },
-});
+const formData = ref<FormData>(newFormData());
 
-const originalData = ref({});
+const originalData = ref<typeof formData.value>();
 const showAuthorDropdown = ref(false);
-const durationError = ref(null);
-const inlineNotesTextarea = ref(null);
-const fullscreenNotesTextarea = ref(null);
+const durationError = ref<string | null>(null);
+const inlineNotesTextarea = ref<HTMLTextAreaElement | null>(null);
+const fullscreenNotesTextarea = ref<HTMLTextAreaElement | null>(null);
 const goodreadsModalOpen = ref(false);
 const fullscreenNotesOpen = ref(false);
-const notesSaveTimeout = ref(null);
+const notesSaveTimeout = ref<NodeJS.Timeout | null>(null);
 
 const NOTES_AUTO_SAVE_KEY = 'mybooks_editform_draft';
 
@@ -300,7 +311,7 @@ const toggleFullscreenNotes = () => {
   }
 };
 
-const handleKeyDown = (e) => {
+const handleKeyDown = (e: KeyboardEvent) => {
   const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
   const isToggleKey = isMac ? e.metaKey && e.code === 'Enter' : e.ctrlKey && e.code === 'Enter';
 
@@ -319,7 +330,7 @@ const saveNotesToLocalStorage = () => {
 };
 
 const restoreNotesFromLocalStorage = () => {
-  const draft = safeGetItem(NOTES_AUTO_SAVE_KEY);
+  const draft: any = safeGetItem(NOTES_AUTO_SAVE_KEY);
   if (draft && !formData.value.notes && draft.hash === getCurrentHash()) {
     formData.value.notes = draft.notes;
   }
@@ -339,10 +350,10 @@ const debounceAutoSaveNotes = () => {
   }, 300);
 };
 
-const handleGoodreadsData = (metadata) => {
+const handleGoodreadsData = (metadata: GoodreadsMetadata) => {
   formData.value.title = metadata.title;
   formData.value.author = metadata.author;
-  formData.value.meta.ISBN = metadata.isbn;
+  formData.value.meta.ISBN = metadata.isbn || '';
   formData.value.meta.GoodreadsID = metadata.goodreadsId;
   if (metadata.pages) {
     formData.value.meta.pages = metadata.pages;
@@ -365,8 +376,11 @@ const save = () => {
   emit('save', {
     ...formData.value,
     meta: {
-      ...buildBookMeta(formData.value.meta),
-      duration: durationToMinutes(formData.value.meta.duration),
+      pages: formData.value.meta.pages ?? null,
+      duration: formData.value.meta.duration ? durationToMinutes(formData.value.meta.duration) : null,
+      GoodreadsID: formData.value.meta.GoodreadsID || null,
+      ISBN: formData.value.meta.ISBN || null,
+      pubDate: formData.value.meta.pubDate || null,
     },
   });
 };
@@ -374,37 +388,7 @@ const save = () => {
 watch(
   () => [props.book, props.isNewBook],
   () => {
-    if (props.isNewBook || !props.book) {
-      formData.value = {
-        title: '',
-        author: '',
-        date: getTodayDate(),
-        dnf: false,
-        notes: '',
-        meta: {
-          pages: null,
-          duration: '',
-          GoodreadsID: '',
-          ISBN: '',
-          pubDate: '',
-        },
-      };
-    } else {
-      formData.value = {
-        title: props.book.title,
-        author: props.book.author,
-        date: props.book.date,
-        dnf: props.book.dnf || false,
-        notes: props.book.notes || '',
-        meta: {
-          pages: props.book.meta?.pages || null,
-          duration: props.book.meta?.duration ? minutesToDuration(props.book.meta.duration) : '',
-          GoodreadsID: props.book.meta?.GoodreadsID || '',
-          ISBN: props.book.meta?.ISBN || '',
-          pubDate: props.book.meta?.pubDate || '',
-        },
-      };
-    }
+    formData.value = newFormData(!props.isNewBook && props.book ? props.book : undefined);
     originalData.value = JSON.parse(JSON.stringify(formData.value));
     durationError.value = null;
     autoGrowTextarea();

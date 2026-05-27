@@ -1,4 +1,4 @@
-export const formatDate = (dateStr) => {
+export const formatDate = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '—';
   if (dateStr === '?') return '?';
 
@@ -18,7 +18,7 @@ export const formatDate = (dateStr) => {
   return dateStr;
 };
 
-export const formatDuration = (minutes) => {
+export const formatDuration = (minutes: number | null | undefined): string => {
   if (!minutes) return '';
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;

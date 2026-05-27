@@ -1,4 +1,5 @@
-import { validateUrl, fetchBookMetadata } from './goodreads.js';
+// @ts-nocheck
+import { validateUrl, fetchBookMetadata } from './goodreads';
 
 // Save the real fetch before any mocking
 const realFetch = global.fetch;

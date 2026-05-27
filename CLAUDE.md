@@ -20,7 +20,7 @@ A Vue 3 web app to read/write book summaries stored in a JSON file on Dropbox. W
 
 ## Architecture
 
-**Tech stack:** Vue 3 with Single-File Components, Vite, plain CSS, Dropbox OAuth (PKCE), Jest testing.
+**Tech stack:** Vue 3 with Single-File Components, Vite, Typescript, plain CSS, Dropbox OAuth (PKCE), Jest testing.
 
 **Why these choices:**
 
@@ -31,24 +31,7 @@ A Vue 3 web app to read/write book summaries stored in a JSON file on Dropbox. W
 
 ## Data Model
 
-```typescript
-type Book = {
-  title: string; // Display title
-  author: string;
-  date: string; // YYYY-MM, YYYY, or "?"
-  dnf: boolean; // Did Not Finish
-  notes: string; // Multi-line user summary
-  meta?: BookMeta;
-};
-
-type BookMeta = {
-  goodreadsId?: string;
-  isbn?: string;
-  pubDate?: string; // ISO format
-  pages?: number;
-  duration?: number; // Minutes; presence = is audiobook
-};
-```
+See `src/types.ts`
 
 **Critical constraint:** Dropbox map key = normalized title (exact Kotlin algorithm):
 
@@ -78,28 +61,6 @@ Must match `normalizeTitle()` in BookList.vue exactly.
 - On tab visibility change: cheap metadata check, silently refetch if changed
 - Before save/delete: check revision. If changed, reload books and block operation with error message
 - Prevents data loss from concurrent edits across tabs without manual conflict resolution
-
-**Serialization:** `uploadBooks()` explicitly serializes only approved fields (`title`, `author`, `date`, `dnf`, `notes`, `meta`). Any other properties (Vue internals, mutations) are excluded.
-
-## Vue Reactivity Gotchas (Fixed)
-
-- Mutations on array items: use `Object.assign(books.value[index], {...})` not direct assignment
-- Prop destructuring: use `toRefs(props)` to maintain reactivity
-- DOM measurements: call `nextTick()` before measuring (e.g., textarea auto-grow)
-
-## Testing
-
-**Convention:** Test files sit alongside source (e.g., `books.js` ↔ `books.test.js`), not in `__tests__`.
-
-**Philosophy:**
-
-- Test business logic and pure functions (utils, serialization, token expiry)
-- Avoid testing framework internals or Vue reactivity
-- 70-80% coverage on critical paths beats 100% everywhere
-- Tests = regression prevention, not proof of correctness
-- Tests live alongside the files: `my.js` -> `my.test.js`
-
-**Run tests:** `npm test` (Jest, ~1.5s). Watch mode: `npm test -- --watch`
 
 ## Code Style
 

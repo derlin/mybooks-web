@@ -173,11 +173,12 @@
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
+import type { Book } from '../types';
 import { downloadBooks, uploadBooks, checkFileRevision } from '../services/dropbox';
 import { formatDuration } from '../utils/formatting';
-import { booksToMap, buildBookMeta, normalizeTitle } from '../utils/books';
+import { normalizeTitle } from '../utils/books';
 import { checkDuplicateTitle } from '../utils/validation';
 import { filterAndSort } from '../utils/filtering';
 import DetailsDrawer from './DetailsDrawer.vue';
@@ -187,24 +188,24 @@ import BookFilters from './BookFilters.vue';
 const props = defineProps(['filesChanged']);
 const emit = defineEmits(['logout', 'files-refreshed']);
 
-const books = ref([]);
+const books = ref<Book[]>([]);
 const loading = ref(true);
-const error = ref(null);
+const error = ref<string | null>(null);
 const globalFilter = ref('');
 const dnfFilter = ref('all'); // 'all', 'dnf', 'finished'
 const audiobookFilter = ref('all'); // 'all', 'audiobook', 'paper'
 const searchFieldsFilter = ref('anything'); // 'anything', 'title', 'author', 'title+author', 'date', 'notes'
 const filtersOpen = ref(false);
 const sorting = ref([{ id: 'date', desc: true }]);
-const selectedBook = ref(null);
+const selectedBook = ref<Book | null>(null);
 const drawerOpen = ref(false);
 const editFormOpen = ref(false);
 const isNewBook = ref(false);
-const successMessage = ref(null);
-const undoData = ref(null);
-const undoTimeout = ref(null);
+const successMessage = ref<string | null>(null);
+const undoData = ref<{ key: string; book: Book } | null>(null);
+const undoTimeout = ref<NodeJS.Timeout | null>(null);
 const isSaving = ref(false);
-const searchInput = ref(null);
+const searchInput = ref<HTMLInputElement | null>(null);
 
 const columns = [
   { id: 'author', header: 'Author', enableSorting: true },
@@ -236,13 +237,13 @@ const dismissMessageAfter = (ms = 3000) => {
   }, ms);
 };
 
-const handleSearchKeyboard = (keyboardEvent) => {
+const handleSearchKeyboard = (keyboardEvent: KeyboardEvent) => {
   if (keyboardEvent.key === 'Enter' || keyboardEvent.keyCode === 13) {
     searchInput.value?.blur();
   }
 };
 
-const toggleSort = (columnId) => {
+const toggleSort = (columnId: string) => {
   if (sorting.value[0]?.id === columnId) {
     sorting.value[0].desc = !sorting.value[0].desc;
   } else {
@@ -250,7 +251,7 @@ const toggleSort = (columnId) => {
   }
 };
 
-const setFormHash = (mode, bookKey) => {
+const setFormHash = (mode?: string | null, bookKey?: string) => {
   if (!mode) {
     window.location.hash = '';
   } else if (mode === 'new') {
@@ -274,7 +275,7 @@ const restoreFormFromHash = () => {
   }
 };
 
-const openDrawer = (book) => {
+const openDrawer = (book: Book) => {
   if (selectedBook.value?._key === book._key) {
     drawerOpen.value = !drawerOpen.value;
   } else {
@@ -283,7 +284,7 @@ const openDrawer = (book) => {
   }
 };
 
-const openEditForm = (book) => {
+const openEditForm = (book: Book) => {
   selectedBook.value = book;
   isNewBook.value = false;
   editFormOpen.value = true;
@@ -304,14 +305,10 @@ const closeForm = () => {
 };
 
 const loadBooksFromDropbox = async () => {
-  const data = await downloadBooks();
-  books.value = Object.entries(data).map(([key, book]) => ({
-    ...book,
-    _key: key,
-  }));
+  books.value = await downloadBooks();
 };
 
-const checkRevisionBeforeOperation = async (operationName) => {
+const checkRevisionBeforeOperation = async (operationName: string) => {
   try {
     const revisionChanged = await checkFileRevision();
     if (revisionChanged) {
@@ -321,33 +318,33 @@ const checkRevisionBeforeOperation = async (operationName) => {
       return false;
     }
     return true;
-  } catch (err) {
+  } catch (err: any) {
     console.error(`[Books] Error checking revision before ${operationName}:`, err);
     error.value = 'Failed to verify book state. Please try again.';
     return false;
   }
 };
 
-const deleteBook = async (book) => {
+const deleteBook = async (book: Book) => {
   if (!(await checkRevisionBeforeOperation('delete'))) {
     return;
   }
 
   try {
-    const booksCopy = booksToMap(books.value);
+    const deletedBook = books.value.find((b) => b._key === book._key);
+    if (!deletedBook) return;
 
-    // Store for undo
+    // Store for undo before removing
     undoData.value = {
       key: book._key,
-      book: booksCopy[book._key],
+      book: deletedBook,
     };
 
     // Remove from local state
-    delete booksCopy[book._key];
     books.value = books.value.filter((b) => b._key !== book._key);
 
     // Upload to Dropbox
-    await uploadBooks(booksCopy);
+    await uploadBooks(books.value);
 
     // Show delete toast with undo button
     successMessage.value = 'deleted';
@@ -357,15 +354,17 @@ const deleteBook = async (book) => {
       clearTimeout(undoTimeout.value);
     }
 
-    // Auto-undo after 5 seconds if not manually undone
+    // Auto-dismiss after 5 seconds if not manually undone
     undoTimeout.value = setTimeout(() => {
       undoData.value = null;
       successMessage.value = null;
     }, 5000);
-  } catch (err) {
-    error.value = err.message || 'Failed to delete book';
+  } catch (err: any) {
     // Restore local state on error
-    books.value.push(undoData.value.book);
+    if (undoData.value) {
+      books.value.push(undoData.value.book);
+    }
+    error.value = err.message || 'Failed to delete book';
     undoData.value = null;
   }
 };
@@ -374,17 +373,11 @@ const undoDelete = async () => {
   if (!undoData.value) return;
 
   try {
-    const booksCopy = booksToMap(books.value);
-
-    // Restore book
-    booksCopy[undoData.value.key] = undoData.value.book;
-    books.value.push({
-      ...undoData.value.book,
-      _key: undoData.value.key,
-    });
+    // Restore book to array
+    books.value.push(undoData.value.book);
 
     // Upload to Dropbox
-    await uploadBooks(booksCopy);
+    await uploadBooks(books.value);
 
     // Clear undo
     if (undoTimeout.value) {
@@ -395,12 +388,14 @@ const undoDelete = async () => {
 
     // Auto-dismiss after 3 seconds
     dismissMessageAfter(3000);
-  } catch (err) {
+  } catch (err: any) {
+    // Rollback on error
+    books.value = books.value.filter((b) => b._key !== undoData.value!.key);
     error.value = err.message || 'Failed to restore book';
   }
 };
 
-const handleEditSave = async (editedBook) => {
+const handleEditSave = async (editedBook: any) => {
   if (!(await checkRevisionBeforeOperation('save'))) {
     isSaving.value = false;
     return;
@@ -409,7 +404,7 @@ const handleEditSave = async (editedBook) => {
   const duplicateCheck = checkDuplicateTitle(
     editedBook.title,
     books.value,
-    isNewBook.value ? undefined : selectedBook.value._key
+    isNewBook.value ? undefined : selectedBook.value?._key
   );
   if (duplicateCheck.isDuplicate) {
     error.value = duplicateCheck.error;
@@ -419,46 +414,45 @@ const handleEditSave = async (editedBook) => {
 
   isSaving.value = true;
   try {
-    const booksCopy = booksToMap(books.value);
-    const key = isNewBook.value ? normalizeTitle(editedBook.title) : selectedBook.value._key;
+    const newKey = isNewBook.value ? normalizeTitle(editedBook.title) : selectedBook.value!._key;
 
-    // Remove old key if renaming
-    if (!isNewBook.value && selectedBook.value._key !== key) {
-      delete booksCopy[selectedBook.value._key];
-    }
-
-    booksCopy[key] = {
+    const bookToSave: Book = {
       title: editedBook.title,
       author: editedBook.author,
       date: editedBook.date,
       dnf: editedBook.dnf,
       notes: editedBook.notes,
-      meta: buildBookMeta(editedBook.meta),
+      meta: editedBook.meta,
+      _key: newKey,
     };
 
-    await uploadBooks(booksCopy);
-
+    // Build new books array
+    let newBooks: Book[];
     if (isNewBook.value) {
-      books.value.push({
-        ...booksCopy[key],
-        _key: key,
-      });
+      // New book: add to array
+      newBooks = [...books.value, bookToSave];
     } else {
-      const bookIndex = books.value.findIndex((b) => b._key === selectedBook.value._key);
-      if (bookIndex >= 0) {
-        Object.assign(books.value[bookIndex], {
-          ...booksCopy[key],
-          _key: key,
-        });
+      const oldKey = selectedBook.value!._key;
+      if (oldKey === newKey) {
+        // Edit without rename: replace in place
+        newBooks = books.value.map((b) => (b._key === oldKey ? bookToSave : b));
+      } else {
+        // Rename: remove old key, add with new key
+        newBooks = [...books.value.filter((b) => b._key !== oldKey), bookToSave];
       }
     }
 
+    // Upload to Dropbox
+    await uploadBooks(newBooks);
+
+    // Update local state only after successful upload
+    books.value = newBooks;
+    selectedBook.value = bookToSave;
     error.value = null;
     successMessage.value = isNewBook.value ? 'Book added successfully' : 'Book saved successfully';
     closeForm();
-
     dismissMessageAfter(3000);
-  } catch (err) {
+  } catch (err: any) {
     error.value = err.message || 'Failed to save book';
   } finally {
     isSaving.value = false;
@@ -475,7 +469,7 @@ watch(
         console.log(`[Books] Reloaded ${books.value.length} books from Dropbox`);
         successMessage.value = 'Books updated from Dropbox';
         dismissMessageAfter(3000);
-      } catch (err) {
+      } catch (err: any) {
         error.value = err.message || 'Failed to refresh books';
         console.error('[Books] Error reloading from Dropbox:', err);
       }
@@ -488,7 +482,7 @@ onMounted(async () => {
   try {
     await loadBooksFromDropbox();
     restoreFormFromHash();
-  } catch (err) {
+  } catch (err: any) {
     error.value = err.message || 'Failed to load books';
   } finally {
     loading.value = false;

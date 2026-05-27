@@ -1,19 +1,11 @@
-/**
- * Extract numbers from date strings for sorting.
- * Handles non-standard dates like "??", "New Zealand" by treating as 0.
- */
-export const extractDateNumbers = (dateStr) => {
+import type { Book } from '../types';
+
+export const extractDateNumbers = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '';
   return dateStr.replace(/\D/g, '');
 };
 
-/**
- * Apply DNF (Did Not Finish) filter to books array.
- * @param {Array} books - Books to filter
- * @param {string} dnfFilter - 'dnf', 'finished', or 'all'
- * @returns {Array} Filtered books
- */
-export const applyDnfFilter = (books, dnfFilter) => {
+export const applyDnfFilter = (books: Book[], dnfFilter: string): Book[] => {
   if (dnfFilter === 'dnf') {
     return books.filter((b) => b.dnf);
   } else if (dnfFilter === 'finished') {
@@ -22,13 +14,7 @@ export const applyDnfFilter = (books, dnfFilter) => {
   return books;
 };
 
-/**
- * Apply format (audiobook/paper) filter to books array.
- * @param {Array} books - Books to filter
- * @param {string} audiobookFilter - 'audiobook', 'paper', or 'all'
- * @returns {Array} Filtered books
- */
-export const applyFormatFilter = (books, audiobookFilter) => {
+export const applyFormatFilter = (books: Book[], audiobookFilter: string): Book[] => {
   if (audiobookFilter === 'audiobook') {
     return books.filter((b) => b.meta?.duration);
   } else if (audiobookFilter === 'paper') {
@@ -37,14 +23,7 @@ export const applyFormatFilter = (books, audiobookFilter) => {
   return books;
 };
 
-/**
- * Apply global search filter across specified fields.
- * @param {Array} books - Books to filter
- * @param {string} query - Search query (will be lowercased)
- * @param {string} searchField - Which field(s) to search
- * @returns {Array} Filtered books
- */
-export const applySearchFilter = (books, query, searchField) => {
+export const applySearchFilter = (books: Book[], query: string, searchField: string): Book[] => {
   if (!query) return books;
 
   const q = query.toLowerCase();
@@ -73,18 +52,10 @@ export const applySearchFilter = (books, query, searchField) => {
   });
 };
 
-/**
- * Sort books by specified column.
- * @param {Array} books - Books to sort
- * @param {string} columnId - Column identifier (title, author, date, duration, pages, dnf)
- * @param {boolean} descending - Sort descending if true
- * @returns {Array} Sorted books
- */
-export const sortBooks = (books, columnId, descending) => {
+export const sortBooks = (books: Book[], columnId: string | null, descending: boolean): Book[] => {
   if (!columnId) return books;
 
   const sorted = [...books].sort((a, b) => {
-    // Date sorting: extract numbers, handle non-numeric dates
     if (columnId === 'date') {
       const aDigits = extractDateNumbers(a.date);
       const bDigits = extractDateNumbers(b.date);
@@ -94,13 +65,11 @@ export const sortBooks = (books, columnId, descending) => {
       if (aNum !== bNum) {
         return descending ? bNum - aNum : aNum - bNum;
       }
-      // Fallback to title comparison if dates are equal
       const aTitle = a.title?.toLowerCase() || '';
       const bTitle = b.title?.toLowerCase() || '';
       return aTitle.localeCompare(bTitle);
     }
 
-    // Pages sorting: treat null as 0
     if (columnId === 'pages') {
       const aPages = a.meta?.pages || 0;
       const bPages = b.meta?.pages || 0;
@@ -111,7 +80,6 @@ export const sortBooks = (books, columnId, descending) => {
       return 0;
     }
 
-    // Duration sorting: treat null as 0
     if (columnId === 'duration') {
       const aDuration = a.meta?.duration || 0;
       const bDuration = b.meta?.duration || 0;
@@ -122,9 +90,8 @@ export const sortBooks = (books, columnId, descending) => {
       return 0;
     }
 
-    // Generic string/value sorting for other columns
-    let aVal = a[columnId];
-    let bVal = b[columnId];
+    let aVal: any = (a as any)[columnId];
+    let bVal: any = (b as any)[columnId];
 
     if (aVal == null) aVal = '';
     if (bVal == null) bVal = '';
@@ -144,13 +111,16 @@ export const sortBooks = (books, columnId, descending) => {
   return sorted;
 };
 
-/**
- * Apply all filters and sort in sequence.
- * @param {Array} books - Books to filter and sort
- * @param {Object} options - Filter and sort options
- * @returns {Array} Filtered and sorted books
- */
-export const filterAndSort = (books, options = {}) => {
+type FilterAndSortOptions = {
+  dnfFilter?: string;
+  audiobookFilter?: string;
+  searchQuery?: string;
+  searchField?: string;
+  sortBy?: string | null;
+  sortDesc?: boolean;
+};
+
+export const filterAndSort = (books: Book[], options: FilterAndSortOptions = {}): Book[] => {
   const {
     dnfFilter = 'all',
     audiobookFilter = 'all',

@@ -37,7 +37,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import { fetchBookMetadata } from '../services/goodreads.js';
 
@@ -71,7 +71,7 @@ const submit = async () => {
     emit('metadata-fetched', metadata);
     url.value = '';
     error.value = null;
-  } catch (err) {
+  } catch (err: any) {
     error.value = err.message;
   } finally {
     loading.value = false;
