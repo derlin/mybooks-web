@@ -175,7 +175,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import type { Book } from '../types';
-import { downloadBooks, uploadBooks, checkFileRevision } from '../services/dropbox';
+import type { BooksProvider } from '../services/booksProvider';
 import { formatDuration } from '../utils/formatting';
 import { normalizeTitle } from '../utils/books';
 import { checkDuplicateTitle } from '../utils/validation';
@@ -184,7 +184,7 @@ import DetailsDrawer from './DetailsDrawer.vue';
 import EditForm from './EditForm.vue';
 import BookFilters from './BookFilters.vue';
 
-const props = defineProps(['filesChanged']);
+const props = defineProps<{ booksProvider: BooksProvider; filesChanged?: boolean }>();
 const emit = defineEmits(['logout', 'files-refreshed']);
 
 const books = ref<Book[]>([]);
@@ -301,12 +301,12 @@ const closeForm = () => {
 };
 
 const loadBooksFromDropbox = async () => {
-  books.value = await downloadBooks();
+  books.value = await props.booksProvider.downloadBooks();
 };
 
 const checkRevisionBeforeOperation = async (operationName: string) => {
   try {
-    const revisionChanged = await checkFileRevision();
+    const revisionChanged = await props.booksProvider.checkFileRevision();
     if (revisionChanged) {
       console.log(`[Books] ${operationName} aborted: file revision changed, reloading`);
       await loadBooksFromDropbox();
@@ -340,7 +340,7 @@ const deleteBook = async (book: Book) => {
     books.value = books.value.filter((b) => b._key !== book._key);
 
     // Upload to Dropbox
-    await uploadBooks(books.value);
+    await props.booksProvider.uploadBooks(books.value);
 
     // Show delete toast with undo button
     successMessage.value = 'deleted';
@@ -373,7 +373,7 @@ const undoDelete = async () => {
     books.value.push(undoData.value.book);
 
     // Upload to Dropbox
-    await uploadBooks(books.value);
+    await props.booksProvider.uploadBooks(books.value);
 
     // Clear undo
     if (undoTimeout.value) {
@@ -398,11 +398,7 @@ const handleEditSave = async (editedBook: any) => {
     return;
   }
 
-  const duplicateCheck = checkDuplicateTitle(
-    editedBook.title,
-    books.value,
-    selectedBook.value?._key
-  );
+  const duplicateCheck = checkDuplicateTitle(editedBook.title, books.value, selectedBook.value?._key);
   if (duplicateCheck.isDuplicate) {
     error.value = duplicateCheck.error;
     isSaving.value = false;
@@ -440,7 +436,7 @@ const handleEditSave = async (editedBook: any) => {
     }
 
     // Upload to Dropbox
-    await uploadBooks(newBooks);
+    await props.booksProvider.uploadBooks(newBooks);
 
     // Update local state only after successful upload
     books.value = newBooks;
@@ -480,6 +476,7 @@ onMounted(async () => {
     await loadBooksFromDropbox();
     restoreFormFromHash();
   } catch (err: any) {
+    console.error(err);
     error.value = err.message || 'Failed to load books';
   } finally {
     loading.value = false;

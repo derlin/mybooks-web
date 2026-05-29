@@ -35,11 +35,11 @@
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
+      "@/*": ["./src/*"]
     },
 
-    "types": ["jest", "node", "vite/client"],
+    "types": ["jest", "node", "vite/client"]
   },
   "include": ["src/**/*"],
-  "references": [{ "path": "./tsconfig.node.json" }],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

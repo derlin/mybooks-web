@@ -22,8 +22,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { getAuthUrl, exchangeCodeForToken } from '../services/dropbox';
+import type { IDropboxService } from '../services/dropboxService';
 
+const props = defineProps<{ dropboxService: IDropboxService }>();
 const emit = defineEmits(['authenticate']);
 const loading = ref(false);
 const error = ref<string | null>(null);
@@ -33,7 +34,7 @@ const authenticate = async () => {
   error.value = null;
 
   try {
-    const authUrl = await getAuthUrl();
+    const authUrl = await props.dropboxService.getAuthUrl();
     const width = 500;
     const height = 600;
     const left = (window.innerWidth - width) / 2;
@@ -67,6 +68,7 @@ const authenticate = async () => {
       }
     }, 500);
   } catch (err: any) {
+    console.error(err);
     error.value = err.message || 'Failed to initialize authentication';
     loading.value = false;
   }
@@ -74,9 +76,10 @@ const authenticate = async () => {
 
 const handleAuthCode = async (code: string) => {
   try {
-    const token = await exchangeCodeForToken(code);
-    emit('authenticate', token);
+    await props.dropboxService.exchangeCodeForToken(code);
+    emit('authenticate');
   } catch (err: any) {
+    console.error(err);
     error.value = err.message || 'Authentication failed';
     loading.value = false;
   }
