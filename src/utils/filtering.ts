@@ -40,7 +40,6 @@ export const applySearchFilter = (books: Book[], query: string, searchField: str
         return b.date?.toLowerCase().includes(q);
       case 'notes':
         return b.notes?.toLowerCase().includes(q);
-      case 'anything':
       default:
         return (
           b.title?.toLowerCase().includes(q) ||
@@ -59,8 +58,8 @@ export const sortBooks = (books: Book[], columnId: string | null, descending: bo
     if (columnId === 'date') {
       const aDigits = extractDateNumbers(a.date);
       const bDigits = extractDateNumbers(b.date);
-      const aNum = parseInt(aDigits) || 0;
-      const bNum = parseInt(bDigits) || 0;
+      const aNum = parseInt(aDigits, 10) || 0;
+      const bNum = parseInt(bDigits, 10) || 0;
 
       if (aNum !== bNum) {
         return descending ? bNum - aNum : aNum - bNum;

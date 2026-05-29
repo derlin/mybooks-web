@@ -2,7 +2,11 @@
   <div class="app">
     <AuthCallback v-if="isAuthCallback" />
     <div v-else-if="isLoading" class="loading">Loading...</div>
-    <AuthScreen v-else-if="!isAuthenticated" :dropbox-service="dropboxService" @authenticate="handleAuth" />
+    <AuthScreen
+      v-else-if="!isAuthenticated"
+      :dropbox-service="dropboxService"
+      @authenticate="handleAuth"
+    />
     <BookList
       v-else
       :books-provider="booksProvider"
@@ -14,12 +18,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import AuthScreen from './components/AuthScreen.vue';
-import BookList from './components/BookList.vue';
-import AuthCallback from './components/AuthCallback.vue';
-import { DropboxService } from './services/dropboxService';
-import { BooksProvider } from './services/booksProvider';
+import { onMounted, ref } from "vue";
+import AuthCallback from "./components/AuthCallback.vue";
+import AuthScreen from "./components/AuthScreen.vue";
+import BookList from "./components/BookList.vue";
+import { BooksProvider } from "./services/booksProvider";
+import { DropboxService } from "./services/dropboxService";
 
 const isAuthenticated = ref(false);
 const isAuthCallback = ref(false);
@@ -29,28 +33,31 @@ const dropboxService = new DropboxService();
 const booksProvider = new BooksProvider(dropboxService);
 
 const handleVisibilityChange = async () => {
-  if (document.visibilityState === 'visible' && isAuthenticated.value) {
+  if (document.visibilityState === "visible" && isAuthenticated.value) {
     try {
       const revisionChanged = await booksProvider.checkFileRevision();
       if (revisionChanged) {
         filesChanged.value = true;
       }
     } catch (err) {
-      console.error('Error checking file revision:', err);
+      console.error("Error checking file revision:", err);
     }
   }
 };
 
 onMounted(async () => {
-  document.addEventListener('visibilitychange', handleVisibilityChange);
+  document.addEventListener("visibilitychange", handleVisibilityChange);
 
-  if (window.location.pathname.endsWith('/auth-callback.html') && window.location.search.includes('code=')) {
+  if (
+    window.location.pathname.endsWith("/auth-callback.html") &&
+    window.location.search.includes("code=")
+  ) {
     isAuthCallback.value = true;
   } else {
     try {
       isAuthenticated.value = await dropboxService.tryLogin();
     } catch (err) {
-      console.error('Failed to login to dropbox:', err);
+      console.error("Failed to login to dropbox:", err);
       handleLogout();
       return;
     }

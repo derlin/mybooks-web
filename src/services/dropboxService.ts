@@ -1,5 +1,4 @@
 import { Dropbox, DropboxAuth } from 'dropbox';
-import type { Book } from '../types';
 import * as env from '../env';
 import { Storage } from '../utils/storage';
 
@@ -87,6 +86,7 @@ export class DropboxService implements IDropboxService {
       this.storeTokens(access_token, auth.refreshToken, expiresIn);
       this.initDbx(access_token);
     } catch (err: any) {
+      console.log('[Dropbox] Refreshing token failed', err);
       this.storage.clear(STORAGE_KEY_DROPBOX_AUTH);
       throw new Error('Failed to refresh token');
     }
@@ -105,12 +105,8 @@ export class DropboxService implements IDropboxService {
   }
 
   private async handleDropboxError<T>(retryFn: () => Promise<T>): Promise<T> {
-    try {
-      await this.refreshAccessToken();
-      return await retryFn();
-    } catch (err: any) {
-      throw err;
-    }
+    await this.refreshAccessToken();
+    return await retryFn();
   }
 
   async tryLogin(): Promise<boolean> {
@@ -121,6 +117,7 @@ export class DropboxService implements IDropboxService {
       this.initDbx(storedAuth.accessToken);
       return true;
     } catch (err) {
+      console.log('[Dropbox] login failed', err);
       return false;
     }
   }

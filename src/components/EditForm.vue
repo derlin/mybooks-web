@@ -173,19 +173,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, toRefs, onMounted, onUnmounted } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, toRefs, watch } from 'vue';
+import type { GoodreadsMetadata } from '../services/goodreads';
 import type { Book, BookMeta } from '../types';
+import { Storage } from '../utils/storage';
 import {
-  getTodayDate,
-  formatDateString,
   durationToMinutes,
-  minutesToDuration,
+  formatDateString,
   getFilteredAuthors,
+  getTodayDate,
+  minutesToDuration,
   validateDuration,
 } from '../utils/validation';
-import { Storage } from '../utils/storage';
 import GoodreadsModal from './GoodreadsModal.vue';
-import { GoodreadsMetadata } from '../services/goodreads';
 
 const storage = new Storage({ silentFail: true });
 

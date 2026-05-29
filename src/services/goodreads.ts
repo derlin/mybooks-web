@@ -77,7 +77,7 @@ export async function fetchBookMetadata(url: string): Promise<GoodreadsMetadata>
         Referer: 'https://www.goodreads.com/',
       },
     });
-  } catch (err: any) {
+  } catch (_err: any) {
     throw new Error('Failed to fetch Goodreads page. Check your internet connection.');
   }
 
@@ -88,7 +88,7 @@ export async function fetchBookMetadata(url: string): Promise<GoodreadsMetadata>
   let html: string;
   try {
     html = await response.text();
-  } catch (err: any) {
+  } catch (_err: any) {
     throw new Error('Failed to read page content');
   }
 
@@ -101,6 +101,7 @@ export async function fetchBookMetadata(url: string): Promise<GoodreadsMetadata>
   try {
     jsonLd = JSON.parse(jsonLdMatch[1]);
   } catch (err: any) {
+    console.log('[Goodreads] Failed to parse JSON-LD metadata:', err, 'Raw JSON-LD:', jsonLdMatch[1]);
     throw new Error('Failed to parse book metadata from the page');
   }
 

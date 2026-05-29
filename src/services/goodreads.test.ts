@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { validateUrl, fetchBookMetadata } from './goodreads';
+import { fetchBookMetadata, validateUrl } from './goodreads';
 
 // Save the real fetch before any mocking
 const realFetch = global.fetch;
@@ -293,7 +293,7 @@ describe('Goodreads Service', () => {
 
       const callArgs = global.fetch.mock.calls[0];
       expect(callArgs[1].headers['User-Agent']).toContain('Mozilla');
-      expect(callArgs[1].headers['Referer']).toBe('https://www.goodreads.com/');
+      expect(callArgs[1].headers.Referer).toBe('https://www.goodreads.com/');
     });
   });
 });

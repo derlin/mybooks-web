@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 export default function authCallbackPlugin() {
   return {
@@ -8,7 +8,7 @@ export default function authCallbackPlugin() {
     configureServer(server) {
       // In dev: serve /auth-callback.html the same as /
       return () => {
-        server.middlewares.use('/auth-callback.html', (req, res, next) => {
+        server.middlewares.use('/auth-callback.html', (req, _res, next) => {
           req.url = '/';
           next();
         });

@@ -32,8 +32,8 @@ export const validateDuration = (duration: string): ValidationResult => {
     };
   }
 
-  const hours = parseInt(match[1]);
-  const minutes = match[2] ? parseInt(match[2]) : 0;
+  const hours = parseInt(match[1], 10);
+  const minutes = match[2] ? parseInt(match[2], 10) : 0;
 
   if (minutes > 59) {
     return {
@@ -54,8 +54,8 @@ export const durationToMinutes = (durationStr: string | null | undefined): numbe
   const match = durationStr.match(DURATION_REGEX);
   if (!match) return null;
 
-  const hours = parseInt(match[1]);
-  const minutes = match[2] ? parseInt(match[2]) : 0;
+  const hours = parseInt(match[1], 10);
+  const minutes = match[2] ? parseInt(match[2], 10) : 0;
 
   return hours * 60 + minutes;
 };
@@ -70,7 +70,7 @@ export const minutesToDuration = (minutes: number | null | undefined): string =>
 };
 
 export const formatDateString = (dateStr: string): string => {
-  let date = dateStr.trim();
+  const date = dateStr.trim();
   if (!date) return '';
 
   if (date === '?') return date;

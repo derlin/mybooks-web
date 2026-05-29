@@ -1,7 +1,8 @@
 // @ts-nocheck
+
+import type { Book } from '../types';
 import { BooksProvider } from './booksProvider';
 import type { IDropboxService } from './dropboxService';
-import type { Book } from '../types';
 
 describe('BooksProvider', () => {
   let mockDropboxService: jest.Mocked<IDropboxService>;

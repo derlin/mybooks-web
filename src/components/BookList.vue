@@ -173,16 +173,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
-import type { Book } from '../types';
+import { computed, onMounted, ref, watch } from 'vue';
 import type { BooksProvider } from '../services/booksProvider';
-import { formatDuration } from '../utils/formatting';
+import type { Book } from '../types';
 import { normalizeTitle } from '../utils/books';
-import { checkDuplicateTitle } from '../utils/validation';
 import { filterAndSort } from '../utils/filtering';
+import { formatDuration } from '../utils/formatting';
+import { checkDuplicateTitle } from '../utils/validation';
+import BookFilters from './BookFilters.vue';
 import DetailsDrawer from './DetailsDrawer.vue';
 import EditForm from './EditForm.vue';
-import BookFilters from './BookFilters.vue';
 
 const props = defineProps<{ booksProvider: BooksProvider; filesChanged?: boolean }>();
 const emit = defineEmits(['logout', 'files-refreshed']);
