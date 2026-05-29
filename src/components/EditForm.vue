@@ -3,7 +3,7 @@
     <div class="form-header">
       <div class="form-header-title">
         <img src="@/assets/logo.svg" alt="MyBooks" class="logo logo-header" />
-        <h1>{{ isNewBook ? 'Add' : 'Edit' }}</h1>
+        <h1>{{ !book ? 'Add' : 'Edit' }}</h1>
       </div>
       <div class="form-header-actions">
         <button class="goodreads-btn" @click="goodreadsModalOpen = true" title="Import metadata from Goodreads">
@@ -197,7 +197,6 @@ type DraftNotes = {
 const props = defineProps<{
   book: Book | null;
   allBooks: Book[];
-  isNewBook: boolean;
   errorMessage?: string | null;
   isSaving: boolean;
 }>();
@@ -259,7 +258,7 @@ const notesSaveTimeout = ref<NodeJS.Timeout | null>(null);
 const NOTES_AUTO_SAVE_KEY = 'mybooks_editform_draft';
 
 const getCurrentHash = (): string => {
-  return props.isNewBook ? 'new' : props.book!._key;
+  return props.book?._key ?? 'new';
 };
 
 const filteredAuthors = computed(() => {
@@ -393,9 +392,9 @@ const save = () => {
 };
 
 watch(
-  () => [props.book, props.isNewBook],
+  () => props.book,
   () => {
-    formData.value = newFormData(!props.isNewBook && props.book ? props.book : undefined);
+    formData.value = newFormData(props.book || undefined);
     originalData.value = JSON.parse(JSON.stringify(formData.value));
     durationError.value = null;
     autoGrowTextarea();

@@ -162,9 +162,8 @@
 
   <EditForm
     v-else
-    :key="`${selectedBook?._key}-${isNewBook}`"
+    :key="selectedBook?._key || 'new'"
     :book="selectedBook"
-    :isNewBook="isNewBook"
     :allBooks="books"
     :errorMessage="error"
     :isSaving="isSaving"
@@ -200,7 +199,6 @@ const sorting = ref([{ id: 'date', desc: true }]);
 const selectedBook = ref<Book | null>(null);
 const drawerOpen = ref(false);
 const editFormOpen = ref(false);
-const isNewBook = ref(false);
 const successMessage = ref<string | null>(null);
 const undoData = ref<{ key: string; book: Book } | null>(null);
 const undoTimeout = ref<NodeJS.Timeout | null>(null);
@@ -286,14 +284,12 @@ const openDrawer = (book: Book) => {
 
 const openEditForm = (book: Book) => {
   selectedBook.value = book;
-  isNewBook.value = false;
   editFormOpen.value = true;
   setFormHash('edit', book._key);
 };
 
 const openNewBook = () => {
   selectedBook.value = null;
-  isNewBook.value = true;
   editFormOpen.value = true;
   setFormHash('new');
 };
@@ -396,6 +392,7 @@ const undoDelete = async () => {
 };
 
 const handleEditSave = async (editedBook: any) => {
+  const isNew = !selectedBook.value;
   if (!(await checkRevisionBeforeOperation('save'))) {
     isSaving.value = false;
     return;
@@ -404,7 +401,7 @@ const handleEditSave = async (editedBook: any) => {
   const duplicateCheck = checkDuplicateTitle(
     editedBook.title,
     books.value,
-    isNewBook.value ? undefined : selectedBook.value?._key
+    selectedBook.value?._key
   );
   if (duplicateCheck.isDuplicate) {
     error.value = duplicateCheck.error;
@@ -414,7 +411,7 @@ const handleEditSave = async (editedBook: any) => {
 
   isSaving.value = true;
   try {
-    const newKey = isNewBook.value ? normalizeTitle(editedBook.title) : selectedBook.value!._key;
+    const newKey = isNew ? normalizeTitle(editedBook.title) : selectedBook.value!._key;
 
     const bookToSave: Book = {
       title: editedBook.title,
@@ -428,7 +425,7 @@ const handleEditSave = async (editedBook: any) => {
 
     // Build new books array
     let newBooks: Book[];
-    if (isNewBook.value) {
+    if (isNew) {
       // New book: add to array
       newBooks = [...books.value, bookToSave];
     } else {
@@ -449,7 +446,7 @@ const handleEditSave = async (editedBook: any) => {
     books.value = newBooks;
     selectedBook.value = bookToSave;
     error.value = null;
-    successMessage.value = isNewBook.value ? 'Book added successfully' : 'Book saved successfully';
+    successMessage.value = isNew ? 'Book added successfully' : 'Book saved successfully';
     closeForm();
     dismissMessageAfter(3000);
   } catch (err: any) {
