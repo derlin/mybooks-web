@@ -1,12 +1,18 @@
 import { Dropbox, DropboxAuth } from 'dropbox';
 import type { Book } from '../types';
 import * as env from '../env';
+import { Storage } from '../utils/storage';
 
 type DropboxTokenAuth = {
   accessToken: string;
   refreshToken: string;
   expiresAt: number;
 };
+
+const STORAGE_KEY_DROPBOX_AUTH = 'dropbox_auth';
+const STORAGE_KEY_DROPBOX_FILE_REV = 'dropbox_file_rev';
+
+const storage = new Storage();
 
 let _dbx: Dropbox | null = null;
 
@@ -70,27 +76,23 @@ export async function getAuthUrl(): Promise<string> {
 
 function storeTokens(accessToken: string, refreshToken: string, expiresIn: number): void {
   const expiresAt = Date.now() + expiresIn * 1000;
-  localStorage.setItem(
-    'dropbox_auth',
-    JSON.stringify({
-      accessToken,
-      refreshToken,
-      expiresAt,
-    })
-  );
+  storage.saveJson(STORAGE_KEY_DROPBOX_AUTH, {
+    accessToken,
+    refreshToken,
+    expiresAt,
+  });
 }
 
 function storeFileRevision(rev: string): void {
-  localStorage.setItem('dropbox_file_rev', rev);
+  storage.save(STORAGE_KEY_DROPBOX_FILE_REV, rev);
 }
 
 export function getStoredFileRevision(): string | null {
-  return localStorage.getItem('dropbox_file_rev');
+  return storage.load(STORAGE_KEY_DROPBOX_FILE_REV);
 }
 
 export function getStoredAuth(): DropboxTokenAuth | null {
-  const auth = localStorage.getItem('dropbox_auth');
-  return auth ? JSON.parse(auth) : null;
+  return storage.loadJson(STORAGE_KEY_DROPBOX_AUTH);
 }
 
 export function isTokenExpired(): boolean {
@@ -140,7 +142,7 @@ export async function refreshAccessToken(): Promise<string> {
     initDropbox(access_token);
     return access_token;
   } catch (err: any) {
-    localStorage.removeItem('dropbox_auth');
+    storage.clear(STORAGE_KEY_DROPBOX_AUTH);
     throw new Error('Failed to refresh token');
   }
 }

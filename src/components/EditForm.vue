@@ -183,9 +183,16 @@ import {
   getFilteredAuthors,
   validateDuration,
 } from '../utils/validation';
-import { safeGetItem, safeSetItem, safeRemoveItem } from '../utils/storage';
+import { Storage } from '../utils/storage';
 import GoodreadsModal from './GoodreadsModal.vue';
 import { GoodreadsMetadata } from '../services/goodreads';
+
+const storage = new Storage({ silentFail: true });
+
+type DraftNotes = {
+  hash: string;
+  notes: string;
+};
 
 const props = defineProps<{
   book: Book | null;
@@ -251,8 +258,8 @@ const notesSaveTimeout = ref<NodeJS.Timeout | null>(null);
 
 const NOTES_AUTO_SAVE_KEY = 'mybooks_editform_draft';
 
-const getCurrentHash = () => {
-  return props.isNewBook ? 'new' : props.book?._key;
+const getCurrentHash = (): string => {
+  return props.isNewBook ? 'new' : props.book!._key;
 };
 
 const filteredAuthors = computed(() => {
@@ -322,22 +329,22 @@ const handleKeyDown = (e: KeyboardEvent) => {
 };
 
 const saveNotesToLocalStorage = () => {
-  const draft = {
+  const draft: DraftNotes = {
     hash: getCurrentHash(),
     notes: formData.value.notes,
   };
-  safeSetItem(NOTES_AUTO_SAVE_KEY, draft);
+  storage.saveJson(NOTES_AUTO_SAVE_KEY, draft);
 };
 
 const restoreNotesFromLocalStorage = () => {
-  const draft: any = safeGetItem(NOTES_AUTO_SAVE_KEY);
+  const draft = storage.loadJson<DraftNotes>(NOTES_AUTO_SAVE_KEY);
   if (draft && !formData.value.notes && draft.hash === getCurrentHash()) {
     formData.value.notes = draft.notes;
   }
 };
 
 const clearNotesFromLocalStorage = () => {
-  safeRemoveItem(NOTES_AUTO_SAVE_KEY);
+  storage.clear(NOTES_AUTO_SAVE_KEY);
 };
 
 const debounceAutoSaveNotes = () => {
