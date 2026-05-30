@@ -72,6 +72,7 @@ const submit = async () => {
     url.value = '';
     error.value = null;
   } catch (err: any) {
+    console.error("[Goodreads] Failed to read metadata", err);
     error.value = err.message;
   } finally {
     loading.value = false;

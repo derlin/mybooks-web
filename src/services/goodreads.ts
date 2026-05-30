@@ -11,7 +11,7 @@ export type GoodreadsMetadata = {
   pubDate?: string | null;
 };
 
-export function validateUrl(url: string): boolean {
+function validateUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
     return parsed.hostname.includes('goodreads.com') && parsed.pathname.includes('/book/show/');
@@ -54,16 +54,7 @@ function extractPublicationDate(html: string): string | null {
   return `${year}-${month}-${String(day).padStart(2, '0')}`;
 }
 
-export async function fetchBookMetadata(url: string): Promise<GoodreadsMetadata> {
-  if (!validateUrl(url)) {
-    throw new Error('Invalid Goodreads URL. Please use a book detail page URL (e.g., goodreads.com/book/show/*)');
-  }
-
-  const goodreadsId = extractGoodreadsId(url);
-  if (!goodreadsId) {
-    throw new Error('Could not extract Goodreads ID from URL');
-  }
-
+async function fetchPageContent(url: string): Promise<string> {
   const encodedUrl = encodeURIComponent(url);
 
   let response: Response;
@@ -85,25 +76,39 @@ export async function fetchBookMetadata(url: string): Promise<GoodreadsMetadata>
     throw new Error(`Failed to fetch page: ${response.status} ${response.statusText}`);
   }
 
-  let html: string;
   try {
-    html = await response.text();
+    return await response.text();
   } catch (_err: any) {
     throw new Error('Failed to read page content');
   }
+}
 
+function extractJsonLd(html: string): any {
   const jsonLdMatch = html.match(/<script type="application\/ld\+json">({.*?})<\/script>/s);
   if (!jsonLdMatch) {
     throw new Error('No book metadata found on this page. Ensure it is a valid Goodreads book detail page.');
   }
 
-  let jsonLd: any;
   try {
-    jsonLd = JSON.parse(jsonLdMatch[1]);
+    return JSON.parse(jsonLdMatch[1]);
   } catch (err: any) {
     console.log('[Goodreads] Failed to parse JSON-LD metadata:', err, 'Raw JSON-LD:', jsonLdMatch[1]);
     throw new Error('Failed to parse book metadata from the page');
   }
+}
+
+export async function fetchBookMetadata(url: string): Promise<GoodreadsMetadata> {
+  if (!validateUrl(url)) {
+    throw new Error('Invalid Goodreads URL. Please use a book detail page URL (e.g., goodreads.com/book/show/*)');
+  }
+
+  const goodreadsId = extractGoodreadsId(url);
+  if (!goodreadsId) {
+    throw new Error('Could not extract Goodreads ID from URL');
+  }
+
+  const html = await fetchPageContent(url);
+  const jsonLd = extractJsonLd(html);
 
   if (!jsonLd.name || !jsonLd.author) {
     throw new Error('Missing required metadata (title or author) on this page');
@@ -128,3 +133,9 @@ export async function fetchBookMetadata(url: string): Promise<GoodreadsMetadata>
     pubDate,
   };
 }
+
+export const __test__ = {
+  validateUrl,
+  fetchPageContent,
+  extractJsonLd,
+};
