@@ -29,8 +29,9 @@
           </div>
         </div>
 
-        <div v-if="book.meta?.GoodreadsID" class="actions-section">
-          <button class="goodreads-link-btn" @click="openGoodreadsLink">↗ View on Goodreads</button>
+        <div class="actions-section">
+          <button class="google-search-btn" @click="openGoogleSearch">🔍 Google</button>
+          <button v-if="book.meta?.GoodreadsID" class="goodreads-link-btn" @click="openGoodreadsLink">↗ Goodreads</button>
         </div>
 
         <div class="notes-section">
@@ -73,6 +74,7 @@
 import { computed, ref, watch } from 'vue';
 import { useDrag } from '../composables/useDrag';
 import { formatDate, formatDuration } from '../utils/formatting';
+import { googleUrlFor } from '../utils/books';
 
 const props = defineProps({
   book: {
@@ -114,6 +116,11 @@ const openGoodreadsLink = () => {
     const url = `https://www.goodreads.com/book/show/${props.book.meta.GoodreadsID}`;
     window.open(url, '_blank');
   }
+};
+
+const openGoogleSearch = () => {
+  const url = googleUrlFor(props.book);
+  window.open(url, '_blank');
 };
 
 const close = () => {
@@ -219,6 +226,8 @@ const close = () => {
 .actions-section {
   margin-bottom: 2rem;
   flex-shrink: 0;
+  display: flex;
+  gap: 0.5rem;
 }
 
 .info-prose {
@@ -409,9 +418,9 @@ const close = () => {
   color: var(--bg-primary);
 }
 
-.goodreads-link-btn {
-  width: 100%;
-  padding: 0.75rem;
+.google-search-btn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
   background-color: transparent;
   color: var(--accent-secondary);
   border: 1px solid var(--accent-secondary);
@@ -419,6 +428,25 @@ const close = () => {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
+  font-size: 0.9rem;
+}
+
+.google-search-btn:hover {
+  background-color: var(--accent-secondary);
+  color: var(--bg-primary);
+}
+
+.goodreads-link-btn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background-color: transparent;
+  color: var(--accent-secondary);
+  border: 1px solid var(--accent-secondary);
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 0.9rem;
 }
 
 .goodreads-link-btn:hover {
