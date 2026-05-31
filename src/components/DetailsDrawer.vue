@@ -25,6 +25,7 @@
             <span v-if="book.meta?.duration" class="pill">
               {{ formatDuration(book.meta.duration) }}
             </span>
+            <span v-if="book.meta?.ISBN" class="pill isbn-pill" @click="copyISBN" title="Click to copy">ISBN: {{ book.meta.ISBN }}</span>
             <span v-if="book.dnf" class="pill dnf">DNF</span>
           </div>
         </div>
@@ -36,27 +37,13 @@
 
         <div class="notes-section">
           <h3>Notes</h3>
-          <div class="notes-content">
-            {{ book.notes || '(no notes)' }}
+          <div class="notes-wrapper">
+            <div class="notes-content">
+              {{ book.notes || '(no notes)' }}
+            </div>
           </div>
         </div>
 
-        <div v-if="hasMetadata" class="metadata-section">
-          <button class="collapsible-header" @click="metaOpen = !metaOpen">
-            <span>Metadata</span>
-            <span class="toggle-icon">{{ metaOpen ? '▼' : '▶' }}</span>
-          </button>
-          <div v-show="metaOpen" class="metadata-content">
-            <div v-if="book.meta?.GoodreadsID" class="meta-row">
-              <span class="label">Goodreads ID:</span>
-              <span class="value">{{ book.meta.GoodreadsID }}</span>
-            </div>
-            <div v-if="book.meta?.ISBN" class="meta-row">
-              <span class="label">ISBN:</span>
-              <span class="value">{{ book.meta.ISBN }}</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div class="drawer-footer">
@@ -84,7 +71,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['close', 'edit', 'delete']);
 
-const metaOpen = ref(false);
 
 const { dragOffset, handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(() => close(), 70);
 
@@ -97,13 +83,8 @@ watch(
   }
 );
 
-const hasMetadata = computed(() => {
-  const meta = props.book.meta;
-  return meta && (meta.GoodreadsID || meta.ISBN);
-});
-
 const hasAttributes = computed(() => {
-  return props.book.meta?.pages || props.book.meta?.duration || props.book.dnf;
+  return props.book.meta?.pages || props.book.meta?.duration || props.book.meta?.ISBN || props.book.dnf;
 });
 
 const openGoodreadsLink = () => {
@@ -116,6 +97,12 @@ const openGoodreadsLink = () => {
 const openGoogleSearch = () => {
   const url = googleUrlFor(props.book);
   window.open(url, '_blank');
+};
+
+const copyISBN = async () => {
+  if (props.book.meta?.ISBN) {
+    await navigator.clipboard.writeText(props.book.meta.ISBN);
+  }
 };
 
 const close = () => {
@@ -149,7 +136,7 @@ const close = () => {
   top: 0;
   bottom: 0;
   right: 0;
-  width: 400px;
+  width: 500px;
   background-color: var(--bg-primary);
   border-left: 1px solid var(--border);
   display: flex;
@@ -207,19 +194,19 @@ const close = () => {
 
 .drawer-content {
   flex: 1;
-  padding: 1.5rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 
 .header-section {
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
   flex-shrink: 0;
 }
 
 .actions-section {
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
   flex-shrink: 0;
   display: flex;
   gap: 0.5rem;
@@ -261,11 +248,23 @@ const close = () => {
   color: var(--warning);
 }
 
+.pill.isbn-pill {
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.pill.isbn-pill:hover {
+  background-color: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+  color: var(--bg-primary);
+}
+
 .notes-section {
   display: flex;
   flex-direction: column;
   min-height: 0;
   margin-bottom: 1.5rem;
+  flex: 1;
 }
 
 .notes-section h3 {
@@ -275,79 +274,21 @@ const close = () => {
   flex-shrink: 0;
 }
 
+.notes-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
 .notes-content {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 1rem;
+  padding: 1rem 0.5rem;
   color: var(--text-primary);
-  line-height: 1.6;
+  line-height: 1.3;
   white-space: pre-wrap;
   word-wrap: break-word;
-  overflow-y: auto;
-  font-size: 0.9rem;
-  max-height: 60vh;
-}
-
-.metadata-section {
-  margin-bottom: 1rem;
-  flex-shrink: 0;
-}
-
-.collapsible-header {
-  width: 100%;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 1rem;
-  color: var(--accent-primary);
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: background-color 0.15s;
-}
-
-.collapsible-header:hover {
-  background-color: var(--bg-secondary);
-}
-
-.toggle-icon {
-  font-size: 0.75rem;
-  opacity: 0.7;
-}
-
-.metadata-content {
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-top: none;
-  border-radius: 0 0 4px 4px;
-  padding: 1rem;
-}
-
-.metadata-content .meta-row {
-  margin-bottom: 0.5rem;
-}
-
-.meta-row {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-  align-items: flex-start;
-}
-
-.label {
-  color: var(--text-secondary);
-  font-weight: 500;
-  min-width: 120px;
-  flex-shrink: 0;
-}
-
-.value {
-  color: var(--text-primary);
-  word-break: break-word;
-  flex: 1;
 }
 
 .drawer-footer {
