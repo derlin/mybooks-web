@@ -56,15 +56,13 @@ Must match `normalizeTitle()` in BookTable.vue exactly.
 - Before save/delete: check revision. If changed, reload books and block operation with error message
 - Prevents data loss from concurrent edits across tabs without manual conflict resolution
 
-## Code Style
+## Utilities
 
-Format with Prettier (run `npm run format` after edits). Key rules:
+After any change, ensure format, lint and test still work:
 
-- 2 spaces, no tabs
-- Single quotes
-- Semicolons
-- Trailing commas in ES5
-- 120 char line length
+- Format with biome -> `biome.json`
+- Test with jest -> `npm run test`
+- Lint with biome -> `npm run lint`
 
 ## Known Issues
 

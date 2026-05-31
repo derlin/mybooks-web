@@ -1,19 +1,4 @@
 <template>
-  <div
-    v-if="successMessage"
-    class="toast-notification"
-    :class="{
-      success: successMessage !== 'deleted',
-      delete: successMessage === 'deleted',
-    }"
-  >
-    <span v-if="successMessage === 'deleted'">
-      Book deleted
-      <button v-if="pendingUndo" class="undo-btn" @click="undoDelete">Undo</button>
-    </span>
-    <span v-else>{{ successMessage }}</span>
-  </div>
-
   <div v-if="!isEditFormOpen" class="book-list-container">
     <div class="header">
       <img src="@/assets/logo.svg" alt="MyBooks" class="logo logo-header" />
@@ -205,8 +190,6 @@ const {
   currentSort,
   selectedBook,
   isEditFormOpen,
-  successMessage,
-  pendingUndo,
   isSaving,
   filteredAndSortedBooks,
   toggleSort,
@@ -214,7 +197,6 @@ const {
   openNewBook,
   closeForm,
   deleteBook,
-  undoDelete,
   handleEditSave,
   init,
 } = useBookManager(props.booksProvider, computed(() => props.filesChanged));
@@ -499,60 +481,6 @@ h1 {
   margin: 0 0.4rem;
 }
 
-.toast-notification {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 1rem 1.5rem;
-  border-radius: 4px;
-  font-weight: 500;
-  z-index: 300;
-  animation: slideDown 0.3s ease-out;
-  max-width: 90%;
-}
-
-@keyframes slideDown {
-  from {
-    transform: translateX(-50%) translateY(-100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
-  }
-}
-
-.toast-notification.success {
-  background-color: rgba(81, 207, 102, 0.9);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(81, 207, 102, 0.3);
-}
-
-.toast-notification.delete {
-  background-color: rgba(255, 107, 107, 0.9);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.undo-btn {
-  background-color: rgba(255, 255, 255, 0.2);
-  border: 1px solid #fff;
-  color: #fff;
-  padding: 0.4rem 0.8rem;
-  border-radius: 3px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.85rem;
-  transition: background-color 0.15s;
-}
-
-.undo-btn:hover {
-  background-color: rgba(255, 255, 255, 0.3);
-}
 
 @media (max-width: 768px) {
   .controls {

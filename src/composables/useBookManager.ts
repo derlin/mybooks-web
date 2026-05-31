@@ -5,8 +5,11 @@ import { normalizeTitle } from '../utils/books';
 import type { FilterState } from '../utils/filtering';
 import { DEFAULT_AUDIOBOOK_FILTER, DEFAULT_DNF_FILTER, DEFAULT_SEARCH_FIELD, filterAndSort } from '../utils/filtering';
 import { checkDuplicateTitle } from '../utils/validation';
+import { useToast } from './useToast';
 
 export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Ref<boolean>) {
+  const toast = useToast();
+
   // Data state
   const books = ref<Book[]>([]);
   const loading = ref(true);
@@ -20,8 +23,7 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
   const currentSort = ref({ id: 'date', desc: true });
   const selectedBook = ref<Book | null>(null);
   const isEditFormOpen = ref(false);
-  const successMessage = ref<string | null>(null);
-  const pendingUndo = ref<{ book: Book; timeoutId: NodeJS.Timeout } | null>(null);
+  const pendingUndo = ref<Book | null>(null);
   const isSaving = ref(false);
 
   // Computed
@@ -37,11 +39,6 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
   });
 
   // Methods
-  const dismissMessageAfter = (ms = 3000) => {
-    setTimeout(() => {
-      successMessage.value = null;
-    }, ms);
-  };
 
   const toggleSort = (columnId: string) => {
     if (currentSort.value.id === columnId) {
@@ -130,25 +127,22 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
       // Upload to Dropbox
       await booksProvider.uploadBooks(books.value);
 
-      // Show delete toast with undo button
-      successMessage.value = 'deleted';
+      // Store for potential undo
+      pendingUndo.value = deletedBook;
 
-      // Clear any existing undo timeout
-      if (pendingUndo.value) {
-        clearTimeout(pendingUndo.value.timeoutId);
-      }
-
-      // Auto-dismiss after 5 seconds if not manually undone
-      const timeoutId = setTimeout(() => {
-        pendingUndo.value = null;
-        successMessage.value = null;
-      }, 5000);
-
-      pendingUndo.value = { book: deletedBook, timeoutId };
+      // Show delete toast with undo action
+      toast.showSuccess(
+        'Book deleted',
+        {
+          label: 'Undo',
+          callback: undoDelete,
+        },
+        5000
+      );
     } catch (err: any) {
       // Restore local state on error
       if (pendingUndo.value) {
-        books.value.push(pendingUndo.value.book);
+        books.value.push(pendingUndo.value);
       }
       error.value = err.message || 'Failed to delete book';
       pendingUndo.value = null;
@@ -160,23 +154,18 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
 
     try {
       // Restore book to array
-      books.value.push(pendingUndo.value.book);
+      books.value.push(pendingUndo.value);
 
       // Upload to Dropbox
       await booksProvider.uploadBooks(books.value);
 
-      // Clear undo
-      clearTimeout(pendingUndo.value.timeoutId);
+      // Clear undo state
       pendingUndo.value = null;
-      successMessage.value = 'Book restored';
-
-      // Auto-dismiss after 3 seconds
-      dismissMessageAfter(3000);
+      toast.showSuccess('Book restored', undefined, 3000);
     } catch (err: any) {
       // Rollback on error
       if (pendingUndo.value) {
-        const restoredBook = pendingUndo.value.book;
-        books.value = books.value.filter((b) => b._key !== restoredBook._key);
+        books.value = books.value.filter((b) => b._key !== pendingUndo.value._key);
         error.value = err.message || 'Failed to restore book';
       }
     }
@@ -232,9 +221,8 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
       books.value = newBooks;
       selectedBook.value = bookToSave;
       error.value = null;
-      successMessage.value = editedBookKey ? 'Book saved successfully' : 'Book added successfully';
+      toast.showSuccess(editedBookKey ? 'Book saved successfully' : 'Book added successfully', undefined, 3000);
       closeForm();
-      dismissMessageAfter(3000);
     } catch (err: any) {
       error.value = err.message || 'Failed to save book';
     } finally {
@@ -251,8 +239,7 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
         try {
           await loadBooksFromDropbox();
           console.log(`[Books] Reloaded ${books.value.length} books from Dropbox`);
-          successMessage.value = 'Books updated from Dropbox';
-          dismissMessageAfter(3000);
+          toast.showSuccess('Books updated from Dropbox', undefined, 3000);
         } catch (err: any) {
           error.value = err.message || 'Failed to refresh books';
           console.error('[Books] Error reloading from Dropbox:', err);
@@ -283,15 +270,12 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
     currentSort,
     selectedBook,
     isEditFormOpen,
-    successMessage,
-    pendingUndo,
     isSaving,
 
     // Computed
     filteredAndSortedBooks,
 
     // Methods
-    dismissMessageAfter,
     toggleSort,
     openEditForm,
     openNewBook,

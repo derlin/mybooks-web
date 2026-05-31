@@ -61,6 +61,7 @@
 import { computed, ref, watch } from 'vue';
 import type { Book } from '../types';
 import { useDrag } from '../composables/useDrag';
+import { useToast } from '../composables/useToast';
 import { formatDate, formatDuration } from '../utils/formatting';
 import { googleUrlFor } from '../utils/books';
 
@@ -71,7 +72,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['close', 'edit', 'delete']);
 
-
+const { showInfo } = useToast();
 const { dragOffset, handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(() => close(), 70);
 
 watch(
@@ -102,6 +103,7 @@ const openGoogleSearch = () => {
 const copyISBN = async () => {
   if (props.book.meta?.ISBN) {
     await navigator.clipboard.writeText(props.book.meta.ISBN);
+    showInfo('ISBN copied to clipboard', undefined, 2000);
   }
 };
 

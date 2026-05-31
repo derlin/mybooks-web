@@ -1,5 +1,6 @@
 <template>
   <div class="app">
+    <ToastContainer />
     <AuthCallback v-if="isAuthCallback" />
     <div v-else-if="isLoading" class="loading">Loading...</div>
     <AuthScreen
@@ -22,8 +23,10 @@ import { onMounted, ref } from "vue";
 import AuthCallback from "./components/AuthCallback.vue";
 import AuthScreen from "./components/AuthScreen.vue";
 import BookPage from "./components/BookPage.vue";
+import ToastContainer from "./components/ToastContainer.vue";
 import { BooksProvider } from "./services/booksProvider";
 import { DropboxService } from "./services/dropboxService";
+import { createToastProvider } from "./composables/useToast";
 
 const isAuthenticated = ref(false);
 const isAuthCallback = ref(false);
@@ -31,6 +34,13 @@ const isLoading = ref(true);
 const filesChanged = ref(false);
 const dropboxService = new DropboxService();
 const booksProvider = new BooksProvider(dropboxService);
+
+const toastApi = createToastProvider();
+
+// Expose for testing in dev console
+if (import.meta.env.DEV) {
+  (window as any).__toast = toastApi;
+}
 
 const handleVisibilityChange = async () => {
   if (document.visibilityState === "visible" && isAuthenticated.value) {
