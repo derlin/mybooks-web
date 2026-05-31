@@ -1,29 +1,67 @@
 import type { Book } from '../types';
 
+export type DnfFilter = 'all' | 'dnf' | 'finished';
+export type AudiobookFilter = 'all' | 'audiobook' | 'paper';
+export type SearchField = 'anything' | 'title' | 'author' | 'title+author' | 'date' | 'notes';
+
+export type FilterState = {
+  query: string;
+  dnf: DnfFilter;
+  audiobook: AudiobookFilter;
+  searchField: SearchField;
+};
+
+export const DEFAULT_DNF_FILTER: DnfFilter = 'all';
+export const DEFAULT_AUDIOBOOK_FILTER: AudiobookFilter = 'all';
+export const DEFAULT_SEARCH_FIELD: SearchField = 'anything';
+
+export const DNF_FILTER_OPTIONS: { value: DnfFilter; label: string }[] = [
+  { value: 'all', label: 'All books' },
+  { value: 'dnf', label: 'Did not finish' },
+  { value: 'finished', label: 'Finished' },
+];
+
+export const AUDIOBOOK_FILTER_OPTIONS: { value: AudiobookFilter; label: string }[] = [
+  { value: 'all', label: 'All formats' },
+  { value: 'audiobook', label: 'Audiobooks' },
+  { value: 'paper', label: 'Paper books' },
+];
+
+export const SEARCH_FIELD_OPTIONS: { value: SearchField; label: string }[] = [
+  { value: 'anything', label: 'Anything' },
+  { value: 'title', label: 'Title' },
+  { value: 'author', label: 'Author' },
+  { value: 'title+author', label: 'Title + Author' },
+  { value: 'date', label: 'Date' },
+  { value: 'notes', label: 'Notes' },
+];
+
 export const extractDateNumbers = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '';
   return dateStr.replace(/\D/g, '');
 };
 
-export const applyDnfFilter = (books: Book[], dnfFilter: string): Book[] => {
+export const applyDnfFilter = (books: Book[], dnfFilter: DnfFilter): Book[] => {
   if (dnfFilter === 'dnf') {
     return books.filter((b) => b.dnf);
-  } else if (dnfFilter === 'finished') {
+  }
+  if (dnfFilter === 'finished') {
     return books.filter((b) => !b.dnf);
   }
   return books;
 };
 
-export const applyFormatFilter = (books: Book[], audiobookFilter: string): Book[] => {
+export const applyFormatFilter = (books: Book[], audiobookFilter: AudiobookFilter): Book[] => {
   if (audiobookFilter === 'audiobook') {
     return books.filter((b) => b.meta?.duration);
-  } else if (audiobookFilter === 'paper') {
+  }
+  if (audiobookFilter === 'paper') {
     return books.filter((b) => !b.meta?.duration);
   }
   return books;
 };
 
-export const applySearchFilter = (books: Book[], query: string, searchField: string): Book[] => {
+export const applySearchFilter = (books: Book[], query: string, searchField: SearchField): Book[] => {
   if (!query) return books;
 
   const q = query.toLowerCase();
@@ -110,21 +148,21 @@ export const sortBooks = (books: Book[], columnId: string | null, descending: bo
   return sorted;
 };
 
-type FilterAndSortOptions = {
-  dnfFilter?: string;
-  audiobookFilter?: string;
+export type FilterAndSortOptions = {
+  dnfFilter?: DnfFilter;
+  audiobookFilter?: AudiobookFilter;
   searchQuery?: string;
-  searchField?: string;
+  searchField?: SearchField;
   sortBy?: string | null;
   sortDesc?: boolean;
 };
 
 export const filterAndSort = (books: Book[], options: FilterAndSortOptions = {}): Book[] => {
   const {
-    dnfFilter = 'all',
-    audiobookFilter = 'all',
+    dnfFilter = DEFAULT_DNF_FILTER,
+    audiobookFilter = DEFAULT_AUDIOBOOK_FILTER,
     searchQuery = '',
-    searchField = 'anything',
+    searchField = DEFAULT_SEARCH_FIELD,
     sortBy = null,
     sortDesc = false,
   } = options;

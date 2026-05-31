@@ -72,20 +72,15 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import type { Book } from '../types';
 import { useDrag } from '../composables/useDrag';
 import { formatDate, formatDuration } from '../utils/formatting';
 import { googleUrlFor } from '../utils/books';
 
-const props = defineProps({
-  book: {
-    type: Object,
-    required: true,
-  },
-  isOpen: {
-    type: Boolean,
-    required: true,
-  },
-});
+const props = defineProps<{
+  book: Book;
+  isOpen: boolean;
+}>();
 
 const emit = defineEmits(['close', 'edit', 'delete']);
 

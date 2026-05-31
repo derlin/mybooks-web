@@ -698,15 +698,13 @@ onUnmounted(() => {
 
 @media (max-width: 600px) {
   .form-footer {
-    flex-direction: column;
     padding: 1rem;
-    gap: 0.5rem;
+    gap: 0.75rem;
   }
 
   .btn-cancel,
   .btn-save {
     flex: 1;
-    width: 100%;
     min-width: unset;
   }
 }

@@ -7,7 +7,7 @@
       :dropbox-service="dropboxService"
       @authenticate="handleAuth"
     />
-    <BookList
+    <BookPage
       v-else
       :books-provider="booksProvider"
       @logout="handleLogout"
@@ -21,7 +21,7 @@
 import { onMounted, ref } from "vue";
 import AuthCallback from "./components/AuthCallback.vue";
 import AuthScreen from "./components/AuthScreen.vue";
-import BookList from "./components/BookList.vue";
+import BookPage from "./components/BookPage.vue";
 import { BooksProvider } from "./services/booksProvider";
 import { DropboxService } from "./services/dropboxService";
 
@@ -37,6 +37,7 @@ const handleVisibilityChange = async () => {
     try {
       const revisionChanged = await booksProvider.checkFileRevision();
       if (revisionChanged) {
+        console.log("File revision has changed, refreshing book list.");
         filesChanged.value = true;
       }
     } catch (err) {

@@ -6,7 +6,9 @@ A simple Vue 3 web app to read/write book summaries stored in Dropbox. Weekly us
 
 - **Dropbox OAuth** with automatic token refresh (PKCE flow)
 - **Full CRUD:** Create, read, update, delete with undo
-- **Table view:** Sorting (all columns), filtering (search + format/status dropdowns)
+- **Dual views:** Table (desktop, ≤768px) and card list (mobile, >768px) with explicit view switching
+- **Sorting:** Table headers (desktop) and dropdown selector (mobile) — date/title, ascending/descending
+- **Filtering:** Search + format/status dropdowns (both views)
 - **Details drawer:** Right-side panel with swipe-to-dismiss on mobile
 - **Edit form:** Fullscreen overlay with localStorage auto-save for drafts
 - **Goodreads import:** Fetch title, author, ISBN, pages, publication date from Goodreads URLs
@@ -63,19 +65,26 @@ src/
 ├── App.vue                  # Root component, auth state
 ├── components/              # Vue components
 │   ├── AuthScreen.vue
-│   ├── BookList.vue         # Main table
+│   ├── BookPage.vue         # Books page (drawer, filters, view switching)
+│   ├── BookViewCard.vue     # Card list rendering (mobile)
+│   ├── BookViewTable.vue    # Table rendering (desktop)
+│   ├── SortDropdown.vue     # Sort selector (mobile)
 │   ├── EditForm.vue         # Form (create/edit)
 │   ├── DetailsDrawer.vue    # Right-side panel
 │   ├── BookFilters.vue      # Filter controls
 │   └── GoodreadsModal.vue
 ├── composables/
-│   └── useDrag.js           # Touch/mouse drag tracking
+│   ├── useBookManager.ts    # Data/filtering/sorting logic
+│   └── useDrag.ts           # Touch/mouse drag tracking
 ├── utils/
-│   ├── books.js             # Data transformations
-│   └── formatting.js        # Date/duration formatting
+│   ├── books.ts             # Data transformations
+│   ├── filtering.ts         # Search/filter/sort logic
+│   ├── formatting.ts        # Date/duration formatting
+│   └── validation.ts        # Data validation
 └── services/
-    ├── dropbox.js           # Dropbox OAuth & API
-    └── goodreads.js         # Goodreads metadata scraping
+    ├── booksProvider.ts     # Book CRUD
+    ├── dropboxService.ts    # Dropbox OAuth & API
+    └── goodreads.ts         # Goodreads metadata scraping
 ```
 
 ## Data Structure

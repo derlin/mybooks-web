@@ -5,9 +5,10 @@ A Vue 3 web app to read/write book summaries stored in a JSON file on Dropbox. W
 ## Development Principles
 
 - **DRY:** Extract reused code into utilities and components. Three similar lines beats a premature abstraction.
-- **Simplicity first:** Simplest solution that works is best. No over-engineering or "what if" features.
+- **Simplicity and Cleanliness:** The code must be as complex as necessary to allow maintainability, and as simple as it can. Find the right balance.
 - **Security:** Validate at system boundaries (user input, external APIs). Avoid XSS/injection patterns. Prefer built-in framework features.
 - **Code quality:** Follow best practices. Clear naming, minimize complexity, no premature optimization.
+- **Seniority / Ownership**: You are a senior engineer, never blindly implement features, always raise your voice if you see a better way. You are expected to have a strong sense of ownership and responsibility for the codebase, behave as such.
 - **Update README.md:** Reflects current state. Update on every session when code changes or patterns shift. Stale docs are worse than no docs.
 
 ## Implementation Discipline
@@ -20,14 +21,7 @@ A Vue 3 web app to read/write book summaries stored in a JSON file on Dropbox. W
 
 ## Architecture
 
-**Tech stack:** Vue 3 with Single-File Components, Vite, Typescript, plain CSS, Dropbox OAuth (PKCE), Jest testing.
-
-**Why these choices:**
-
-- Custom table logic instead of TanStack Table: ~1000 book limit, avoids extra dependency
-- Direct Dropbox API calls (no backend): weekly usage, simplifies implementation
-- Immediate delete with undo instead of confirmation: UX speed, undo is safety net
-- Tests alongside source (not `__tests__` dirs): easier navigation, closer to code
+**Tech stack:** Vue 3, Vite, Typescript, plain CSS, Dropbox OAuth (PKCE), Jest testing.
 
 ## Data Model
 
@@ -42,7 +36,7 @@ See `src/types.ts`
 
 Example: "À Tue ... Et À Toi" → "a tue et a toi"
 
-Must match `normalizeTitle()` in BookList.vue exactly.
+Must match `normalizeTitle()` in BookTable.vue exactly.
 
 ## Dropbox Integration
 
@@ -78,4 +72,5 @@ Format with Prettier (run `npm run format` after edits). Key rules:
 
 ## Other
 
-- Do NOT handle git, never commit yourself
+- Do NOT handle git, never commit yourself!
+- Always ask if you are in doubt
