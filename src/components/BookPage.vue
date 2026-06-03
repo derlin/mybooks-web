@@ -6,16 +6,18 @@
         <button @click="cycleViewMode" class="view-mode-btn" :title="`Switch view (currently: ${getViewModeLabel(viewPreference)})`">
           {{ getViewModeLabel(viewPreference) }}
         </button>
-        <button @click="openNewBook" class="add-btn" title="Add new book">+</button>
+        <button @click="openNewBook" class="btn-icon-only btn-solid btn-primary" title="Add new book">
+          <Plus :size="24" :strokeWidth="4" />
+        </button>
         <div ref="menuContainer" class="menu-container">
           <button
             @click="menuOpen = !menuOpen"
-            class="menu-btn"
+            class="btn-icon-only btn-outline btn-dimmed"
             aria-haspopup="menu"
             :aria-expanded="menuOpen"
             title="Menu"
           >
-            ⋮
+            <MoreVertical :size="24" :stroke-width="2" />
           </button>
           <div v-if="menuOpen" class="menu-dropdown" role="menu">
             <div class="menu-section">
@@ -80,17 +82,17 @@
               "
               title="Clear search"
             >
-              ✕
+              <X :size="18" />
             </button>
           </div>
           <button
             type="button"
-            class="filters-toggle-btn"
+            class="btn-icon-only btn-solid btn-secondary filters-toggle-btn"
             :class="{ active: filtersOpen }"
             @click="filtersOpen = !filtersOpen"
             title="Toggle filters"
           >
-            ☰
+            <ListFilter :size="24" :stroke-width="2" />
           </button>
         </div>
         <div v-if="filtersOpen" class="filters-collapsible">
@@ -168,6 +170,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { X, Plus, MoreVertical, ListFilter } from '@lucide/vue';
 import type { BooksProvider } from '../services/booksProvider';
 import type { Book } from '../types';
 import { useBookManager } from '../composables/useBookManager';
@@ -502,7 +505,8 @@ h1 {
 }
 
 .loading {
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  font-size: 1.1rem;
 }
 
 .error {
@@ -543,26 +547,7 @@ h1 {
 }
 
 .filters-toggle-btn {
-  display: none;
-  background-color: var(--accent-primary);
-  color: var(--bg-primary);
-  border: none;
-  width: 40px;
-  aspect-ratio: 1;
-  border-radius: 4px;
-  font-size: 1.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
-  flex-shrink: 0;
-}
-
-.filters-toggle-btn:hover {
-  opacity: 0.9;
-}
-
-.filters-toggle-btn.active {
-  background-color: var(--accent-secondary);
+    display: none;
 }
 
 .filters-collapsible {

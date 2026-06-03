@@ -3,12 +3,14 @@
     <div class="modal-dialog" @click.stop>
       <div class="modal-header">
         <h2>Import from Goodreads</h2>
-        <button class="close-btn" @click="close" aria-label="Close">
-          <span>×</span>
+        <button class="btn-icon-only" @click="close" aria-label="Close">
+          <X :size="20" />
         </button>
       </div>
 
       <div class="modal-body">
+        <p class="modal-subtitle">Paste a Goodreads URL to automatically import book details such as title, author, publication date, etc.</p>
+
         <div v-if="error" class="error-banner">
           {{ error }}
         </div>
@@ -28,9 +30,13 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn-cancel" @click="close" :disabled="loading">Cancel</button>
-        <button type="button" class="btn-search" @click="submit" :disabled="!url.trim() || loading">
-          {{ loading ? 'Searching...' : 'Search' }}
+        <button type="button" class="btn-outline btn-dimmed btn-icon-text" @click="close" :disabled="loading">
+          <X :size="18" />
+          <span>Cancel</span>
+        </button>
+        <button type="button" class="btn-solid btn-primary btn-icon-text" @click="submit" :disabled="!url.trim() || loading">
+          <Search :size="18" />
+          <span>{{ loading ? 'Searching...' : 'Search' }}</span>
         </button>
       </div>
     </div>
@@ -39,6 +45,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { X, Search } from '@lucide/vue';
 import { fetchBookMetadata } from '../services/goodreads.js';
 
 defineProps({
@@ -141,20 +148,14 @@ const submit = async () => {
   font-size: 1.3rem;
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  color: var(--text-primary);
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-  transition: color 0.15s;
+.modal-subtitle {
+  margin: 0 0 1rem 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 400;
+  line-height: 1.4;
 }
 
-.close-btn:hover {
-  color: var(--accent-primary);
-}
 
 .modal-body {
   padding: 1.5rem;
@@ -236,47 +237,15 @@ const submit = async () => {
 
 .modal-footer {
   display: flex;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-top: 1px solid var(--border);
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
   flex-shrink: 0;
-  background-color: var(--bg-secondary);
   justify-content: flex-end;
 }
 
-.btn-cancel,
-.btn-search {
-  padding: 0.75rem 1.5rem;
-  border: 1px solid var(--border);
+.modal-footer button {
+  padding: 0.5rem 1rem;
   border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-size: 0.95rem;
-}
-
-.btn-cancel {
-  background-color: transparent;
-  color: var(--text-primary);
-}
-
-.btn-cancel:hover:not(:disabled) {
-  background-color: var(--bg-hover);
-}
-
-.btn-search {
-  background-color: var(--accent-primary);
-  color: var(--bg-primary);
-  border-color: var(--accent-primary);
-}
-
-.btn-search:hover:not(:disabled) {
-  opacity: 0.9;
-}
-
-.btn-cancel:disabled,
-.btn-search:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  font-size: 0.85rem;
 }
 </style>

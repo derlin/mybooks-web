@@ -11,9 +11,11 @@
           >
             <div class="header-cell">
               {{ column.header }}
-              <span v-if="currentSort.id === column.id" class="sort-indicator">
-                {{ currentSort.desc ? '▼' : '▲' }}
-              </span>
+              <component
+                v-if="currentSort.id === column.id"
+                :is="currentSort.desc ? ChevronDown : ChevronUp"
+                class="sort-indicator"
+              />
             </div>
           </th>
         </tr>
@@ -39,8 +41,12 @@
             <span v-if="row.dnf" class="badge dnf">DNF</span>
           </td>
           <td class="actions-cell">
-            <button class="action-btn edit-btn" title="Edit" @click.stop="openEdit(row)">✎</button>
-            <button class="action-btn delete-btn" title="Delete" @click.stop="deleteBook(row)">×</button>
+            <button class="action-btn edit-btn" title="Edit" @click.stop="openEdit(row)">
+              <Pencil :size="18" />
+            </button>
+            <button class="action-btn delete-btn" title="Delete" @click.stop="deleteBook(row)">
+              <Trash2 :size="18" />
+            </button>
           </td>
         </tr>
       </tbody>
@@ -51,6 +57,7 @@
 <script setup lang="ts">
 import type { Book } from '../types';
 import { formatDuration } from '../utils/formatting';
+import { Pencil, Trash2, ChevronUp, ChevronDown } from '@lucide/vue';
 
 type Column = {
   id: string;
@@ -138,7 +145,8 @@ const deleteBook = (book: Book) => {
 }
 
 .sort-indicator {
-  font-size: 0.7rem;
+  width: 16px;
+  height: 16px;
   opacity: 0.7;
 }
 

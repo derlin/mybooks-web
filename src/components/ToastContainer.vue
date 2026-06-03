@@ -22,7 +22,7 @@
           @click="dismiss(toast.id)"
           title="Close"
         >
-          ✕
+          <X :size="18" />
         </button>
       </div>
     </transition-group>
@@ -30,6 +30,7 @@
 </template>
 
 <script setup lang="ts">
+import { X } from '@lucide/vue';
 import { useToast } from '../composables/useToast';
 
 const { toasts, dismiss } = useToast();

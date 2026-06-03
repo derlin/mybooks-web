@@ -9,7 +9,9 @@
     >
       <div class="drawer-header">
         <h2>{{ book.title }}</h2>
-        <button class="close-btn" @click="close" title="Close">✕</button>
+        <button class="close-btn" @click="close" title="Close">
+          <X :size="20" />
+        </button>
       </div>
 
       <div class="drawer-content">
@@ -31,8 +33,14 @@
         </div>
 
         <div class="actions-section">
-          <button class="google-search-btn" @click="openGoogleSearch">🔍 Google</button>
-          <button v-if="book.meta?.GoodreadsID" class="goodreads-link-btn" @click="openGoodreadsLink">↗ Goodreads</button>
+          <button class="btn-outline btn-secondary btn-icon-text" @click="openGoogleSearch" title="Search on Google">
+            <Search :size="18" />
+            <span>Google</span>
+          </button>
+          <button v-if="book.meta?.GoodreadsID" class="btn-outline btn-secondary btn-icon-text" @click="openGoodreadsLink" title="Open on Goodreads">
+            <ExternalLink :size="18" />
+            <span>Goodreads</span>
+          </button>
         </div>
 
         <div class="notes-section">
@@ -48,10 +56,19 @@
 
       <div class="drawer-footer">
         <div class="actions-row">
-          <button class="delete-button" @click="$emit('delete')">Delete</button>
-          <button class="edit-button" @click="$emit('edit')">Edit Book</button>
+          <button class="btn-outline btn-warning btn-icon-text" @click="$emit('delete')">
+            <Trash2 :size="18" />
+            <span>Delete</span>
+          </button>
+          <button class="btn-solid btn-primary btn-icon-text" @click="$emit('edit')">
+            <Pencil :size="18" />
+            <span>Edit Book</span>
+          </button>
         </div>
-        <button class="back-button" @click="close">Close</button>
+        <button class="btn-outline btn-dimmed btn-icon-text" @click="close">
+          <ArrowLeft :size="18" />
+          <span>Close</span>
+        </button>
       </div>
     </div>
   </div>
@@ -59,6 +76,7 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue';
+import { X, Trash2, Pencil, ArrowLeft, Search, ExternalLink } from '@lucide/vue';
 import type { Book } from '../types';
 import { useDrag } from '../composables/useDrag';
 import { useToast } from '../composables/useToast';
@@ -307,89 +325,19 @@ const close = () => {
   gap: 0.5rem;
 }
 
-.delete-button {
-  flex: 1;
+.actions-row button,
+.drawer-footer > button {
   padding: 0.75rem;
-  background-color: var(--warning);
-  color: var(--bg-primary);
-  border: none;
   border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
 }
 
-.delete-button:hover {
-  opacity: 0.9;
-}
-
-.edit-button {
+.actions-row button {
   flex: 1;
-  padding: 0.75rem;
-  background-color: var(--accent-primary);
-  color: var(--bg-primary);
-  border: none;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
+  font-size: 0.9rem;
 }
 
-.edit-button:hover {
-  opacity: 0.9;
-}
-
-.back-button {
+.drawer-footer > button {
   width: 100%;
-  padding: 0.75rem;
-  background-color: transparent;
-  border: 1px solid var(--accent-primary);
-  color: var(--accent-primary);
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.back-button:hover {
-  background-color: var(--accent-primary);
-  color: var(--bg-primary);
-}
-
-.google-search-btn {
-  flex: 1;
-  padding: 0.5rem 0.75rem;
-  background-color: transparent;
-  color: var(--accent-secondary);
-  border: 1px solid var(--accent-secondary);
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-size: 0.9rem;
-}
-
-.google-search-btn:hover {
-  background-color: var(--accent-secondary);
-  color: var(--bg-primary);
-}
-
-.goodreads-link-btn {
-  flex: 1;
-  padding: 0.5rem 0.75rem;
-  background-color: transparent;
-  color: var(--accent-secondary);
-  border: 1px solid var(--accent-secondary);
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-size: 0.9rem;
-}
-
-.goodreads-link-btn:hover {
-  background-color: var(--accent-secondary);
-  color: var(--bg-primary);
 }
 
 @media (max-width: 600px) {

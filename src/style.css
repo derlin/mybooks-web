@@ -150,3 +150,125 @@ textarea:focus {
   height: 50px;
   filter: drop-shadow(0 0 18px var(--logo-drop-shadow));
 }
+
+/* Button layout utilities */
+.btn-icon-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-icon-only {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.btn-icon-only:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Button style variants */
+.btn-solid {
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn-solid:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-solid:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Color variants for solid buttons */
+.btn-solid.btn-primary {
+  background-color: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+.btn-solid.btn-secondary {
+  background-color: var(--accent-secondary);
+  color: var(--bg-primary);
+}
+
+.btn-solid.btn-warning {
+  background-color: var(--warning);
+  color: var(--bg-primary);
+}
+
+/* Color variants for outline buttons */
+.btn-outline.btn-primary {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.btn-outline.btn-primary:hover:not(:disabled) {
+  background-color: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+.btn-outline.btn-secondary {
+  color: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+}
+
+.btn-outline.btn-secondary:hover:not(:disabled) {
+  background-color: var(--accent-secondary);
+  color: var(--bg-primary);
+}
+
+.btn-outline.btn-warning {
+  color: var(--warning);
+  border-color: var(--warning);
+}
+
+.btn-outline.btn-warning:hover:not(:disabled) {
+  background-color: var(--warning);
+  color: var(--bg-primary);
+}
+
+/* Dimmed variant (using text-secondary color) */
+.btn-solid.btn-dimmed {
+  background-color: var(--text-secondary);
+  color: var(--bg-primary);
+}
+
+.btn-outline.btn-dimmed {
+  color: var(--text-secondary);
+  border-color: var(--text-secondary);
+}
+
+.btn-outline.btn-dimmed:hover:not(:disabled) {
+  background-color: var(--text-secondary);
+  color: var(--bg-primary);
+}

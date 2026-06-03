@@ -6,10 +6,13 @@
         <h1>{{ !book ? 'Add' : 'Edit' }}</h1>
       </div>
       <div class="form-header-actions">
-        <button class="goodreads-btn" @click="goodreadsModalOpen = true" title="Import metadata from Goodreads">
-          From Goodreads
+        <button class="btn-outline btn-secondary btn-icon-text" @click="goodreadsModalOpen = true" title="Import metadata from Goodreads">
+          <Download :size="18" />
+          <span>From Goodreads</span>
         </button>
-        <button class="cancel-btn" @click="cancel">Cancel</button>
+        <button class="btn-icon-only" @click="cancel" title="Cancel">
+          <X :size="20" />
+        </button>
       </div>
     </div>
 
@@ -72,14 +75,14 @@
 
         <div class="form-section notes-section">
           <div class="notes-header">
-            <span class="label-text">Notes</span>
+            <span>Notes</span>
             <button
               type="button"
-              class="expand-notes-btn"
+              class="btn-icon-only"
               @click="toggleFullscreenNotes"
               title="Fullscreen notes (Cmd+Enter on Mac, Ctrl+Enter on Windows/Linux)"
             >
-              ⛶
+              <Maximize2 :size="16" />
             </button>
           </div>
           <label class="form-label notes-label">
@@ -140,9 +143,13 @@
         </div>
       </div>
       <div class="form-footer">
-        <button type="button" class="btn-cancel" @click="cancel" :disabled="isSaving">Cancel</button>
-        <button type="submit" class="btn-save" :disabled="!hasChanged || !isValid || isSaving">
-          {{ isSaving ? 'Saving...' : 'Save' }}
+        <button type="button" class="btn-outline btn-dimmed btn-icon-text" @click="cancel" :disabled="isSaving">
+          <X :size="18" />
+          <span>Cancel</span>
+        </button>
+        <button type="submit" class="btn-solid btn-primary btn-icon-text" :disabled="!hasChanged || !isValid || isSaving">
+          <Check :size="18" />
+          <span>{{ isSaving ? 'Saving...' : 'Save' }}</span>
         </button>
       </div>
     </form>
@@ -152,7 +159,9 @@
         <div class="notes-fullscreen-header">
           <h2>Notes</h2>
           <div class="notes-fullscreen-help">Cmd+Enter to close (or click outside)</div>
-          <button type="button" class="notes-fullscreen-close" @click="toggleFullscreenNotes">✕</button>
+          <button type="button" class="notes-fullscreen-close" @click="toggleFullscreenNotes">
+            <X :size="20" />
+          </button>
         </div>
         <textarea
           ref="fullscreenNotesTextarea"
@@ -174,6 +183,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, toRefs, watch } from 'vue';
+import { X, Check, Download, Maximize2 } from '@lucide/vue';
 import type { GoodreadsMetadata } from '../services/goodreads';
 import type { Book, BookMeta } from '../types';
 import { Storage } from '../utils/storage';
@@ -439,21 +449,32 @@ onUnmounted(() => {
 
 @media (max-width: 600px) {
   .form-header {
+    position: relative;
     flex-direction: column;
     align-items: stretch;
     gap: 0.75rem;
   }
 
   .form-header-title {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0;
   }
 
   .form-header-actions {
-    flex-direction: column;
+    display: flex;
+    flex-direction: row;
+    gap: 0.75rem;
+    align-items: center;
   }
 
-  .form-header-actions button {
-    width: 100%;
+  .form-header-actions button:first-child {
+    flex: 1;
+  }
+
+  .form-header-actions button:last-child {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    width: auto;
   }
 }
 
@@ -484,42 +505,7 @@ onUnmounted(() => {
   font-size: 0.9rem;
 }
 
-.goodreads-btn {
-  background-color: var(--accent-secondary);
-  border: 1px solid var(--accent-secondary);
-  color: var(--bg-primary);
-  padding: 0.5rem 1.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.15s;
-}
 
-.goodreads-btn:hover {
-  opacity: 0.9;
-}
-
-.cancel-btn {
-  background-color: transparent;
-  border: 1px solid var(--accent-primary);
-  color: var(--accent-primary);
-  padding: 0.5rem 1.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.15s;
-}
-
-.cancel-btn:hover {
-  background-color: var(--accent-primary);
-  color: var(--bg-primary);
-}
-
-@media (max-width: 600px) {
-  .cancel-btn {
-    display: none;
-  }
-}
 
 .form-wrapper-inner {
   flex: 1;
@@ -684,15 +670,11 @@ onUnmounted(() => {
   z-index: 5;
 }
 
-.btn-cancel,
-.btn-save {
+button[type="submit"],
+button[type="button"].btn-icon-text {
   flex: 0 0 400px;
   padding: 0.5rem 1.5rem;
-  border: 1px solid var(--border);
   border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
   font-size: 0.85rem;
 }
 
@@ -702,37 +684,11 @@ onUnmounted(() => {
     gap: 0.75rem;
   }
 
-  .btn-cancel,
-  .btn-save {
+  button[type="submit"],
+  button[type="button"].btn-icon-text {
     flex: 1;
     min-width: unset;
   }
-}
-
-.btn-cancel {
-  background-color: transparent;
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
-.btn-cancel:hover {
-  background-color: var(--accent-primary);
-  color: var(--bg-primary);
-}
-
-.btn-save {
-  background-color: var(--accent-primary);
-  color: var(--bg-primary);
-  border-color: var(--accent-primary);
-}
-
-.btn-save:hover:not(:disabled) {
-  opacity: 0.9;
-}
-
-.btn-save:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .notes-header {
@@ -742,22 +698,6 @@ onUnmounted(() => {
   margin-bottom: 0.5rem;
 }
 
-.expand-notes-btn {
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  cursor: pointer;
-  padding: 0.35rem 0.5rem;
-  border-radius: 4px;
-  font-size: 1rem;
-  transition: all 0.15s;
-}
-
-.expand-notes-btn:hover {
-  background-color: var(--bg-secondary);
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
 
 .notes-label {
   display: block;

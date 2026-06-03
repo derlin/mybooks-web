@@ -14,16 +14,19 @@
       <option value="duration">Duration</option>
     </select>
     <button
-      class="sort-direction-btn"
+      class="btn-icon-only btn-outline btn-dimmed"
       :title="modelValue.desc ? 'Descending' : 'Ascending'"
       @click="toggleDirection"
     >
-      {{ modelValue.desc ? '↓' : '↑' }}
+      <ArrowDown v-if="modelValue.desc" :size="20" :stroke-width="2" />
+      <ArrowUp v-else :size="20" :stroke-width="2" />
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ArrowDown, ArrowUp } from '@lucide/vue';
+
 const props = defineProps<{
   modelValue: { id: string; desc: boolean };
 }>();
@@ -80,29 +83,4 @@ const toggleDirection = () => {
   border-color: var(--accent-primary);
 }
 
-.sort-direction-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text-primary);
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.sort-direction-btn:hover {
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
-.sort-direction-btn:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-}
 </style>
