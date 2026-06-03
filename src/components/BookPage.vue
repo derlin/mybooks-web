@@ -7,7 +7,41 @@
           {{ getViewModeLabel(viewPreference) }}
         </button>
         <button @click="openNewBook" class="add-btn" title="Add new book">+</button>
-        <button @click="emit('logout')" class="logout-btn">Logout</button>
+        <div ref="menuContainer" class="menu-container">
+          <button
+            @click="menuOpen = !menuOpen"
+            class="menu-btn"
+            aria-haspopup="menu"
+            :aria-expanded="menuOpen"
+            title="Menu"
+          >
+            ⋮
+          </button>
+          <div v-if="menuOpen" class="menu-dropdown" role="menu">
+            <div class="menu-section">
+              <div class="menu-header">Theme</div>
+              <label class="menu-radio">
+                <input type="radio" v-model="theme" value="auto" @change="applyTheme('auto')" />
+                Auto
+              </label>
+              <label class="menu-radio">
+                <input type="radio" v-model="theme" value="light" @change="applyTheme('light')" />
+                Light
+              </label>
+              <label class="menu-radio">
+                <input type="radio" v-model="theme" value="dark" @change="applyTheme('dark')" />
+                Dark
+              </label>
+            </div>
+            <div class="menu-section">
+              <div class="menu-header">Actions</div>
+              <button @click="downloadJson" class="menu-item" role="menuitem">Download JSON</button>
+              <button @click="emit('logout')" class="menu-item menu-item-danger" role="menuitem">
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -133,10 +167,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import type { BooksProvider } from '../services/booksProvider';
 import type { Book } from '../types';
 import { useBookManager } from '../composables/useBookManager';
+import { useTheme } from '../composables/useTheme';
 import { Storage } from '../utils/storage';
 import BookFilters from './BookFilters.vue';
 import BookViewTable from './BookViewTable.vue';
@@ -180,6 +215,23 @@ const cycleViewMode = () => {
   storage.save('viewPreference', viewPreference.value);
 };
 
+// Theme management
+const { theme, applyTheme } = useTheme();
+
+// Menu state
+const menuOpen = ref(false);
+
+const downloadJson = () => {
+  const serialized = JSON.stringify(props.booksProvider.serializeBooks(books.value), null, 2);
+  const url = URL.createObjectURL(new Blob([serialized], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mybooks.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  menuOpen.value = false;
+};
+
 // Initialize the book manager composable
 const {
   books,
@@ -204,6 +256,7 @@ const {
 const drawerOpen = ref(false);
 const filtersOpen = ref(false);
 const searchInput = ref<HTMLInputElement | null>(null);
+const menuContainer = ref<HTMLDivElement | null>(null);
 
 const handleSearchKeyboard = (keyboardEvent: KeyboardEvent) => {
   if (keyboardEvent.key === 'Enter' || keyboardEvent.keyCode === 13) {
@@ -247,8 +300,22 @@ watch(
   }
 );
 
+const handleClickOutside = (e: MouseEvent) => {
+  if (menuOpen.value && menuContainer.value && !menuContainer.value.contains(e.target as Node)) {
+    menuOpen.value = false;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+  }
+};
+
 onMounted(async () => {
   await init();
+  document.addEventListener('click', handleClickOutside, true);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside, true);
 });
 </script>
 
@@ -286,7 +353,7 @@ h1 {
   color: var(--bg-primary);
   border: none;
   width: 40px;
-  height: 40px;
+  aspect-ratio: 1;
   border-radius: 4px;
   font-size: 1.5rem;
   font-weight: 600;
@@ -303,7 +370,7 @@ h1 {
 
 .view-mode-btn {
   background-color: var(--bg-primary);
-  color: var(--accent-primary);
+  color: var(--text-primary);
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 4px;
@@ -319,19 +386,111 @@ h1 {
   opacity: 0.9;
 }
 
-.logout-btn {
-  background-color: transparent;
-  border: 1px solid var(--accent-primary);
-  color: var(--accent-primary);
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
+.menu-container {
+  position: relative;
 }
 
-.logout-btn:hover {
-  background-color: var(--accent-primary);
+.menu-btn {
+  background-color: var(--text-secondary);
   color: var(--bg-primary);
+  border: none;
+  width: 40px;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.menu-btn:hover {
+  opacity: 0.9;
+}
+
+.menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 0.5rem;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  min-width: 180px;
+  box-shadow: 0 2px 8px var(--shadow);
+  z-index: 110;
+}
+
+.menu-section {
+  padding: 0;
+  margin-bottom: 1rem;
+}
+
+.menu-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.menu-header {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  padding: 0.75rem 1rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.menu-radio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 1rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.menu-radio:hover {
+  background-color: var(--bg-hover);
+}
+
+.menu-radio input[type="radio"] {
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  width: auto;
+  border: none;
+  background: none;
+}
+
+.menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.15s;
+}
+
+.menu-item:hover {
+  background-color: var(--bg-hover);
+}
+
+.menu-item-danger {
+  color: var(--warning);
+}
+
+.menu-item-danger:hover {
+  background-color: rgba(211, 47, 47, 0.1);
 }
 
 .content {
@@ -389,7 +548,7 @@ h1 {
   color: var(--bg-primary);
   border: none;
   width: 40px;
-  height: 40px;
+  aspect-ratio: 1;
   border-radius: 4px;
   font-size: 1.5rem;
   font-weight: 600;

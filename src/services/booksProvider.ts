@@ -23,7 +23,7 @@ export class BooksProvider {
     }));
   }
 
-  private serializeBooks(books: Book[]): Record<string, any> {
+  serializeBooks(books: Book[]): Record<string, any> {
     return Object.fromEntries(
       books.map(({ _key, meta, ...rest }) => {
         const serialized: any = rest;

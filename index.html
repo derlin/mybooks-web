@@ -7,6 +7,12 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#0a1123" />
+    <script>
+      const theme = localStorage.getItem('color-scheme');
+      if (theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>

@@ -119,7 +119,6 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
 
     const deletedBook = books.value.find((b) => b._key === book._key);
     if (!deletedBook) return;
-
     // Remove from local state
     books.value = books.value.filter((b) => b._key !== book._key);
 
@@ -148,7 +147,6 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
 
   const undoDelete = async () => {
     if (!pendingUndo.value) return;
-
     const bookToRestore = pendingUndo.value;
 
     try {

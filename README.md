@@ -7,12 +7,14 @@ A simple Vue 3 web app to read/write book summaries stored in Dropbox. Weekly us
 - **Dropbox OAuth** with automatic token refresh (PKCE flow)
 - **Full CRUD:** Create, read, update, delete with undo
 - **Dual views:** Table (desktop, ≤768px) and card list (mobile, >768px) with explicit view switching
+- **Theme control:** Light/dark/auto (system preference) with menu dropdown, persisted in localStorage
 - **Sorting:** Table headers (desktop) and dropdown selector (mobile) — date/title, ascending/descending
 - **Filtering:** Search + format/status dropdowns (both views)
 - **Details drawer:** Right-side panel with swipe-to-dismiss on mobile
 - **Edit form:** Fullscreen overlay with localStorage auto-save for drafts
 - **Goodreads import:** Fetch title, author, ISBN, pages, publication date from Goodreads URLs
 - **Toast notifications** for save/delete events
+- **Download JSON:** Export books as JSON file from the menu (⋮)
 - **Mobile-responsive** with collapsible filters and touch gestures
 - **Installable PWA** (home screen shortcut on Android)
 
@@ -24,11 +26,10 @@ A simple Vue 3 web app to read/write book summaries stored in Dropbox. Weekly us
 - npm
 - Dropbox account + app credentials
 
-**Create `.secrets` file:**
+**Create `.env` file:**
 
 ```
 VITE_DROPBOX_APP_KEY=your_key
-VITE_DROPBOX_APP_SECRET=your_secret
 ```
 
 **Dropbox App Setup:**
@@ -46,7 +47,8 @@ npm install
 npm run dev             # Dev server on http://localhost:5173
 npm test                # Run tests (Jest, ~1.5s)
 npm run build           # Production build
-npm run format          # Format code with Prettier
+npm run format          # Format code with biome
+npm run lint            # Lint code with biome
 ```
 
 ## Deployment to GitHub Pages
@@ -57,36 +59,6 @@ npm run format          # Format code with Prettier
 4. Push `dist/` to `gh-pages` branch
 5. Enable GitHub Pages in repo settings
 
-## Project Structure
-
-```
-src/
-├── main.js                  # Vue entry point
-├── App.vue                  # Root component, auth state
-├── components/              # Vue components
-│   ├── AuthScreen.vue
-│   ├── BookPage.vue         # Books page (drawer, filters, view switching)
-│   ├── BookViewCard.vue     # Card list rendering (mobile)
-│   ├── BookViewTable.vue    # Table rendering (desktop)
-│   ├── SortDropdown.vue     # Sort selector (mobile)
-│   ├── EditForm.vue         # Form (create/edit)
-│   ├── DetailsDrawer.vue    # Right-side panel
-│   ├── BookFilters.vue      # Filter controls
-│   └── GoodreadsModal.vue
-├── composables/
-│   ├── useBookManager.ts    # Data/filtering/sorting logic
-│   └── useDrag.ts           # Touch/mouse drag tracking
-├── utils/
-│   ├── books.ts             # Data transformations
-│   ├── filtering.ts         # Search/filter/sort logic
-│   ├── formatting.ts        # Date/duration formatting
-│   └── validation.ts        # Data validation
-└── services/
-    ├── booksProvider.ts     # Book CRUD
-    ├── dropboxService.ts    # Dropbox OAuth & API
-    └── goodreads.ts         # Goodreads metadata scraping
-```
-
 ## Data Structure
 
 Books stored on Dropbox as JSON Map with normalized title keys. Each book has:
@@ -96,17 +68,16 @@ Books stored on Dropbox as JSON Map with normalized title keys. Each book has:
 
 See CLAUDE.md for title normalization algorithm (critical for key matching).
 
-## Testing
+## Testing & Linting
 
 Tests live alongside source files (`books.js` ↔ `books.test.js`).
+Run with `npm test`.
 
-Run with `npm test`. 217 unit tests covering utilities, Dropbox logic, filtering, validation, and gestures.
+Linting and formatting use `biome` -> `npm run format` / `npm run lint`.
 
 ## Known Limitations
 
 - No offline support (weekly usage, Dropbox required)
 - Refresh tokens expire (~10 years), user logs out with no warning
-- No conflict resolution UI (prevents concurrent edits, shows error)
-- Custom table logic (no TanStack Table) — suitable for ~1000 books
 
 See CLAUDE.md for architecture decisions and Vue reactivity gotchas.
