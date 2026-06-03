@@ -90,7 +90,6 @@
         v-if="currentViewType === 'table'"
         :books="filteredAndSortedBooks"
         :current-sort="currentSort"
-        :pending-undo="pendingUndo"
         :selected-book-key="selectedBook?._key"
         @toggle-sort="toggleSort"
         @open-drawer="openDrawer"

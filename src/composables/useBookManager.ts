@@ -117,17 +117,17 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
       return;
     }
 
+    const deletedBook = books.value.find((b) => b._key === book._key);
+    if (!deletedBook) return;
+
+    // Remove from local state
+    books.value = books.value.filter((b) => b._key !== book._key);
+
     try {
-      const deletedBook = books.value.find((b) => b._key === book._key);
-      if (!deletedBook) return;
-
-      // Remove from local state
-      books.value = books.value.filter((b) => b._key !== book._key);
-
       // Upload to Dropbox
       await booksProvider.uploadBooks(books.value);
 
-      // Store for potential undo
+      // Store for potential undo (only after successful upload)
       pendingUndo.value = deletedBook;
 
       // Show delete toast with undo action
@@ -141,20 +141,19 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
       );
     } catch (err: any) {
       // Restore local state on error
-      if (pendingUndo.value) {
-        books.value.push(pendingUndo.value);
-      }
+      books.value.push(deletedBook);
       error.value = err.message || 'Failed to delete book';
-      pendingUndo.value = null;
     }
   };
 
   const undoDelete = async () => {
     if (!pendingUndo.value) return;
 
+    const bookToRestore = pendingUndo.value;
+
     try {
       // Restore book to array
-      books.value.push(pendingUndo.value);
+      books.value.push(bookToRestore);
 
       // Upload to Dropbox
       await booksProvider.uploadBooks(books.value);
@@ -163,11 +162,9 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
       pendingUndo.value = null;
       toast.showSuccess('Book restored', undefined, 3000);
     } catch (err: any) {
-      // Rollback on error
-      if (pendingUndo.value) {
-        books.value = books.value.filter((b) => b._key !== pendingUndo.value._key);
-        error.value = err.message || 'Failed to restore book';
-      }
+      // Rollback on error - remove the book we just added
+      books.value = books.value.filter((b) => b._key !== bookToRestore._key);
+      error.value = err.message || 'Failed to restore book';
     }
   };
 
@@ -271,6 +268,7 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
     selectedBook,
     isEditFormOpen,
     isSaving,
+    pendingUndo,
 
     // Computed
     filteredAndSortedBooks,

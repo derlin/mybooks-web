@@ -61,7 +61,6 @@ type Column = {
 defineProps<{
   books: Book[];
   currentSort: { id: string; desc: boolean };
-  pendingUndo: any;
   selectedBookKey?: string;
 }>();
 
