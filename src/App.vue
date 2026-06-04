@@ -2,7 +2,7 @@
   <div class="app">
     <ToastContainer />
     <AuthCallback v-if="isAuthCallback" />
-    <div v-else-if="isLoading" class="loading">Loading...</div>
+    <div v-else-if="isLoading" class="loader"></div>
     <AuthScreen
       v-else-if="!isAuthenticated"
       :dropbox-service="dropboxService"

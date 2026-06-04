@@ -25,7 +25,6 @@
             :disabled="loading"
             @keyup.enter="submit"
           />
-          <div v-if="loading" class="loading-text"><span class="spinner"></span> Searching...</div>
         </label>
       </div>
 
@@ -35,8 +34,8 @@
           <span>Cancel</span>
         </button>
         <button type="button" class="btn-solid btn-primary btn-icon-text" @click="submit" :disabled="!url.trim() || loading">
-          <Search :size="18" />
-          <span>{{ loading ? 'Searching...' : 'Search' }}</span>
+          <template v-if="loading"><span class="spinner"></span> Importing</template>
+          <template v-else><Search :size="18" /> Import&nbsp;&nbsp;&nbsp;</template>
         </button>
       </div>
     </div>
@@ -214,25 +213,6 @@ const submit = async () => {
   margin-top: 0.5rem;
   font-size: 0.9rem;
   color: var(--text-secondary);
-}
-
-.spinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--border);
-  border-top-color: var(--accent-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .modal-footer {

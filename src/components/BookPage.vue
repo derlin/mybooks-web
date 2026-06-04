@@ -48,7 +48,7 @@
     </div>
 
     <div v-if="loading" class="content">
-      <p class="loading">Loading books...</p>
+      <p class="loader"></p>
     </div>
 
     <div v-else-if="error" class="content">
