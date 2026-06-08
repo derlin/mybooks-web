@@ -1,10 +1,11 @@
 // @ts-nocheck
+import { describe, expect, it, vi } from 'vitest';
 import { useDrag } from './useDrag';
 
 describe('useDrag Composable', () => {
   describe('Basic Drag Tracking', () => {
     it('initializes with zero offset and not dragging', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { dragOffset, isDragging } = useDrag(mockDismiss);
 
       expect(dragOffset.value).toBe(0);
@@ -12,7 +13,7 @@ describe('useDrag Composable', () => {
     });
 
     it('sets isDragging on touch start', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { isDragging, handleTouchStart } = useDrag(mockDismiss);
 
       const event = {
@@ -25,7 +26,7 @@ describe('useDrag Composable', () => {
     });
 
     it('tracks drag offset on touch move', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { dragOffset, isDragging, handleTouchStart, handleTouchMove } = useDrag(mockDismiss, 50);
 
       const startEvent = { touches: [{ clientX: 100 }] };
@@ -39,7 +40,7 @@ describe('useDrag Composable', () => {
     });
 
     it('tracks increasing drag offset', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { dragOffset, handleTouchStart, handleTouchMove } = useDrag(mockDismiss, 50);
 
       handleTouchStart({ touches: [{ clientX: 0 }] });
@@ -55,7 +56,7 @@ describe('useDrag Composable', () => {
     });
 
     it('ignores negative drag (leftward movement)', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { dragOffset, handleTouchStart, handleTouchMove } = useDrag(mockDismiss, 50);
 
       handleTouchStart({ touches: [{ clientX: 100 }] });
@@ -65,7 +66,7 @@ describe('useDrag Composable', () => {
     });
 
     it('ignores touch move when not dragging', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { dragOffset, handleTouchMove } = useDrag(mockDismiss, 50);
 
       const event = { touches: [{ clientX: 50 }] };
@@ -77,7 +78,7 @@ describe('useDrag Composable', () => {
 
   describe('Threshold Detection', () => {
     it('calls onDismiss when drag exceeds threshold', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(mockDismiss, 70);
 
       handleTouchStart({ touches: [{ clientX: 0 }] });
@@ -88,7 +89,7 @@ describe('useDrag Composable', () => {
     });
 
     it('does not call onDismiss when drag below threshold', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(mockDismiss, 70);
 
       handleTouchStart({ touches: [{ clientX: 0 }] });
@@ -99,7 +100,7 @@ describe('useDrag Composable', () => {
     });
 
     it('calls onDismiss when drag equals threshold exactly', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(mockDismiss, 70);
 
       handleTouchStart({ touches: [{ clientX: 0 }] });
@@ -111,7 +112,7 @@ describe('useDrag Composable', () => {
     });
 
     it('calls onDismiss when drag exceeds threshold by 1px', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(mockDismiss, 70);
 
       handleTouchStart({ touches: [{ clientX: 0 }] });
@@ -122,7 +123,7 @@ describe('useDrag Composable', () => {
     });
 
     it('respects custom threshold', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const customThreshold = 100;
       const { handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(mockDismiss, customThreshold);
 
@@ -148,7 +149,7 @@ describe('useDrag Composable', () => {
 
   describe('Reset and Snap Back', () => {
     it('resets offset to zero when threshold not met', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { dragOffset, handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(mockDismiss, 70);
 
       handleTouchStart({ touches: [{ clientX: 0 }] });
@@ -161,7 +162,7 @@ describe('useDrag Composable', () => {
     });
 
     it('does not reset offset when threshold met (caller handles removal)', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { dragOffset, handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(mockDismiss, 70);
 
       handleTouchStart({ touches: [{ clientX: 0 }] });
@@ -176,7 +177,7 @@ describe('useDrag Composable', () => {
     });
 
     it('sets isDragging to false on touch end', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { isDragging, handleTouchStart, handleTouchEnd } = useDrag(mockDismiss, 70);
 
       handleTouchStart({ touches: [{ clientX: 0 }] });
@@ -187,7 +188,7 @@ describe('useDrag Composable', () => {
     });
 
     it('allows multiple drag sequences', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { dragOffset, handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(mockDismiss, 70);
 
       // First drag (below threshold)
@@ -207,7 +208,7 @@ describe('useDrag Composable', () => {
 
   describe('Real-world Scenarios', () => {
     it('handles typical swipe right gesture (DetailsDrawer use case)', () => {
-      const onDismiss = jest.fn();
+      const onDismiss = vi.fn();
       const threshold = 70;
       const { dragOffset, isDragging, handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(
         onDismiss,
@@ -236,7 +237,7 @@ describe('useDrag Composable', () => {
     });
 
     it('handles partial swipe that snaps back', () => {
-      const onDismiss = jest.fn();
+      const onDismiss = vi.fn();
       const { dragOffset, handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(onDismiss, 70);
 
       // User starts swipe
@@ -255,7 +256,7 @@ describe('useDrag Composable', () => {
     });
 
     it('handles accidental leftward drag', () => {
-      const onDismiss = jest.fn();
+      const onDismiss = vi.fn();
       const { dragOffset, handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(onDismiss, 70);
 
       // User starts at x=100
@@ -276,7 +277,7 @@ describe('useDrag Composable', () => {
 
   describe('Event Handler Return Values', () => {
     it('returns correct handler functions', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const handlers = useDrag(mockDismiss, 70);
 
       expect(typeof handlers.handleTouchStart).toBe('function');
@@ -285,7 +286,7 @@ describe('useDrag Composable', () => {
     });
 
     it('handlers do not return values', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(mockDismiss, 70);
 
       const startResult = handleTouchStart({ touches: [{ clientX: 0 }] });
@@ -300,7 +301,7 @@ describe('useDrag Composable', () => {
 
   describe('Default Threshold', () => {
     it('uses 50px as default threshold when not specified', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(mockDismiss); // No threshold arg
 
       handleTouchStart({ touches: [{ clientX: 0 }] });
@@ -313,7 +314,7 @@ describe('useDrag Composable', () => {
     });
 
     it('uses 50px default: 50px does not trigger', () => {
-      const mockDismiss = jest.fn();
+      const mockDismiss = vi.fn();
       const { handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(mockDismiss);
 
       handleTouchStart({ touches: [{ clientX: 0 }] });

@@ -28,6 +28,7 @@ jobs:
       - name: Create .env file
         run: |
           echo "VITE_DROPBOX_APP_KEY=${{ secrets.VITE_DROPBOX_APP_KEY }}" > .env
+          echo "VITE_CORS_PROXY_URL=${{ secrets.VITE_CORS_PROXY_URL }}" >> .env
 
       - name: Install dependencies
         run: npm install

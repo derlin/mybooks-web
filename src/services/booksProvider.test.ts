@@ -1,22 +1,24 @@
 // @ts-nocheck
 
+import type { Mocked } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Book } from '../types';
 import { BooksProvider } from './booksProvider';
 import type { IDropboxService } from './dropboxService';
 
 describe('BooksProvider', () => {
-  let mockDropboxService: jest.Mocked<IDropboxService>;
+  let mockDropboxService: Mocked<IDropboxService>;
   let booksProvider: BooksProvider;
 
   beforeEach(() => {
     mockDropboxService = {
-      downloadFile: jest.fn(),
-      uploadFile: jest.fn(),
-      getRevision: jest.fn(),
-      tryLogin: jest.fn(),
-      logout: jest.fn(),
-      getAuthUrl: jest.fn(),
-      exchangeCodeForToken: jest.fn(),
+      downloadFile: vi.fn(),
+      uploadFile: vi.fn(),
+      getRevision: vi.fn(),
+      tryLogin: vi.fn(),
+      logout: vi.fn(),
+      getAuthUrl: vi.fn(),
+      exchangeCodeForToken: vi.fn(),
     };
     booksProvider = new BooksProvider(mockDropboxService);
   });

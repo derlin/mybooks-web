@@ -1,6 +1,7 @@
 import { decode } from 'html-entities';
+import * as env from '../env';
 
-const CORS_PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
+const CORS_PROXY = env.CORS_PROXY_URL;
 
 export type GoodreadsMetadata = {
   title: string;
@@ -57,9 +58,10 @@ function extractPublicationDate(html: string): string | null {
 async function fetchPageContent(url: string): Promise<string> {
   const encodedUrl = encodeURIComponent(url);
 
+  const proxyUrl = `${CORS_PROXY}${encodedUrl}`;
   let response: Response;
   try {
-    response = await fetch(`${CORS_PROXY}${encodedUrl}`, {
+    response = await fetch(proxyUrl, {
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -68,8 +70,9 @@ async function fetchPageContent(url: string): Promise<string> {
         Referer: 'https://www.goodreads.com/',
       },
     });
-  } catch (_err: any) {
-    throw new Error('Failed to fetch Goodreads page. Check your internet connection.');
+  } catch (err: any) {
+    console.error(`Network error while fetching page from ${proxyUrl}:`, err);
+    throw new Error(`Failed to fetch Goodreads page from ${proxyUrl}. Check your internet connection.`);
   }
 
   if (!response.ok) {

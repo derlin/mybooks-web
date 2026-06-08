@@ -61,7 +61,7 @@ Must match `normalizeTitle()` in BookTable.vue exactly.
 After any change, ensure format, lint and test still work:
 
 - Format with biome -> `biome.json`
-- Test with jest -> `npm run test`
+- Test with vitest -> `npm run test`
 - Lint with biome -> `npm run lint`
 
 ## Known Issues

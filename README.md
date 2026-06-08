@@ -30,6 +30,7 @@ A simple Vue 3 web app to read/write book summaries stored in Dropbox. Weekly us
 
 ```
 VITE_DROPBOX_APP_KEY=your_key
+VITE_CORS_PROXY_URL=https://your-proxy.com?url=
 ```
 
 **Dropbox App Setup:**
@@ -45,7 +46,7 @@ VITE_DROPBOX_APP_KEY=your_key
 nvm install && nvm use  # Set Node version
 npm install
 npm run dev             # Dev server on http://localhost:5173
-npm test                # Run tests (Jest, ~1.5s)
+npm test                # Run tests (vitest, ~1.5s)
 npm run build           # Production build
 npm run format          # Format code with biome
 npm run lint            # Lint code with biome

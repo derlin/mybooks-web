@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { __test__, fetchBookMetadata } from './goodreads';
 
 const { validateUrl, fetchPageContent, extractJsonLd } = __test__;
@@ -22,11 +23,11 @@ describe('Goodreads Service', () => {
 
   describe('fetchPageContent', () => {
     beforeEach(() => {
-      global.fetch = jest.fn();
+      global.fetch = vi.fn();
     });
 
     afterEach(() => {
-      jest.restoreAllMocks();
+      vi.restoreAllMocks();
     });
 
     test('fetches and returns HTML content', async () => {
@@ -122,11 +123,11 @@ describe('Goodreads Service', () => {
     `;
 
     beforeEach(() => {
-      global.fetch = jest.fn();
+      global.fetch = vi.fn();
     });
 
     afterEach(() => {
-      jest.restoreAllMocks();
+      vi.restoreAllMocks();
     });
 
     test('rejects invalid URL', async () => {
@@ -281,7 +282,7 @@ describe('Goodreads Service', () => {
       await fetchBookMetadata(testUrl);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('api.codetabs.com/v1/proxy?quest='),
+        expect.stringContaining('proxy?'),
         expect.objectContaining({
           headers: expect.any(Object),
         })
