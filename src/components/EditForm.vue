@@ -91,7 +91,6 @@
               v-model="formData.notes"
               placeholder="Your notes and summary..."
               class="form-textarea"
-              @input="autoGrowTextarea"
             ></textarea>
           </label>
         </div>
@@ -168,7 +167,6 @@
           v-model="formData.notes"
           placeholder="Your notes and summary..."
           class="notes-fullscreen-textarea"
-          @input="autoGrowTextarea"
         ></textarea>
       </div>
     </div>
@@ -303,14 +301,6 @@ const formatDurationInput = () => {
   }
 };
 
-const autoGrowTextarea = async () => {
-  await nextTick();
-  const textarea = inlineNotesTextarea.value;
-  if (textarea) {
-    textarea.style.height = 'auto';
-    textarea.style.height = textarea.scrollHeight + 'px';
-  }
-};
 
 const closeAuthorDropdown = () => {
   setTimeout(() => {
@@ -407,7 +397,6 @@ watch(
     formData.value = newFormData(props.book || undefined);
     originalData.value = JSON.parse(JSON.stringify(formData.value));
     durationError.value = null;
-    autoGrowTextarea();
   },
   { immediate: true, deep: true }
 );
@@ -569,6 +558,10 @@ onUnmounted(() => {
   transition: border-color 0.15s;
 }
 
+.form-textarea {
+  field-sizing: content;
+}
+
 .form-input:focus,
 .form-textarea:focus {
   outline: none;
@@ -576,10 +569,9 @@ onUnmounted(() => {
 }
 
 .form-textarea {
-  resize: vertical;
+  resize: none;
   min-height: 300px;
   line-height: 1.5;
-  overflow: hidden;
 }
 
 .form-checkbox {
