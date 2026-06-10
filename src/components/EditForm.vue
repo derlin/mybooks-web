@@ -337,7 +337,7 @@ const saveNotesToLocalStorage = () => {
 
 const restoreNotesFromLocalStorage = () => {
   const draft = storage.loadJson<DraftNotes>(NOTES_AUTO_SAVE_KEY);
-  if (draft && !formData.value.notes && draft.hash === getCurrentHash()) {
+  if (draft && draft.hash === getCurrentHash()) {
     formData.value.notes = draft.notes;
   }
 };
