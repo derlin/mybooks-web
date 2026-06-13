@@ -1,7 +1,7 @@
 import type { Book } from '../types';
 import type { IDropboxService } from './dropboxService';
 
-const BOOKS_FILE_PATH = '/mybooks.json';
+const BOOKS_FILE_PATH = import.meta.env.VITE_BOOKS_FILE_PATH || '/mybooks.json';
 
 export class BooksProvider {
   private syncedRevision: string | null = null;

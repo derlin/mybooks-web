@@ -31,6 +31,7 @@ A simple Vue 3 web app to read/write book summaries stored in Dropbox. Weekly us
 ```
 VITE_DROPBOX_APP_KEY=your_key
 VITE_CORS_PROXY_URL=https://your-proxy.com?url=
+#VITE_BOOKS_FILE_PATH=<another-file-for-testing>
 ```
 
 **Dropbox App Setup:**
