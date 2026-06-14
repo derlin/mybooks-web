@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { X, Search } from '@lucide/vue';
-import { fetchBookMetadata } from '../services/goodreads.js';
+import { fetchBookMetadata } from '../services/goodreads-fetcher.js';
 
 defineProps({
   isOpen: {

@@ -182,7 +182,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, toRefs, watch } from 'vue';
 import { X, Check, Download, Maximize2 } from '@lucide/vue';
-import type { GoodreadsMetadata } from '../services/goodreads';
+import type { GoodreadsMetadata } from '../services/goodreads-fetcher';
 import type { Book, BookMeta } from '../types';
 import { Storage } from '../utils/storage';
 import {
