@@ -1,5 +1,5 @@
 import type { Book } from '../types';
-import type { IDropboxService } from './dropboxService';
+import { type IDropboxService, NotFoundError } from './dropboxService';
 
 const BOOKS_FILE_PATH = import.meta.env.VITE_BOOKS_FILE_PATH || '/mybooks.json';
 
@@ -49,8 +49,8 @@ export class BooksProvider {
       this.setSyncedRevision(metadata.rev);
       return this.booksMapToArray(booksMap);
     } catch (err: any) {
-      if (err.message?.includes('File not found')) {
-        this.setSyncedRevision('');
+      if (err instanceof NotFoundError) {
+        await this.uploadBooks([]);
         return [];
       }
       throw err;

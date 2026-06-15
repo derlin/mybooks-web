@@ -55,8 +55,16 @@
       <p class="error">{{ error }}</p>
     </div>
 
-    <div v-else-if="!books || books.length === 0" class="content">
-      <p class="empty">No books yet. Add your first book!</p>
+    <div v-else-if="!books || books.length === 0" class="empty-state">
+      <BookOpenText :size="80" :strokeWidth="1.5" class="empty-state-icon" />
+      <div>
+        <h2 class="empty-state-title">Welcome to MyBooks!</h2>
+        <p class="empty-state-text">Start building your collection by adding your first book.</p>
+      </div>
+      <button @click="openNewBook" class="btn-solid btn-primary btn-icon-text">
+        <Plus :size="24" :strokeWidth="4" />
+        <span>Add Your First Book</span>
+      </button>
     </div>
 
     <div v-else class="table-wrapper">
@@ -170,7 +178,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { X, Plus, MoreVertical, ListFilter } from '@lucide/vue';
+import { X, Plus, MoreVertical, ListFilter, BookOpenText } from '@lucide/vue';
 import type { BooksProvider } from '../services/booksProvider';
 import type { Book } from '../types';
 import { useBookManager } from '../composables/useBookManager';
@@ -514,6 +522,33 @@ h1 {
 }
 
 .empty {
+  color: var(--text-secondary);
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.empty-state-icon {
+  color: var(--accent-secondary);
+}
+
+.empty-state-title {
+  margin: 0;
+  font-size: 1.8rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.empty-state-text {
+  margin: 1rem 0;
   color: var(--text-secondary);
 }
 

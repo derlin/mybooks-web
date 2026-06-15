@@ -7,6 +7,14 @@ export type FileMetadata = {
   fileContent?: string;
 };
 
+export class NotFoundError extends Error {
+  constructor(path: string) {
+    super(`File not found at path: ${path}`);
+    // Ensure instanceof works reliably on all JS versions
+    Object.setPrototypeOf(this, NotFoundError.prototype);
+  }
+}
+
 export interface IDropboxService {
   tryLogin(): Promise<boolean>;
   logout(): void;
@@ -174,7 +182,7 @@ export class DropboxService implements IDropboxService {
       };
     } catch (err: any) {
       if (err.status === 409 && err.error.error_summary?.includes('not_found')) {
-        throw new Error('File not found');
+        throw new NotFoundError(path);
       }
       if (err.status === 401) {
         return this.handleDropboxError(() => this.downloadFile(path));
