@@ -9,11 +9,13 @@ export type FilterState = {
   dnf: DnfFilter;
   audiobook: AudiobookFilter;
   searchField: SearchField;
+  tags: string[];
 };
 
 export const DEFAULT_DNF_FILTER: DnfFilter = 'all';
 export const DEFAULT_AUDIOBOOK_FILTER: AudiobookFilter = 'all';
 export const DEFAULT_SEARCH_FIELD: SearchField = 'anything';
+export const DEFAULT_TAGS_FILTER: string[] = [];
 
 export const DNF_FILTER_OPTIONS: { value: DnfFilter; label: string }[] = [
   { value: 'all', label: 'All books' },
@@ -89,6 +91,11 @@ export const applySearchFilter = (books: Book[], query: string, searchField: Sea
   });
 };
 
+export const applyTagsFilter = (books: Book[], selectedTags: string[]): Book[] => {
+  if (!selectedTags.length) return books;
+  return books.filter((b) => selectedTags.every((tag) => b.tags?.includes(tag)));
+};
+
 export const sortBooks = (books: Book[], columnId: string | null, descending: boolean): Book[] => {
   if (!columnId) return books;
 
@@ -153,6 +160,7 @@ export type FilterAndSortOptions = {
   audiobookFilter?: AudiobookFilter;
   searchQuery?: string;
   searchField?: SearchField;
+  tags?: string[];
   sortBy?: string | null;
   sortDesc?: boolean;
 };
@@ -163,6 +171,7 @@ export const filterAndSort = (books: Book[], options: FilterAndSortOptions = {})
     audiobookFilter = DEFAULT_AUDIOBOOK_FILTER,
     searchQuery = '',
     searchField = DEFAULT_SEARCH_FIELD,
+    tags = DEFAULT_TAGS_FILTER,
     sortBy = null,
     sortDesc = false,
   } = options;
@@ -172,6 +181,7 @@ export const filterAndSort = (books: Book[], options: FilterAndSortOptions = {})
   result = applyDnfFilter(result, dnfFilter);
   result = applyFormatFilter(result, audiobookFilter);
   result = applySearchFilter(result, searchQuery, searchField);
+  result = applyTagsFilter(result, tags);
 
   if (sortBy) {
     result = sortBooks(result, sortBy, sortDesc);

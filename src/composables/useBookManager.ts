@@ -4,6 +4,7 @@ import type { Book } from '../types';
 import { normalizeTitle } from '../utils/books';
 import type { FilterState } from '../utils/filtering';
 import { DEFAULT_AUDIOBOOK_FILTER, DEFAULT_DNF_FILTER, DEFAULT_SEARCH_FIELD, filterAndSort } from '../utils/filtering';
+import { deleteTagFromBooks, renameTagInBooks, tagExists, validateTag } from '../utils/tags';
 import { checkDuplicateTitle } from '../utils/validation';
 import { useToast } from './useToast';
 
@@ -19,6 +20,7 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
     dnf: DEFAULT_DNF_FILTER,
     audiobook: DEFAULT_AUDIOBOOK_FILTER,
     searchField: DEFAULT_SEARCH_FIELD,
+    tags: [],
   });
   const currentSort = ref({ id: 'date', desc: true });
   const selectedBook = ref<Book | null>(null);
@@ -33,6 +35,7 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
       audiobookFilter: filters.value.audiobook,
       searchQuery: filters.value.query,
       searchField: filters.value.searchField,
+      tags: filters.value.tags,
       sortBy: currentSort.value.id,
       sortDesc: currentSort.value.desc,
     });
@@ -190,6 +193,7 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
         date: editedBook.date,
         dnf: editedBook.dnf,
         notes: editedBook.notes,
+        tags: editedBook.tags?.length > 0 ? editedBook.tags : undefined,
         meta: editedBook.meta,
         _key: newKey,
       };
@@ -220,6 +224,50 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
       closeForm();
     } catch (err: any) {
       error.value = err.message || 'Failed to save book';
+    } finally {
+      isSaving.value = false;
+    }
+  };
+
+  const renameTagAcrossAllBooks = async (oldTag: string, newTag: string) => {
+    const validation = validateTag(newTag);
+    if (!validation.isValid) {
+      toast.showError(validation.error);
+      return;
+    }
+
+    if (tagExists(newTag, books.value) && newTag !== oldTag) {
+      toast.showError('Tag already exists');
+      return;
+    }
+
+    isSaving.value = true;
+    try {
+      const renamedBooks = renameTagInBooks(oldTag, newTag, books.value);
+      await booksProvider.uploadBooks(renamedBooks);
+      books.value = renamedBooks;
+      toast.showSuccess(`Renamed "${oldTag}" to "${newTag}"`);
+    } catch (err: any) {
+      console.error('Failed renaming tag', err);
+      error.value = 'Failed to rename tag';
+      toast.showError(error.value);
+    } finally {
+      isSaving.value = false;
+    }
+  };
+
+  const deleteTagFromAllBooks = async (tag: string) => {
+    isSaving.value = true;
+    try {
+      const booksWithTag = books.value.filter((book) => book.tags?.includes(tag)).length;
+      const deletedBooks = deleteTagFromBooks(tag, books.value);
+      await booksProvider.uploadBooks(deletedBooks);
+      books.value = deletedBooks;
+      toast.showSuccess(`Deleted tag "${tag}" from ${booksWithTag} book${booksWithTag !== 1 ? 's' : ''}`);
+    } catch (err: any) {
+      console.error('Failed deleting tag', err);
+      error.value = 'Failed to delete tag';
+      toast.showError(error.value);
     } finally {
       isSaving.value = false;
     }
@@ -279,6 +327,8 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
     deleteBook,
     undoDelete,
     handleEditSave,
+    renameTagAcrossAllBooks,
+    deleteTagFromAllBooks,
     init,
   };
 }

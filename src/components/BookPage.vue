@@ -69,85 +69,45 @@
 
     <div v-else class="table-wrapper">
       <div class="controls">
-        <div class="search-bar">
-          <div class="search-input-wrapper">
-            <input
-              ref="searchInput"
-              v-model="filters.query"
-              type="text"
-              placeholder="Search books..."
-              class="search-input"
-              @keydown="handleSearchKeyboard"
-              @keyup="handleSearchKeyboard"
-            />
-            <button
-              v-if="filters.query"
-              type="button"
-              class="clear-search-btn"
-              @click="
-                filters.query = '';
-                searchInput?.blur();
-              "
-              title="Clear search"
-            >
-              <X :size="18" />
-            </button>
-          </div>
-          <button
-            type="button"
-            class="btn-icon-only btn-solid btn-secondary filters-toggle-btn"
-            :class="{ active: filtersOpen }"
-            @click="filtersOpen = !filtersOpen"
-            title="Toggle filters"
-          >
-            <ListFilter :size="24" :stroke-width="2" />
-          </button>
-        </div>
-        <div v-if="filtersOpen" class="filters-collapsible">
-          <BookFilters
-            :search-fields-filter="filters.searchField"
-            :audiobook-filter="filters.audiobook"
-            :dnf-filter="filters.dnf"
-            @update:search-fields-filter="filters.searchField = $event"
-            @update:audiobook-filter="filters.audiobook = $event"
-            @update:dnf-filter="filters.dnf = $event"
-          />
-        </div>
-        <div v-else class="filters-desktop">
-          <BookFilters
-            :search-fields-filter="filters.searchField"
-            :audiobook-filter="filters.audiobook"
-            :dnf-filter="filters.dnf"
-            @update:search-fields-filter="filters.searchField = $event"
-            @update:audiobook-filter="filters.audiobook = $event"
-            @update:dnf-filter="filters.dnf = $event"
-          />
-        </div>
-        <span class="row-count"
-          ><span class="row-count-filtered">{{ filteredAndSortedBooks.length }}</span>
-          <span class="row-count-separator">/</span>
-          {{ books.length }}</span
-        >
+        <BookFilters
+          :search-query="filters.query"
+          :search-fields-filter="filters.searchField"
+          :audiobook-filter="filters.audiobook"
+          :dnf-filter="filters.dnf"
+          :tags-filter="filters.tags"
+          :all-tags="getTagsFromAllBooks(books)"
+          :filtered-count="filteredAndSortedBooks.length"
+          :total-count="books.length"
+          @update:search-query="filters.query = $event"
+          @update:search-fields-filter="filters.searchField = $event"
+          @update:audiobook-filter="filters.audiobook = $event"
+          @update:dnf-filter="filters.dnf = $event"
+          @update:tags-filter="filters.tags = $event"
+        />
       </div>
 
       <BookViewTable
         v-if="currentViewType === 'table'"
         :books="filteredAndSortedBooks"
+        :all-books="books"
         :current-sort="currentSort"
         :selected-book-key="selectedBook?._key"
         @toggle-sort="toggleSort"
         @open-drawer="openDrawer"
         @open-edit="openEditForm"
         @delete="deleteBook"
+        @open-tag-popup="openTagPopup"
       />
 
       <BookViewCard
         v-else
         :books="filteredAndSortedBooks"
+        :all-books="books"
         :current-sort="currentSort"
         :selected-book-key="selectedBook?._key"
         @toggle-sort="handleCardSort"
         @open-drawer="openDrawer"
+        @open-tag-popup="openTagPopup"
       />
     </div>
 
@@ -155,12 +115,14 @@
       v-if="selectedBook"
       :book="selectedBook"
       :isOpen="drawerOpen"
+      :all-books="books"
       @close="closeDrawer"
       @edit="openEditForm(selectedBook)"
       @delete="
         deleteBook(selectedBook);
         closeDrawer();
       "
+      @open-tag-popup="openTagPopup"
     />
   </div>
 
@@ -174,21 +136,33 @@
     @save="handleEditSave"
     @cancel="closeForm"
   />
+
+  <!-- Tag Popup -->
+  <TagBulkOperationsPopup
+    v-if="activePopup"
+    :tag="activePopup.tag"
+    :all-books="activePopup.allBooks"
+    @action="handleTagPopupAction"
+    @close="activePopup = null"
+  />
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { X, Plus, MoreVertical, ListFilter, BookOpenText } from '@lucide/vue';
+import { Plus, MoreVertical, BookOpenText } from '@lucide/vue';
 import type { BooksProvider } from '../services/booksProvider';
 import type { Book } from '../types';
 import { useBookManager } from '../composables/useBookManager';
 import { useTheme } from '../composables/useTheme';
 import { Storage } from '../utils/storage';
+import { getTagsFromAllBooks } from '../utils/tags';
+import type { TagPopupAction } from '../composables/useTagPopup';
 import BookFilters from './BookFilters.vue';
 import BookViewTable from './BookViewTable.vue';
 import BookViewCard from './BookViewCard.vue';
 import DetailsDrawer from './DetailsDrawer.vue';
 import EditForm from './EditForm.vue';
+import TagBulkOperationsPopup from './TagBulkOperationsPopup.vue';
 
 type ViewPreference = 'default' | 'cards' | 'table';
 
@@ -229,6 +203,9 @@ const cycleViewMode = () => {
 // Theme management
 const { theme, applyTheme } = useTheme();
 
+// Tag popup
+const activePopup = ref<{ tag: string; allBooks: Book[] } | null>(null);
+
 // Menu state
 const menuOpen = ref(false);
 
@@ -260,20 +237,14 @@ const {
   closeForm,
   deleteBook,
   handleEditSave,
+  renameTagAcrossAllBooks,
+  deleteTagFromAllBooks,
   init,
 } = useBookManager(props.booksProvider, computed(() => props.filesChanged));
 
 // View-specific state
 const drawerOpen = ref(false);
-const filtersOpen = ref(false);
-const searchInput = ref<HTMLInputElement | null>(null);
 const menuContainer = ref<HTMLDivElement | null>(null);
-
-const handleSearchKeyboard = (keyboardEvent: KeyboardEvent) => {
-  if (keyboardEvent.key === 'Enter' || keyboardEvent.keyCode === 13) {
-    searchInput.value?.blur();
-  }
-};
 
 const openDrawer = (book: Book) => {
   if (selectedBook.value?._key === book._key) {
@@ -291,6 +262,23 @@ const closeDrawer = () => {
 
 const handleCardSort = (sortId: string, desc: boolean) => {
   currentSort.value = { id: sortId, desc };
+};
+
+const openTagPopup = (tag: string) => {
+  activePopup.value = { tag, allBooks: books.value };
+};
+
+const handleTagPopupAction = async (action: TagPopupAction) => {
+  if (action.type === 'filter') {
+    if (!filters.value.tags.includes(action.oldTag)) {
+      filters.value.tags.push(action.oldTag);
+    }
+  } else if (action.type === 'rename' && action.newTag) {
+    await renameTagAcrossAllBooks(action.oldTag, action.newTag);
+  } else if (action.type === 'delete') {
+    await deleteTagFromAllBooks(action.oldTag);
+  }
+  activePopup.value = null;
 };
 
 watch(
@@ -563,137 +551,13 @@ h1 {
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
-  align-items: center;
   padding: 1.5rem 1.5rem 0 1.5rem;
 }
-
-.search-bar {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.search-input-wrapper {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-}
-
-.filters-toggle-btn {
-    display: none;
-}
-
-.filters-collapsible {
-  display: none;
-  width: 100%;
-}
-
-.filters-desktop {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.search-input {
-  width: 100%;
-  padding: 0.75rem 2.5rem 0.75rem 1rem;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text-primary);
-  font-size: 1rem;
-}
-
-.search-input::placeholder {
-  color: var(--text-secondary);
-}
-
-.search-input::-webkit-search-cancel-button {
-  display: none;
-}
-
-.search-input::-webkit-search-decoration {
-  display: none;
-}
-
-.clear-search-btn {
-  position: absolute;
-  right: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-
-.clear-search-btn:hover {
-  color: var(--text-primary);
-}
-
-.row-count {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  white-space: nowrap;
-  min-width: 5.5rem;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.row-count-filtered {
-  color: var(--accent-primary);
-}
-
-.row-count-separator {
-  color: var(--text-secondary);
-  margin: 0 0.4rem;
-}
-
 
 @media (max-width: 768px) {
   .controls {
     flex-direction: column;
     gap: 1rem;
-    align-items: stretch;
-  }
-
-  .search-bar {
-    flex-direction: row;
-    width: 100%;
-  }
-
-  .search-input {
-    flex: 1;
-  }
-
-  .filters-toggle-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .filters-desktop {
-    display: none;
-  }
-
-  .filters-collapsible {
-    display: flex;
-    width: 100%;
-  }
-
-  .row-count {
-    display: block;
-    text-align: right;
   }
 }
 </style>

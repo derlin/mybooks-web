@@ -71,6 +71,17 @@
             <input v-model="formData.dnf" type="checkbox" class="form-checkbox" />
             <span>Did Not Finish (DNF)</span>
           </label>
+
+          <!-- do NOT use label for the Tags, it messes the event system (clicking on the label triggers a remove event) -->
+          <div class="form-label">
+            <span class="label-text">Tags</span>
+            <TagInput
+              v-model="formData.tags"
+              :all-tags="getTagsFromAllBooks(allBooks)"
+              placeholder="Add tags..."
+            />
+            <div class="form-helper">Max 32 characters per tag, no spaces.</div>
+          </div>
         </div>
 
         <div class="form-section notes-section">
@@ -185,6 +196,7 @@ import { X, Check, Download, Maximize2 } from '@lucide/vue';
 import type { GoodreadsMetadata } from '../services/goodreads-fetcher';
 import type { Book, BookMeta } from '../types';
 import { Storage } from '../utils/storage';
+import { getTagsFromAllBooks } from '../utils/tags';
 import {
   durationToMinutes,
   formatDateString,
@@ -194,6 +206,7 @@ import {
   validateDuration,
 } from '../utils/validation';
 import GoodreadsModal from './GoodreadsModal.vue';
+import TagInput from './TagInput.vue';
 
 const storage = new Storage({ silentFail: true });
 
@@ -209,7 +222,8 @@ const props = defineProps<{
   isSaving: boolean;
 }>();
 
-type FormData = Omit<Book, '_key' | 'meta'> & {
+type FormData = Omit<Book, '_key' | 'meta' | 'tags'> & {
+  tags: string[];
   meta: Omit<BookMeta, 'duration'> & {
     duration: string;
   };
@@ -223,6 +237,7 @@ const newFormData = (book: Book | null | undefined = undefined): FormData => {
       date: book.date,
       dnf: book.dnf || false,
       notes: book.notes || '',
+      tags: book.tags ?? [],
       meta: {
         pages: book.meta?.pages ? Number(book.meta.pages) : null,
         duration: book.meta?.duration ? minutesToDuration(book.meta.duration) : '',
@@ -238,6 +253,7 @@ const newFormData = (book: Book | null | undefined = undefined): FormData => {
     date: getTodayDate(),
     dnf: false,
     notes: '',
+    tags: [],
     meta: {
       pages: null,
       duration: '',
@@ -646,6 +662,13 @@ onUnmounted(() => {
   color: var(--warning);
   font-size: 0.85rem;
   margin-top: 0.25rem;
+}
+
+.form-helper {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  margin-top: 0.25rem;
+  display: block;
 }
 
 .form-footer {

@@ -29,7 +29,20 @@
           @click="openDrawer(row)"
         >
           <td>{{ row.author || '—' }}</td>
-          <td>{{ row.title }}</td>
+          <td>
+            <div class="title-with-tags">
+              <span>{{ row.title }}</span>
+              <div v-if="row.tags?.length" class="tags-container">
+                <TagPill
+                  v-for="tag in row.tags"
+                  :key="tag"
+                  :tag="tag"
+                  interactive
+                  @interact="handleTagClick(tag)"
+                />
+              </div>
+            </div>
+          </td>
           <td>{{ row.date || '—' }}</td>
           <td class="duration-cell">
             {{ row.meta?.duration ? formatDuration(row.meta?.duration) : '—' }}
@@ -58,6 +71,7 @@
 import type { Book } from '../types';
 import { formatDuration } from '../utils/formatting';
 import { Pencil, Trash2, ChevronUp, ChevronDown } from '@lucide/vue';
+import TagPill from './TagPill.vue';
 
 type Column = {
   id: string;
@@ -67,6 +81,7 @@ type Column = {
 
 defineProps<{
   books: Book[];
+  allBooks: Book[];
   currentSort: { id: string; desc: boolean };
   selectedBookKey?: string;
 }>();
@@ -86,6 +101,7 @@ const emit = defineEmits<{
   'open-drawer': [book: Book];
   'open-edit': [book: Book];
   'delete': [book: Book];
+  'open-tag-popup': [tag: string];
 }>();
 
 const toggleSort = (columnId: string) => {
@@ -102,6 +118,10 @@ const openEdit = (book: Book) => {
 
 const deleteBook = (book: Book) => {
   emit('delete', book);
+};
+
+const handleTagClick = (tag: string) => {
+  emit('open-tag-popup', tag);
 };
 </script>
 
@@ -181,6 +201,18 @@ const deleteBook = (book: Book) => {
 .pages-cell,
 .boolean-cell {
   text-align: center;
+}
+
+.title-with-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .badge {

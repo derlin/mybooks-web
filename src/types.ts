@@ -12,6 +12,7 @@ export type Book = {
   date: string; // YYYY-MM, YYYY, or "?"
   dnf: boolean;
   notes: string;
+  tags?: string[];
   meta?: BookMeta;
   _key: string; // normalized title used as Dropbox map key (always present in memory)
 };

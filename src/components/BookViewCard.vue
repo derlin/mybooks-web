@@ -16,6 +16,15 @@
           <div class="card-main">
             <div class="card-title">{{ book.title }}</div>
             <p class="card-author">{{ book.author || '—' }}</p>
+            <div v-if="book.tags?.length" class="card-tags">
+              <TagPill
+                v-for="tag in book.tags"
+                :key="tag"
+                :tag="tag"
+                interactive
+                @interact="handleTagClick(tag)"
+              />
+            </div>
           </div>
           <div class="card-side">
             <span v-if="book.date" class="card-date">{{ book.date }}</span>
@@ -33,9 +42,11 @@
 <script setup lang="ts">
 import type { Book } from '../types';
 import SortDropdown from './SortDropdown.vue';
+import TagPill from './TagPill.vue';
 
 defineProps<{
   books: Book[];
+  allBooks: Book[];
   currentSort: { id: string; desc: boolean };
   selectedBookKey?: string;
 }>();
@@ -43,7 +54,12 @@ defineProps<{
 const emit = defineEmits<{
   'toggle-sort': [sortId: string, desc: boolean];
   'open-drawer': [book: Book];
+  'open-tag-popup': [tag: string];
 }>();
+
+const handleTagClick = (tag: string) => {
+  emit('open-tag-popup', tag);
+};
 
 const handleSortChange = (newSort: { id: string; desc: boolean }) => {
   emit('toggle-sort', newSort.id, newSort.desc);
@@ -125,6 +141,13 @@ const openDrawer = (book: Book) => {
   line-height: 1.3;
   word-break: break-word;
   font-weight: 500;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.25rem 0;
 }
 
 .card-author {

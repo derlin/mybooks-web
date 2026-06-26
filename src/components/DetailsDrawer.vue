@@ -22,6 +22,18 @@
           <div v-if="book.meta?.pubDate" class="info-prose">First published on {{ formatDate(book.meta.pubDate) }}</div>
           <div class="info-prose">Read on {{ formatDate(book.date) }}</div>
 
+          <div v-if="book.tags?.length" class="tags-section">
+            <div class="tags-container">
+              <TagPill
+                v-for="tag in book.tags"
+                :key="tag"
+                :tag="tag"
+                interactive
+                @interact="handleTagClick(tag)"
+              />
+            </div>
+          </div>
+
           <div v-if="hasAttributes" class="attributes">
             <span v-if="book.meta?.pages" class="pill"> {{ book.meta.pages }} pages </span>
             <span v-if="book.meta?.duration" class="pill">
@@ -82,13 +94,24 @@ import { useDrag } from '../composables/useDrag';
 import { useToast } from '../composables/useToast';
 import { formatDate, formatDuration } from '../utils/formatting';
 import { googleUrlFor } from '../utils/books';
+import TagPill from './TagPill.vue';
 
 const props = defineProps<{
   book: Book;
   isOpen: boolean;
+  allBooks?: Book[];
 }>();
 
-const emit = defineEmits(['close', 'edit', 'delete']);
+const emit = defineEmits<{
+  close: [];
+  edit: [];
+  delete: [];
+  'open-tag-popup': [tag: string];
+}>();
+
+const handleTagClick = (tag: string) => {
+  emit('open-tag-popup', tag);
+};
 
 const { showInfo } = useToast();
 const { dragOffset, handleTouchStart, handleTouchMove, handleTouchEnd } = useDrag(() => close(), 70);
@@ -240,15 +263,22 @@ const close = () => {
   font-weight: 500;
 }
 
-.info-prose .highlight {
-  font-weight: 700;
-}
-
 .attributes {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 1.5rem;
+}
+
+.tags-section {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .pill {
