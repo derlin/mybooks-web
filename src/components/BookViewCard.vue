@@ -82,12 +82,6 @@ const openDrawer = (book: Book) => {
   margin: auto;
 }
 
-@media (max-width: 768px) {
-	.card-list-wrapper {
-        margin: -3rem auto 0;
-	}
-}
-
 .sort-section {
   flex-shrink: 0;
   padding: 1rem;
