@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!isEditFormOpen" class="book-list-container">
+  <div :class="{ hidden: isEditFormOpen }" class="book-list-container">
     <div class="header">
       <img src="@/assets/logo.svg" alt="MyBooks" class="logo logo-header" />
       <div class="header-actions">
@@ -127,7 +127,7 @@
   </div>
 
   <EditForm
-    v-else
+    v-if="isEditFormOpen"
     :key="selectedBook?._key || 'new'"
     :book="selectedBook"
     :allBooks="books"
@@ -325,6 +325,10 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   background-color: var(--bg-primary);
+}
+
+.book-list-container.hidden {
+  display: none;
 }
 
 .header {
