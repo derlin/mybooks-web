@@ -17,13 +17,15 @@
       v-model="inputValue"
       type="text"
       class="tag-input__field"
+      autocapitalize="off"
+      autocorrect="off"
       :placeholder="placeholder"
       :disabled="disabled"
-      @keydown="handleKeydown"
       @focus="showDropdown = true"
       @click="showDropdown = true"
       @blur="scheduleDropdownClose"
-      @input="showDropdown = true"
+      @keydown="handleBackspaceKeydown"
+      @input="showDropdown = true; handleTextInput($event)"
     />
     <button
       v-if="inputValue"
@@ -113,17 +115,27 @@ function removeTag(tag: string) {
   emit('update:modelValue', props.modelValue.filter(t => t !== tag));
 }
 
-function handleKeydown(event: KeyboardEvent) {
-  if (event.key === ' ' || event.key === 'Enter') {
+function handleBackspaceKeydown(event: KeyboardEvent) {
+  // IMPORTANT: on mobile, keyboardEvents for regular chars and punctuation all show
+  // as unidentified, with charCode 229 so we need to use @input. However, for backspace,
+  // InputEvent deleteContentBackward doesn't fire if the input is empty.
+  // We thus need both KeyboardEvent (backspace), and InputEvent (insertText)
+  if (event.key === 'Backspace' && !inputValue.value && props.modelValue.length > 0) {
+    event.preventDefault();
+    removeTag(props.modelValue[props.modelValue.length - 1]);
+  }
+}
+
+function handleTextInput(event: InputEvent) {
+  // IMPORTANT: as explained in handleBackspaceKeydown, InputEvent is the only one
+  // that can be trusted on mobile for regular characters. However, it does't fire
+  // inputType == "deleteContentBackward" (backspace) if the input is empty.
+  console.log(event.data, event.inputType, event);
+  if (event.inputType == 'insertText' && event.data === ' ') {
     event.preventDefault();
     if (inputValue.value.trim()) {
       addTag(inputValue.value);
     }
-  } else if (event.key === 'Backspace' && !inputValue.value && props.modelValue.length > 0) {
-    event.preventDefault();
-    removeTag(props.modelValue[props.modelValue.length - 1]);
-  } else if (event.key === 'Escape') {
-    showDropdown.value = false;
   }
 }
 
