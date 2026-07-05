@@ -79,6 +79,7 @@
               v-model="formData.tags"
               :all-tags="TagsUtil.getAll(allBooks)"
               placeholder="Add tags..."
+              :allow-new="true"
             />
             <div class="form-helper">Max 32 characters per tag, no spaces.</div>
           </div>

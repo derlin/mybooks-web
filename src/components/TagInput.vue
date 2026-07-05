@@ -1,5 +1,5 @@
 <template>
-  <div class="tag-input" :class="{ 'tag-input--disabled': disabled }">
+  <div class="tag-input">
     <div v-if="modelValue.length > 0" class="tag-input__selected">
       <TagPill
         v-for="tag in modelValue"
@@ -7,7 +7,6 @@
         :tag="tag"
         interactive
         removable
-        :disabled="disabled"
         @interact="removeTag(tag)"
         @remove="removeTag(tag)"
       />
@@ -20,7 +19,6 @@
       autocapitalize="off"
       autocorrect="off"
       :placeholder="placeholder"
-      :disabled="disabled"
       @focus="showDropdown = true"
       @click="showDropdown = true"
       @blur="scheduleDropdownClose"
@@ -28,17 +26,17 @@
       @input="showDropdown = true; handleTextInput($event)"
     />
     <button
-      v-if="inputValue"
+      v-if="inputValue && allowNew"
       type="button"
       class="tag-input__add-btn"
-      :disabled="disabled"
+      :disabled="modelValue.includes(inputValue)"
       @click="addTag(inputValue)"
       aria-label="Add tag"
     >
       +
     </button>
     <div v-show="showDropdown && (inputValue || filteredTags.length > 0)" class="tag-input__dropdown">
-      <div v-if="filteredTags.length === 0 && inputValue" class="tag-input__option tag-input__option--new">
+      <div v-if="allowNew && filteredTags.length === 0 && inputValue" class="tag-input__option tag-input__option--new">
         Press + or type space to create "<strong>{{ inputValue }}</strong>"
       </div>
       <button
@@ -65,8 +63,7 @@ const props = defineProps<{
   modelValue: string[];
   allTags: string[];
   placeholder?: string;
-  maxTags?: number;
-  disabled?: boolean;
+  allowNew?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -100,11 +97,6 @@ function addTag(tag: string) {
     return;
   }
 
-  if (props.maxTags && props.modelValue.length >= props.maxTags) {
-    toast.showError(`Maximum ${props.maxTags} tags allowed`);
-    return;
-  }
-
   emit('update:modelValue', [...props.modelValue, normalized]);
   inputValue.value = '';
   showDropdown.value = true;
@@ -133,7 +125,8 @@ function handleTextInput(event: InputEvent) {
   console.log(event.data, event.inputType, event);
   if (event.inputType == 'insertText' && event.data === ' ') {
     event.preventDefault();
-    if (inputValue.value.trim()) {
+    inputValue.value = inputValue.value.trim();
+    if (props.allowNew && inputValue.value) {
       addTag(inputValue.value);
     }
   }
@@ -166,12 +159,6 @@ function scheduleDropdownClose() {
   box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.1);
 }
 
-.tag-input--disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background: var(--bg-hover);
-}
-
 .tag-input__selected {
   display: flex;
   flex-wrap: wrap;
@@ -190,9 +177,6 @@ function scheduleDropdownClose() {
   outline: none;
 }
 
-.tag-input__field:disabled {
-  cursor: not-allowed;
-}
 
 .tag-input__field::placeholder {
   color: var(--text-secondary);

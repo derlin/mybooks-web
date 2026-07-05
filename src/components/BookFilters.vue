@@ -104,6 +104,7 @@
         v-model="localTagsFilter"
         :all-tags="allTags"
         placeholder="Filter by tags..."
+        :allow-new="false"
       />
     </div>
   </div>
