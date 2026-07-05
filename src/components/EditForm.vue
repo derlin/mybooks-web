@@ -77,7 +77,7 @@
             <span class="label-text">Tags</span>
             <TagInput
               v-model="formData.tags"
-              :all-tags="getTagsFromAllBooks(allBooks)"
+              :all-tags="TagsUtil.getAll(allBooks)"
               placeholder="Add tags..."
             />
             <div class="form-helper">Max 32 characters per tag, no spaces.</div>
@@ -196,7 +196,7 @@ import { X, Check, Download, Maximize2 } from '@lucide/vue';
 import type { GoodreadsMetadata } from '../services/goodreads-fetcher';
 import type { Book, BookMeta } from '../types';
 import { Storage } from '../utils/storage';
-import { getTagsFromAllBooks } from '../utils/tags';
+import { TagsUtil } from '../utils/tags';
 import {
   durationToMinutes,
   formatDateString,

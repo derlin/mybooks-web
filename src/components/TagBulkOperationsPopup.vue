@@ -13,7 +13,7 @@
       <div class="tag-popup__content">
         <!-- Menu Screen -->
         <div v-if="screen === 'menu'">
-          <p class="tag-popup__subtitle">Tag {{ tag }} matches <span class="highlight">{{ bookCount }}</span> book{{ bookCount !== 1 ? 's' : '' }}</p>
+          <p class="tag-popup__subtitle">"<span class="highlight">{{ value }}</span>" matches <span class="highlight">{{ bookCount }}</span> book{{ bookCount !== 1 ? 's' : '' }}</p>
           <div class="tag-popup__actions menu">
             <button class="btn btn-outline btn-primary btn-icon-text" @click="handleFilter">
               <ListFilter :size="18" />
@@ -60,8 +60,8 @@
         <!-- Delete Screen -->
         <div v-else-if="screen === 'delete'">
           <p class="tag-popup__warning">
-            You have <strong>{{ bookCount }} book{{ bookCount !== 1 ? 's' : '' }}</strong> with
-            this tag.<br/>Are you sure?
+            You have <strong>{{ bookCount }}</strong> associated book{{ bookCount !== 1 ? 's' : '' }}.
+            <br/>Are you sure?
           </p>
           <div class="tag-popup__actions delete">
             <button type="button" class="btn-outline btn-dimmed btn-icon-text" @click="screen = 'menu'">
@@ -83,11 +83,12 @@
 import { computed, nextTick, ref } from 'vue';
 import type { Book } from '@/types';
 import { ArrowLeft, ListFilter, Pencil, Trash2, Check } from '@lucide/vue';
-import { validateTag, tagExists } from '@/utils/tags';
+import { TagLikeFieldUtil } from '@/utils/tags';
 import type { TagPopupAction } from '@/composables/useTagPopup';
 
 const props = defineProps<{
-  tag: string;
+  value: string;
+  fieldUtil: TagLikeFieldUtil;
   allBooks: Book[];
 }>();
 
@@ -99,59 +100,59 @@ const emit = defineEmits<{
 type Screen = 'menu' | 'rename' | 'delete';
 
 const screen = ref<Screen>('menu');
-const newTagName = ref(props.tag);
+const newTagName = ref(props.value);
 const error = ref('');
 const renameInputEl = ref<HTMLInputElement>();
 
 const bookCount = computed(() => {
-  return props.allBooks.filter((book) => book.tags?.includes(props.tag)).length;
+  return props.fieldUtil.getCount(props.value, props.allBooks);
 });
 
 const hasConflict = computed(() => {
-  if (screen.value !== 'rename' || !newTagName.value || newTagName.value === props.tag) {
+  if (screen.value !== 'rename' || !newTagName.value || newTagName.value === props.value) {
     return false;
   }
-  const validation = validateTag(newTagName.value);
+  const validation = props.fieldUtil.validate(newTagName.value);
   if (!validation.isValid) return false;
-  return tagExists(newTagName.value, props.allBooks);
+  return props.fieldUtil.exists(newTagName.value, props.allBooks);
 });
 
 const screenTitle = computed(() => {
   switch (screen.value) {
     case 'menu':
-      return props.tag;
+      return props.value;
     case 'rename':
-      return 'Rename tag';
+      return `Rename "${props.value}"`;
     case 'delete':
-      return 'Delete tag';
+      return `Delete "${props.value}"`;
   }
 });
 
 function handleFilter() {
-  emit('action', { type: 'filter', oldTag: props.tag });
+  emit('action', { type: 'filter', oldTag: props.value });
   emit('close');
 }
 
 function handleRename() {
-  const validation = validateTag(newTagName.value);
+  const validation = props.fieldUtil.validate(newTagName.value);
 
   if (!validation.isValid) {
     error.value = validation.error!;
     return;
   }
 
-  if (newTagName.value === props.tag) {
-    error.value = 'New tag is the same as current tag';
+  if (newTagName.value === props.value) {
+    error.value = 'New value is the same as current value';
     return;
   }
 
   error.value = '';
-  emit('action', { type: 'rename', oldTag: props.tag, newTag: newTagName.value });
+  emit('action', { type: 'rename', oldTag: props.value, newTag: newTagName.value });
   emit('close');
 }
 
 function handleDelete() {
-  emit('action', { type: 'delete', oldTag: props.tag });
+  emit('action', { type: 'delete', oldTag: props.value });
   emit('close');
 }
 

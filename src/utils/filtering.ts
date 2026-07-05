@@ -91,9 +91,9 @@ export const applySearchFilter = (books: Book[], query: string, searchField: Sea
   });
 };
 
-export const applyTagsFilter = (books: Book[], selectedTags: string[]): Book[] => {
+export const applyTagLikeFilter = (books: Book[], field: keyof Book, selectedTags: string[]): Book[] => {
   if (!selectedTags.length) return books;
-  return books.filter((b) => selectedTags.every((tag) => b.tags?.includes(tag)));
+  return books.filter((b) => selectedTags.every((tag) => (b[field] as string[])?.includes(tag)));
 };
 
 export const sortBooks = (books: Book[], columnId: string | null, descending: boolean): Book[] => {
@@ -181,7 +181,7 @@ export const filterAndSort = (books: Book[], options: FilterAndSortOptions = {})
   result = applyDnfFilter(result, dnfFilter);
   result = applyFormatFilter(result, audiobookFilter);
   result = applySearchFilter(result, searchQuery, searchField);
-  result = applyTagsFilter(result, tags);
+  result = applyTagLikeFilter(result, 'tags', tags);
 
   if (sortBy) {
     result = sortBooks(result, sortBy, sortDesc);

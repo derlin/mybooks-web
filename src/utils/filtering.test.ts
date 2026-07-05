@@ -4,6 +4,7 @@ import {
   applyDnfFilter,
   applyFormatFilter,
   applySearchFilter,
+  applyTagLikeFilter,
   extractDateNumbers,
   filterAndSort,
   sortBooks,
@@ -174,6 +175,66 @@ describe('Filtering Utilities', () => {
       const result = applySearchFilter(mockBooks, 'tolkien', 'unknown');
       expect(result).toHaveLength(1);
       expect(result[0].author).toBe('Tolkien');
+    });
+  });
+
+  describe('applyTagLikeFilter', () => {
+    const booksWithTags = [
+      {
+        _key: 'book1',
+        title: 'Book 1',
+        author: 'Author 1',
+        dnf: false,
+        tags: ['fiction', 'adventure'],
+      },
+      {
+        _key: 'book2',
+        title: 'Book 2',
+        author: 'Author 2',
+        dnf: false,
+        tags: ['fiction', 'mystery'],
+      },
+      {
+        _key: 'book3',
+        title: 'Book 3',
+        author: 'Author 3',
+        dnf: false,
+        tags: ['non-fiction'],
+      },
+      {
+        _key: 'book4',
+        title: 'Book 4',
+        author: 'Author 4',
+        dnf: false,
+      },
+    ];
+
+    it('filters by single tag', () => {
+      const result = applyTagLikeFilter(booksWithTags, 'tags', ['fiction']);
+      expect(result).toHaveLength(2);
+      expect(result.map((b) => b._key)).toEqual(['book1', 'book2']);
+    });
+
+    it('filters by multiple tags (AND logic)', () => {
+      const result = applyTagLikeFilter(booksWithTags, 'tags', ['fiction', 'adventure']);
+      expect(result).toHaveLength(1);
+      expect(result[0]._key).toBe('book1');
+    });
+
+    it('returns all books when no tags selected', () => {
+      const result = applyTagLikeFilter(booksWithTags, 'tags', []);
+      expect(result).toHaveLength(4);
+    });
+
+    it('returns empty array when tag does not match', () => {
+      const result = applyTagLikeFilter(booksWithTags, 'tags', ['nonexistent']);
+      expect(result).toHaveLength(0);
+    });
+
+    it('handles books without tags field', () => {
+      const result = applyTagLikeFilter(booksWithTags, 'tags', ['fiction']);
+      expect(result).toHaveLength(2);
+      expect(result.every((b) => b.tags?.includes('fiction'))).toBe(true);
     });
   });
 

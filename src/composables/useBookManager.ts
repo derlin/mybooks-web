@@ -4,7 +4,6 @@ import type { Book } from '../types';
 import { normalizeTitle } from '../utils/books';
 import type { FilterState } from '../utils/filtering';
 import { DEFAULT_AUDIOBOOK_FILTER, DEFAULT_DNF_FILTER, DEFAULT_SEARCH_FIELD, filterAndSort } from '../utils/filtering';
-import { deleteTagFromBooks, renameTagInBooks, tagExists, validateTag } from '../utils/tags';
 import { checkDuplicateTitle } from '../utils/validation';
 import { useToast } from './useToast';
 
@@ -229,44 +228,24 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
     }
   };
 
-  const renameTagAcrossAllBooks = async (oldTag: string, newTag: string) => {
-    const validation = validateTag(newTag);
-    if (!validation.isValid) {
-      toast.showError(validation.error);
-      return;
-    }
-
-    if (tagExists(newTag, books.value) && newTag !== oldTag) {
-      toast.showError('Tag already exists');
-      return;
-    }
-
-    isSaving.value = true;
-    try {
-      const renamedBooks = renameTagInBooks(oldTag, newTag, books.value);
-      await booksProvider.uploadBooks(renamedBooks);
-      books.value = renamedBooks;
-      toast.showSuccess(`Renamed "${oldTag}" to "${newTag}"`);
-    } catch (err: any) {
-      console.error('Failed renaming tag', err);
-      error.value = 'Failed to rename tag';
-      toast.showError(error.value);
-    } finally {
+  const handleBulkEditSave = async (
+    operation: (books: Book[]) => Book[],
+    operationName: string = 'bulk operation'
+  ): Promise<void> => {
+    if (!(await checkRevisionBeforeOperation(operationName))) {
       isSaving.value = false;
+      return;
     }
-  };
 
-  const deleteTagFromAllBooks = async (tag: string) => {
     isSaving.value = true;
     try {
-      const booksWithTag = books.value.filter((book) => book.tags?.includes(tag)).length;
-      const deletedBooks = deleteTagFromBooks(tag, books.value);
-      await booksProvider.uploadBooks(deletedBooks);
-      books.value = deletedBooks;
-      toast.showSuccess(`Deleted tag "${tag}" from ${booksWithTag} book${booksWithTag !== 1 ? 's' : ''}`);
+      const newBooks = operation(books.value);
+      await booksProvider.uploadBooks(newBooks);
+      books.value = newBooks;
+      toast.showSuccess(`${operationName} completed`);
     } catch (err: any) {
-      console.error('Failed deleting tag', err);
-      error.value = 'Failed to delete tag';
+      console.error(`Failed ${operationName}:`, err);
+      error.value = `Failed to ${operationName}`;
       toast.showError(error.value);
     } finally {
       isSaving.value = false;
@@ -327,8 +306,7 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
     deleteBook,
     undoDelete,
     handleEditSave,
-    renameTagAcrossAllBooks,
-    deleteTagFromAllBooks,
+    handleBulkEditSave,
     init,
   };
 }

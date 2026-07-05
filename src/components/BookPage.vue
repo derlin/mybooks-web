@@ -75,7 +75,7 @@
           :audiobook-filter="filters.audiobook"
           :dnf-filter="filters.dnf"
           :tags-filter="filters.tags"
-          :all-tags="getTagsFromAllBooks(books)"
+          :all-tags="TagsUtil.getAll(books)"
           :filtered-count="filteredAndSortedBooks.length"
           :total-count="books.length"
           @update:search-query="filters.query = $event"
@@ -137,10 +137,11 @@
     @cancel="closeForm"
   />
 
-  <!-- Tag Popup -->
+  <!-- Field Popup -->
   <TagBulkOperationsPopup
     v-if="activePopup"
-    :tag="activePopup.tag"
+    :value="activePopup.value"
+    :field-util="activePopup.fieldUtil"
     :all-books="activePopup.allBooks"
     @action="handleTagPopupAction"
     @close="activePopup = null"
@@ -154,8 +155,9 @@ import type { BooksProvider } from '../services/booksProvider';
 import type { Book } from '../types';
 import { useBookManager } from '../composables/useBookManager';
 import { useTheme } from '../composables/useTheme';
+import { useToast } from '../composables/useToast';
 import { Storage } from '../utils/storage';
-import { getTagsFromAllBooks } from '../utils/tags';
+import { TagsUtil, TagLikeFieldUtil } from '../utils/tags';
 import type { TagPopupAction } from '../composables/useTagPopup';
 import BookFilters from './BookFilters.vue';
 import BookViewTable from './BookViewTable.vue';
@@ -203,8 +205,11 @@ const cycleViewMode = () => {
 // Theme management
 const { theme, applyTheme } = useTheme();
 
-// Tag popup
-const activePopup = ref<{ tag: string; allBooks: Book[] } | null>(null);
+// Toast notifications
+const toast = useToast();
+
+// Field popup
+const activePopup = ref<{ value: string; fieldUtil: TagLikeFieldUtil; allBooks: Book[] } | null>(null);
 
 // Menu state
 const menuOpen = ref(false);
@@ -237,8 +242,7 @@ const {
   closeForm,
   deleteBook,
   handleEditSave,
-  renameTagAcrossAllBooks,
-  deleteTagFromAllBooks,
+  handleBulkEditSave,
   init,
 } = useBookManager(props.booksProvider, computed(() => props.filesChanged));
 
@@ -265,7 +269,7 @@ const handleCardSort = (sortId: string, desc: boolean) => {
 };
 
 const openTagPopup = (tag: string) => {
-  activePopup.value = { tag, allBooks: books.value };
+  activePopup.value = { value: tag, fieldUtil: TagsUtil, allBooks: books.value };
 };
 
 const handleTagPopupAction = async (action: TagPopupAction) => {
@@ -274,9 +278,25 @@ const handleTagPopupAction = async (action: TagPopupAction) => {
       filters.value.tags.push(action.oldTag);
     }
   } else if (action.type === 'rename' && action.newTag) {
-    await renameTagAcrossAllBooks(action.oldTag, action.newTag);
+    const validation = TagsUtil.validate(action.newTag);
+    if (!validation.isValid) {
+      toast.showError(validation.error);
+      return;
+    }
+    if (TagsUtil.exists(action.newTag, books.value) && action.newTag !== action.oldTag) {
+      toast.showError('Tag already exists');
+      return;
+    }
+    await handleBulkEditSave(
+      (booksToUpdate) => TagsUtil.rename(action.oldTag, action.newTag!, booksToUpdate),
+      `Renamed "${action.oldTag}" to "${action.newTag}"`
+    );
   } else if (action.type === 'delete') {
-    await deleteTagFromAllBooks(action.oldTag);
+    const bookCount = TagsUtil.getCount(action.oldTag, books.value);
+    await handleBulkEditSave(
+      (booksToUpdate) => TagsUtil.delete(action.oldTag, booksToUpdate),
+      `Deleted tag "${action.oldTag}" from ${bookCount} book${bookCount !== 1 ? 's' : ''}`
+    );
   }
   activePopup.value = null;
 };

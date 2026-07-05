@@ -57,7 +57,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { validateTag, normalizeTag } from '@/utils/tags';
+import { TagsUtil } from '@/utils/tags';
 import { useToast } from '@/composables/useToast';
 import TagPill from './TagPill.vue';
 
@@ -88,8 +88,8 @@ const filteredTags = computed(() => {
 });
 
 function addTag(tag: string) {
-  const normalized = normalizeTag(tag);
-  const validation = validateTag(normalized);
+  const normalized = TagsUtil.normalize(tag);
+  const validation = TagsUtil.validate(normalized);
 
   if (!validation.isValid) {
     toast.showError(validation.error!);
