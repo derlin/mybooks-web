@@ -283,10 +283,6 @@ const handleTagPopupAction = async (action: TagPopupAction) => {
       toast.showError(validation.error);
       return;
     }
-    if (TagsUtil.exists(action.newTag, books.value) && action.newTag !== action.oldTag) {
-      toast.showError('Tag already exists');
-      return;
-    }
     await handleBulkEditSave(
       (booksToUpdate) => TagsUtil.rename(action.oldTag, action.newTag!, booksToUpdate),
       `Renamed "${action.oldTag}" to "${action.newTag}"`

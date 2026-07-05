@@ -44,9 +44,10 @@ export class TagLikeFieldUtil<T extends keyof Book = 'tags'> {
   rename(oldValue: string, newValue: string, books: Book[]): Book[] {
     return books.map((book) => {
       if (!(book[this.fieldName] as string[])?.includes(oldValue)) return book;
+      const newValues = (book[this.fieldName] as string[]).map((value) => (value === oldValue ? newValue : value));
       return {
         ...book,
-        [this.fieldName]: (book[this.fieldName] as string[]).map((value) => (value === oldValue ? newValue : value)),
+        [this.fieldName]: [...new Set(newValues)],
       };
     });
   }
