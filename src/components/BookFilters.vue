@@ -47,7 +47,7 @@
             <label>Format:</label>
             <select v-model="localAudiobookFilter" class="filter-select">
               <option value="all">All</option>
-              <option value="audiobook">Audiobook</option>
+              <option value="audiobook">Audio</option>
               <option value="paper">Paper</option>
             </select>
           </div>
@@ -55,7 +55,7 @@
             <label>Status:</label>
             <select v-model="localDnfFilter" class="filter-select">
               <option value="all">All</option>
-              <option value="finished">Finished</option>
+              <option value="finished">Done</option>
               <option value="dnf">DNF</option>
             </select>
           </div>
@@ -83,7 +83,7 @@
           <label>Format:</label>
           <select v-model="localAudiobookFilter" class="filter-select">
             <option value="all">All</option>
-            <option value="audiobook">Audiobook</option>
+            <option value="audiobook">Audio</option>
             <option value="paper">Paper</option>
           </select>
         </div>
@@ -91,7 +91,7 @@
           <label>Status:</label>
           <select v-model="localDnfFilter" class="filter-select">
             <option value="all">All</option>
-            <option value="finished">Finished</option>
+            <option value="finished">Done</option>
             <option value="dnf">DNF</option>
           </select>
         </div>
@@ -359,12 +359,14 @@ const clearSearch = () => {
   }
 
   .filters {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     width: 100%;
   }
 
   .filter-group {
-    width: 100%;
+    flex: 1;
+    min-width: 150px;
   }
 
   .filter-group--tags {
