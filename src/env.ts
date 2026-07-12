@@ -1,3 +1,4 @@
 export const DROPBOX_APP_KEY = import.meta.env.VITE_DROPBOX_APP_KEY;
 export const GOODREADS_FETCHER_URL = import.meta.env.VITE_GOODREADS_FETCHER_URL;
 export const GOODREADS_FETCHER_API_KEY = import.meta.env.VITE_GOODREADS_FETCHER_API_KEY;
+export const BOOKS_FILE_PATH = import.meta.env.VITE_BOOKS_FILE_PATH || '/mybooks.json';

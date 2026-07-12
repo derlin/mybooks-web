@@ -158,6 +158,7 @@ import { useTheme } from '../composables/useTheme';
 import { useToast } from '../composables/useToast';
 import { Storage } from '../utils/storage';
 import { TagsUtil, TagLikeFieldUtil } from '../utils/tags';
+import { BOOKS_FILE_PATH } from '../env';
 import type { TagPopupAction } from '../composables/useTagPopup';
 import BookFilters from './BookFilters.vue';
 import BookViewTable from './BookViewTable.vue';
@@ -219,7 +220,7 @@ const downloadJson = () => {
   const url = URL.createObjectURL(new Blob([serialized], { type: 'application/json' }));
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'mybooks.json';
+  a.download = BOOKS_FILE_PATH.split('/').pop() || 'mybooks.json';
   a.click();
   URL.revokeObjectURL(url);
   menuOpen.value = false;
