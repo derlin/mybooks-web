@@ -83,6 +83,23 @@
             />
             <div class="form-helper">Max 32 characters per tag, no spaces.</div>
           </div>
+
+          <label class="form-label">
+            <span class="label-text">Rating</span>
+            <input
+              v-model.number="formData.rating"
+              type="number"
+              placeholder="0-5 (e.g., 4.2)"
+              class="form-input"
+              min="0"
+              max="5"
+              step="0.1"
+              @change="validateRatingInput"
+            />
+            <div v-if="ratingError" class="error-message">
+              {{ ratingError }}
+            </div>
+          </label>
         </div>
 
         <div class="form-section notes-section">
@@ -223,8 +240,9 @@ const props = defineProps<{
   isSaving: boolean;
 }>();
 
-type FormData = Omit<Book, '_key' | 'meta' | 'tags'> & {
+type FormData = Omit<Book, '_key' | 'meta' | 'tags' | 'rating'> & {
   tags: string[];
+  rating: number | null;
   meta: Omit<BookMeta, 'duration'> & {
     duration: string;
   };
@@ -239,6 +257,7 @@ const newFormData = (book: Book | null | undefined = undefined): FormData => {
       dnf: book.dnf || false,
       notes: book.notes || '',
       tags: book.tags ?? [],
+      rating: book.rating ?? null,
       meta: {
         pages: book.meta?.pages ? Number(book.meta.pages) : null,
         duration: book.meta?.duration ? minutesToDuration(book.meta.duration) : '',
@@ -255,6 +274,7 @@ const newFormData = (book: Book | null | undefined = undefined): FormData => {
     dnf: false,
     notes: '',
     tags: [],
+    rating: null,
     meta: {
       pages: null,
       duration: '',
@@ -274,6 +294,7 @@ const formData = ref<FormData>(newFormData());
 const originalData = ref<typeof formData.value>();
 const showAuthorDropdown = ref(false);
 const durationError = ref<string | null>(null);
+const ratingError = ref<string | null>(null);
 const inlineNotesTextarea = ref<HTMLTextAreaElement | null>(null);
 const fullscreenNotesTextarea = ref<HTMLTextAreaElement | null>(null);
 const goodreadsModalOpen = ref(false);
@@ -297,6 +318,7 @@ const hasChanged = computed(() => {
 const isValid = computed(() => {
   if (!formData.value.title.trim() || !formData.value.author.trim()) return false;
   if (durationError.value) return false;
+  if (ratingError.value) return false;
   return true;
 });
 
@@ -318,6 +340,30 @@ const formatDurationInput = () => {
   }
 };
 
+const validateRatingInput = () => {
+  const rating = formData.value.rating;
+  ratingError.value = null;
+
+  if(rating !== 0 && !rating) {
+    return;
+  }
+
+  const num = Number(rating);
+  if (isNaN(num)) {
+    ratingError.value = 'Rating must be a number';
+    return;
+  }
+
+  if (num < 0 || num > 5) {
+    ratingError.value = 'Rating must be between 0 and 5';
+    return;
+  }
+
+  const decimalPlaces = (num.toString().split('.')[1] || '').length;
+  if (decimalPlaces > 1) {
+    formData.value.rating = Math.round(num * 10) / 10;
+  }
+};
 
 const closeAuthorDropdown = () => {
   setTimeout(() => {
@@ -398,6 +444,7 @@ const save = () => {
   clearNotesFromLocalStorage();
   emit('save', {
     ...formData.value,
+    rating: formData.value.rating ?? null,
     meta: {
       pages: formData.value.meta.pages ?? null,
       duration: formData.value.meta.duration ? durationToMinutes(formData.value.meta.duration) : null,
@@ -414,6 +461,7 @@ watch(
     formData.value = newFormData(props.book || undefined);
     originalData.value = JSON.parse(JSON.stringify(formData.value));
     durationError.value = null;
+    ratingError.value = null;
   },
   { immediate: true, deep: true }
 );

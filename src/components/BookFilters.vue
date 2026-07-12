@@ -35,12 +35,12 @@
 
       <div class="filters-row--desktop">
         <select v-model="localSearchFieldsFilter" class="filter-select">
-          <option value="anything">Search: Anything</option>
-          <option value="title">Search: Title</option>
-          <option value="author">Search: Author</option>
-          <option value="title+author">Search: Title + Author</option>
-          <option value="date">Search: Date</option>
-          <option value="notes">Search: Notes</option>
+          <option value="anything">Anywhere</option>
+          <option value="title">In title</option>
+          <option value="author">In author</option>
+          <option value="title+author">In title+author</option>
+          <option value="date">In date</option>
+          <option value="notes">In notes</option>
         </select>
         <div class="filters">
           <div class="filter-group">
@@ -59,6 +59,24 @@
               <option value="dnf">DNF</option>
             </select>
           </div>
+          <div class="filter-group filter-group--rating">
+            <label>Rating:</label>
+            <select v-model="localRatingOperator" class="filter-select filter-select--compact" @change="validateRatingFilter">
+              <option value="eq">=</option>
+              <option value="lt">&lt;</option>
+              <option value="gt">&gt;</option>
+            </select>
+            <input
+              v-model.number="localRatingValue"
+              type="number"
+              placeholder="0-5"
+              class="filter-select filter-select--rating-input"
+              min="0"
+              max="5"
+              step="0.1"
+              @change="validateRatingFilter"
+            />
+          </div>
         </div>
       </div>
 
@@ -71,13 +89,33 @@
 
     <div v-if="filtersOpen" class="filters-row--mobile">
       <select v-model="localSearchFieldsFilter" class="filter-select">
-        <option value="anything">Search: Anything</option>
-        <option value="title">Search: Title</option>
-        <option value="author">Search: Author</option>
-        <option value="title+author">Search: Title + Author</option>
-        <option value="date">Search: Date</option>
-        <option value="notes">Search: Notes</option>
+        <option value="anything">Search: anywhere</option>
+        <option value="title">Search: in title</option>
+        <option value="author">Search: in author</option>
+        <option value="title+author">Search: in title + author</option>
+        <option value="date">Search: in date</option>
+        <option value="notes">Search: in notes</option>
       </select>
+      <div class="filter-group filter-group--rating-mobile">
+        <label>Rating:</label>
+        <div class="rating-input-group">
+          <select v-model="localRatingOperator" class="filter-select filter-select--compact" @change="validateRatingFilter">
+            <option value="eq">=</option>
+            <option value="lt">&lt;</option>
+            <option value="gt">&gt;</option>
+          </select>
+          <input
+            v-model.number="localRatingValue"
+            type="number"
+            placeholder="0-5"
+            class="filter-select filter-select--rating-input"
+            min="0"
+            max="5"
+            step="0.1"
+            @change="validateRatingFilter"
+          />
+        </div>
+      </div>
       <div class="filters">
         <div class="filter-group">
           <label>Format:</label>
@@ -113,7 +151,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { X, ListFilter } from '@lucide/vue';
-import type { SearchField, AudiobookFilter, DnfFilter } from '@/utils/filtering';
+import type { SearchField, AudiobookFilter, DnfFilter, RatingFilter } from '@/utils/filtering';
 import TagInput from './TagInput.vue';
 
 const props = defineProps<{
@@ -122,6 +160,7 @@ const props = defineProps<{
   audiobookFilter: AudiobookFilter;
   dnfFilter: DnfFilter;
   tagsFilter: string[];
+  ratingFilter: RatingFilter | null;
   allTags: string[];
   filteredCount: number;
   totalCount: number;
@@ -133,10 +172,13 @@ const emit = defineEmits<{
   'update:audiobook-filter': [AudiobookFilter];
   'update:dnf-filter': [DnfFilter];
   'update:tags-filter': [string[]];
+  'update:rating-filter': [RatingFilter | null];
 }>();
 
 const searchInput = ref<HTMLInputElement | null>(null);
 const filtersOpen = ref(false);
+const localRatingOperator = ref<'eq' | 'lt' | 'gt'>('gt');
+const localRatingValue = ref<number | null>(null);
 
 const localSearchQuery = computed({
   get: () => props.searchQuery,
@@ -173,6 +215,42 @@ const clearSearch = () => {
   localSearchQuery.value = '';
   searchInput.value?.blur();
 };
+
+const validateRatingFilter = () => {
+  const operator = localRatingOperator.value as 'eq' | 'lt' | 'gt';
+  const value = localRatingValue.value;
+
+  if (!operator || (value !== 0 && !value)) {
+    emit('update:rating-filter', null);
+    return;
+  }
+
+  const num = Number(value);
+  if (isNaN(num) || num < 0 || num > 5) {
+    emit('update:rating-filter', null);
+    return;
+  }
+  const finalValue = Math.round(num * 10) / 10;
+  localRatingValue.value = finalValue;
+
+
+  emit('update:rating-filter', {
+    operator: operator,
+    value: finalValue,
+  });
+};
+
+const initializeRatingFromProps = () => {
+  if (props.ratingFilter) {
+    localRatingOperator.value = props.ratingFilter.operator;
+    localRatingValue.value = props.ratingFilter.value;
+  } else {
+    localRatingOperator.value = 'gt';
+    localRatingValue.value = null;
+  }
+};
+
+initializeRatingFromProps();
 </script>
 
 <style scoped>
@@ -293,6 +371,12 @@ const clearSearch = () => {
   white-space: nowrap;
 }
 
+.filter-group--rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .filter-select {
   padding: 0.5rem 0.75rem;
   background-color: var(--bg-secondary);
@@ -302,6 +386,17 @@ const clearSearch = () => {
   font-size: 0.9rem;
   cursor: pointer;
   transition: border-color 0.15s;
+}
+
+.filter-select--compact {
+  padding: 0.5rem 0.5rem;
+  min-width: 50px;
+}
+
+.filter-select--rating-input {
+  padding: 0.5rem 0.75rem;
+  width: 65px;
+  cursor: text;
 }
 
 .filter-select:hover {
@@ -349,6 +444,8 @@ const clearSearch = () => {
 
   .filters-row--mobile {
     display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
 
   .filters-toggle-btn {
@@ -369,6 +466,19 @@ const clearSearch = () => {
     min-width: 150px;
   }
 
+  .filter-group--rating-mobile {
+    width: 100%;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .rating-input-group {
+    display: flex;
+    gap: 0.5rem;
+    flex: 1;
+  }
+
   .filter-group--tags {
     width: 100%;
   }
@@ -379,6 +489,16 @@ const clearSearch = () => {
 
   .filter-select {
     width: 100%;
+  }
+
+  .filter-select--compact {
+    width: auto;
+    min-width: 50px;
+  }
+
+  .filter-select--rating-input {
+    flex: 1;
+    width: auto;
   }
 }
 </style>

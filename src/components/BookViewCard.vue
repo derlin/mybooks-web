@@ -29,6 +29,7 @@
           <div class="card-side">
             <span v-if="book.date" class="card-date">{{ book.date }}</span>
             <div class="card-pills">
+              <RatingPill v-if="book.rating !== null && book.rating !== undefined" :rating="book.rating" />
               <div v-if="book.dnf" class="badge dnf">DNF</div>
               <div v-if="book.meta?.pages" class="pill pages">{{ book.meta.pages }} <span>p</span></div>
             </div>
@@ -43,6 +44,7 @@
 import type { Book } from '../types';
 import SortDropdown from './SortDropdown.vue';
 import TagPill from './TagPill.vue';
+import RatingPill from './RatingPill.vue';
 
 defineProps<{
   books: Book[];
@@ -192,9 +194,6 @@ const openDrawer = (book: Book) => {
   padding: 0.2rem 0.6rem;
   border-radius: 12px;
   font-size: 0.75rem;
-  font-weight: 600;
-  background-color: var(--border);
-  color: var(--text-primary);
 }
 
 .pill span {

@@ -44,6 +44,10 @@
             </div>
           </td>
           <td>{{ row.date || '—' }}</td>
+          <td class="rating-cell">
+            <RatingPill v-if="row.rating !== null && row.rating !== undefined" :rating="row.rating" />
+            <span v-else>—</span>
+          </td>
           <td class="duration-cell">
             {{ row.meta?.duration ? formatDuration(row.meta?.duration) : '—' }}
           </td>
@@ -72,6 +76,7 @@ import type { Book } from '../types';
 import { formatDuration } from '../utils/formatting';
 import { Pencil, Trash2, ChevronUp, ChevronDown } from '@lucide/vue';
 import TagPill from './TagPill.vue';
+import RatingPill from './RatingPill.vue';
 
 type Column = {
   id: string;
@@ -90,6 +95,7 @@ const columns: Column[] = [
   { id: 'author', header: 'Author', enableSorting: true },
   { id: 'title', header: 'Title', enableSorting: true },
   { id: 'date', header: 'Read', enableSorting: true },
+  { id: 'rating', header: 'Rating', enableSorting: true },
   { id: 'duration', header: 'Duration', enableSorting: true },
   { id: 'pages', header: 'Pages', enableSorting: true },
   { id: 'dnf', header: 'DNF?', enableSorting: true },
@@ -197,10 +203,15 @@ const handleTagClick = (tag: string) => {
   color: var(--text-primary);
 }
 
+.rating-cell,
 .duration-cell,
 .pages-cell,
 .boolean-cell {
   text-align: center;
+}
+
+.pill.rating {
+  width: 3.5rem;
 }
 
 .title-with-tags {

@@ -75,6 +75,7 @@
           :audiobook-filter="filters.audiobook"
           :dnf-filter="filters.dnf"
           :tags-filter="filters.tags"
+          :rating-filter="filters.rating || null"
           :all-tags="TagsUtil.getAll(books)"
           :filtered-count="filteredAndSortedBooks.length"
           :total-count="books.length"
@@ -83,6 +84,7 @@
           @update:audiobook-filter="filters.audiobook = $event"
           @update:dnf-filter="filters.dnf = $event"
           @update:tags-filter="filters.tags = $event"
+          @update:rating-filter="filters.rating = $event"
         />
       </div>
 

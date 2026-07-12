@@ -157,6 +157,18 @@ textarea:focus {
   box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.1);
 }
 
+/* Pill styling */
+.pill {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
 /* Logo styling */
 .logo {
   width: auto;

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   applyDnfFilter,
   applyFormatFilter,
+  applyRatingFilter,
   applySearchFilter,
   applyTagLikeFilter,
   extractDateNumbers,
@@ -238,6 +239,85 @@ describe('Filtering Utilities', () => {
     });
   });
 
+  describe('applyRatingFilter', () => {
+    const booksWithRatings = [
+      {
+        _key: 'book1',
+        title: 'Book 1',
+        author: 'Author 1',
+        dnf: false,
+        rating: 5,
+      },
+      {
+        _key: 'book2',
+        title: 'Book 2',
+        author: 'Author 2',
+        dnf: false,
+        rating: 4.5,
+      },
+      {
+        _key: 'book3',
+        title: 'Book 3',
+        author: 'Author 3',
+        dnf: false,
+        rating: 3,
+      },
+      {
+        _key: 'book4',
+        title: 'Book 4',
+        author: 'Author 4',
+        dnf: false,
+        rating: null,
+      },
+      {
+        _key: 'book5',
+        title: 'Book 5',
+        author: 'Author 5',
+        dnf: false,
+      },
+    ];
+
+    it('filters by exact rating match (eq operator)', () => {
+      const result = applyRatingFilter(booksWithRatings, { operator: 'eq', value: 4.5 });
+      expect(result).toHaveLength(1);
+      expect(result[0]._key).toBe('book2');
+    });
+
+    it('filters books with rating less than value (lt operator)', () => {
+      const result = applyRatingFilter(booksWithRatings, { operator: 'lt', value: 4 });
+      expect(result).toHaveLength(1);
+      expect(result[0]._key).toBe('book3');
+    });
+
+    it('filters books with rating greater than value (gt operator)', () => {
+      const result = applyRatingFilter(booksWithRatings, { operator: 'gt', value: 4 });
+      expect(result).toHaveLength(2);
+      expect(result.map((b) => b._key)).toEqual(['book1', 'book2']);
+    });
+
+    it('returns empty array when no ratings match', () => {
+      const result = applyRatingFilter(booksWithRatings, { operator: 'eq', value: 2 });
+      expect(result).toHaveLength(0);
+    });
+
+    it('excludes books with null or undefined rating', () => {
+      const result = applyRatingFilter(booksWithRatings, { operator: 'gt', value: 0 });
+      expect(result).toHaveLength(3);
+      expect(result.map((b) => b._key)).toEqual(['book1', 'book2', 'book3']);
+    });
+
+    it('returns all books when filter is null', () => {
+      const result = applyRatingFilter(booksWithRatings, null);
+      expect(result).toHaveLength(5);
+    });
+
+    it('handles decimal ratings correctly', () => {
+      const result = applyRatingFilter(booksWithRatings, { operator: 'eq', value: 5 });
+      expect(result).toHaveLength(1);
+      expect(result[0].rating).toBe(5);
+    });
+  });
+
   describe('sortBooks - Date Sorting', () => {
     it('sorts by date ascending/descending and uses title as tiebreaker', () => {
       const result = sortBooks(mockBooks, 'date', false);
@@ -366,6 +446,25 @@ describe('Filtering Utilities', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].title).toBe('1984');
+    });
+
+    it('applies rating filter with other filters', () => {
+      const booksWithRatings = [
+        { ...mockBooks[0], rating: 5 }, // Hobbit, finished
+        { ...mockBooks[1], rating: 3.5 }, // Dune, finished
+        { ...mockBooks[2], rating: 4 }, // 1984, DNF
+        { ...mockBooks[3], rating: 4.2 }, // Foundation, finished
+      ];
+
+      const result = filterAndSort(booksWithRatings, {
+        dnfFilter: 'finished',
+        rating: { operator: 'gt', value: 3.5 },
+        sortBy: 'rating',
+      });
+
+      expect(result).toHaveLength(2);
+      expect(result[0].rating).toBe(4.2);
+      expect(result[1].rating).toBe(5);
     });
 
     it('handles no filters (returns all in original order)', () => {

@@ -13,6 +13,7 @@ export type Book = {
   dnf: boolean;
   notes: string;
   tags?: string[];
+  rating?: number | null; // 0-5, one decimal place
   meta?: BookMeta;
   _key: string; // normalized title used as Dropbox map key (always present in memory)
 };

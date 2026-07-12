@@ -3,6 +3,10 @@ import type { Book } from '../types';
 export type DnfFilter = 'all' | 'dnf' | 'finished';
 export type AudiobookFilter = 'all' | 'audiobook' | 'paper';
 export type SearchField = 'anything' | 'title' | 'author' | 'title+author' | 'date' | 'notes';
+export type RatingFilter = {
+  operator: 'eq' | 'lt' | 'gt';
+  value: number;
+};
 
 export type FilterState = {
   query: string;
@@ -10,12 +14,14 @@ export type FilterState = {
   audiobook: AudiobookFilter;
   searchField: SearchField;
   tags: string[];
+  rating?: RatingFilter | null;
 };
 
 export const DEFAULT_DNF_FILTER: DnfFilter = 'all';
 export const DEFAULT_AUDIOBOOK_FILTER: AudiobookFilter = 'all';
 export const DEFAULT_SEARCH_FIELD: SearchField = 'anything';
 export const DEFAULT_TAGS_FILTER: string[] = [];
+export const DEFAULT_RATING_FILTER: RatingFilter | null = null;
 
 export const DNF_FILTER_OPTIONS: { value: DnfFilter; label: string }[] = [
   { value: 'all', label: 'All books' },
@@ -96,6 +102,26 @@ export const applyTagLikeFilter = (books: Book[], field: keyof Book, selectedTag
   return books.filter((b) => selectedTags.every((tag) => (b[field] as string[])?.includes(tag)));
 };
 
+export const applyRatingFilter = (books: Book[], ratingFilter: RatingFilter | null): Book[] => {
+  if (!ratingFilter) return books;
+
+  return books.filter((b) => {
+    const rating = b.rating;
+    if (rating === null || rating === undefined) return false;
+
+    switch (ratingFilter.operator) {
+      case 'eq':
+        return rating === ratingFilter.value;
+      case 'lt':
+        return rating < ratingFilter.value;
+      case 'gt':
+        return rating > ratingFilter.value;
+      default:
+        return true;
+    }
+  });
+};
+
 export const sortBooks = (books: Book[], columnId: string | null, descending: boolean): Book[] => {
   if (!columnId) return books;
 
@@ -134,6 +160,16 @@ export const sortBooks = (books: Book[], columnId: string | null, descending: bo
       return 0;
     }
 
+    if (columnId === 'rating') {
+      const aRating = a.rating ?? 0;
+      const bRating = b.rating ?? 0;
+
+      if (aRating !== bRating) {
+        return descending ? bRating - aRating : aRating - bRating;
+      }
+      return 0;
+    }
+
     let aVal: any = (a as any)[columnId];
     let bVal: any = (b as any)[columnId];
 
@@ -161,6 +197,7 @@ export type FilterAndSortOptions = {
   searchQuery?: string;
   searchField?: SearchField;
   tags?: string[];
+  rating?: RatingFilter | null;
   sortBy?: string | null;
   sortDesc?: boolean;
 };
@@ -172,6 +209,7 @@ export const filterAndSort = (books: Book[], options: FilterAndSortOptions = {})
     searchQuery = '',
     searchField = DEFAULT_SEARCH_FIELD,
     tags = DEFAULT_TAGS_FILTER,
+    rating = DEFAULT_RATING_FILTER,
     sortBy = null,
     sortDesc = false,
   } = options;
@@ -182,6 +220,7 @@ export const filterAndSort = (books: Book[], options: FilterAndSortOptions = {})
   result = applyFormatFilter(result, audiobookFilter);
   result = applySearchFilter(result, searchQuery, searchField);
   result = applyTagLikeFilter(result, 'tags', tags);
+  result = applyRatingFilter(result, rating);
 
   if (sortBy) {
     result = sortBooks(result, sortBy, sortDesc);

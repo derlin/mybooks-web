@@ -3,7 +3,13 @@ import type { BooksProvider } from '../services/booksProvider';
 import type { Book } from '../types';
 import { normalizeTitle } from '../utils/books';
 import type { FilterState } from '../utils/filtering';
-import { DEFAULT_AUDIOBOOK_FILTER, DEFAULT_DNF_FILTER, DEFAULT_SEARCH_FIELD, filterAndSort } from '../utils/filtering';
+import {
+  DEFAULT_AUDIOBOOK_FILTER,
+  DEFAULT_DNF_FILTER,
+  DEFAULT_RATING_FILTER,
+  DEFAULT_SEARCH_FIELD,
+  filterAndSort,
+} from '../utils/filtering';
 import { checkDuplicateTitle } from '../utils/validation';
 import { useToast } from './useToast';
 
@@ -20,6 +26,7 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
     audiobook: DEFAULT_AUDIOBOOK_FILTER,
     searchField: DEFAULT_SEARCH_FIELD,
     tags: [],
+    rating: DEFAULT_RATING_FILTER,
   });
   const currentSort = ref({ id: 'date', desc: true });
   const selectedBook = ref<Book | null>(null);
@@ -35,6 +42,7 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
       searchQuery: filters.value.query,
       searchField: filters.value.searchField,
       tags: filters.value.tags,
+      rating: filters.value.rating,
       sortBy: currentSort.value.id,
       sortDesc: currentSort.value.desc,
     });
@@ -193,6 +201,7 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
         dnf: editedBook.dnf,
         notes: editedBook.notes,
         tags: editedBook.tags?.length > 0 ? editedBook.tags : undefined,
+        rating: editedBook.rating ?? null,
         meta: editedBook.meta,
         _key: newKey,
       };

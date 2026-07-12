@@ -12,6 +12,7 @@
       <option value="date">Date</option>
       <option value="pages">Pages</option>
       <option value="duration">Duration</option>
+      <option value="rating">Rating</option>
     </select>
     <button
       class="btn-icon-only btn-outline btn-dimmed"

@@ -35,6 +35,7 @@
           </div>
 
           <div v-if="hasAttributes" class="attributes">
+            <RatingPill v-if="book.rating !== null && book.rating !== undefined" :rating="book.rating" />
             <span v-if="book.meta?.pages" class="pill"> {{ book.meta.pages }} pages </span>
             <span v-if="book.meta?.duration" class="pill">
               {{ formatDuration(book.meta.duration) }}
@@ -95,6 +96,7 @@ import { useToast } from '../composables/useToast';
 import { formatDate, formatDuration } from '../utils/formatting';
 import { googleUrlFor } from '../utils/books';
 import TagPill from './TagPill.vue';
+import RatingPill from './RatingPill.vue';
 
 const props = defineProps<{
   book: Book;
@@ -279,17 +281,6 @@ const close = () => {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-}
-
-.pill {
-  display: inline-block;
-  padding: 0.35rem 0.75rem;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  border-radius: 16px;
-  font-size: 0.8rem;
-  font-weight: 500;
 }
 
 .pill.dnf {
