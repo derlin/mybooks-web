@@ -38,6 +38,7 @@
             <div class="menu-section">
               <div class="menu-header">Actions</div>
               <button @click="downloadJson" class="menu-item" role="menuitem">Download JSON</button>
+              <button @click="triggerFileUpload" class="menu-item" role="menuitem">Upload JSON</button>
               <button @click="emit('logout')" class="menu-item menu-item-danger" role="menuitem">
                 Logout
               </button>
@@ -226,6 +227,46 @@ const downloadJson = () => {
   a.click();
   URL.revokeObjectURL(url);
   menuOpen.value = false;
+};
+
+const fileInput = ref<HTMLInputElement | null>(null);
+
+const triggerFileUpload = () => {
+  if (!fileInput.value) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = handleFileUpload;
+    fileInput.value = input;
+  }
+  fileInput.value.click();
+  menuOpen.value = false;
+};
+
+const handleFileUpload = async (e: Event) => {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  try {
+    const content = await file.text();
+    let uploadedBooks;
+    try {
+      uploadedBooks = JSON.parse(content);
+    } catch {
+      toast.showError('Invalid JSON file');
+      return;
+    }
+    await props.booksProvider.uploadBookMapToDropbox(uploadedBooks);
+    window.location.reload()
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to upload JSON';
+    toast.showError(message);
+  }
+
+  if (fileInput.value) {
+    fileInput.value.value = '';
+  }
 };
 
 // Initialize the book manager composable

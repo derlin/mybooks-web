@@ -59,6 +59,10 @@ export class BooksProvider {
   async uploadBooks(books: Book[]): Promise<void> {
     console.log('[BooksProvider] Uploading books');
     const cleanedData = this.serializeBooks(books);
+    await this.uploadBookMapToDropbox(cleanedData);
+  }
+
+  async uploadBookMapToDropbox(cleanedData: Record<string, any>): Promise<void> {
     const content = JSON.stringify(cleanedData, null, 2);
     const metadata = await this.dropboxService.uploadFile(
       BOOKS_FILE_PATH,
