@@ -192,7 +192,7 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
 
     isSaving.value = true;
     try {
-      const newKey = editedBookKey ?? normalizeTitle(editedBook.title);
+      const newKey = normalizeTitle(editedBook.title);
 
       const bookToSave: Book = {
         title: editedBook.title,
