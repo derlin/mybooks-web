@@ -122,70 +122,53 @@ export const applyRatingFilter = (books: Book[], ratingFilter: RatingFilter | nu
   });
 };
 
+const compareNumbers = (a: number | null | undefined, b: number | null | undefined, descending: boolean): number => {
+  const aVal = a || 0;
+  const bVal = b || 0;
+
+  if (aVal !== bVal) {
+    return descending ? bVal - aVal : aVal - bVal;
+  }
+  return 0;
+};
+
+const compareStrings = (a: string | null | undefined, b: string | null | undefined, descending: boolean): number => {
+  const aVal = a?.toLowerCase() || '';
+  const bVal = b?.toLowerCase() || '';
+
+  if (aVal !== bVal) {
+    return descending ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+  }
+  return 0;
+};
+
+const compareAny = (a: any, b: any, descending: boolean): number => {
+  if (a == null && b == null) return 0;
+  if (a == null) return descending ? 1 : -1;
+  if (b == null) return descending ? -1 : 1;
+
+  // Fallback to string comparison for other types
+  const aStr = String(a);
+  const bStr = String(b);
+  return compareStrings(aStr, bStr, descending);
+};
+
 export const sortBooks = (books: Book[], columnId: string | null, descending: boolean): Book[] => {
   if (!columnId) return books;
-
   const sorted = [...books].sort((a, b) => {
     if (columnId === 'date') {
-      const aDigits = extractDateNumbers(a.date);
-      const bDigits = extractDateNumbers(b.date);
-      const aNum = parseInt(aDigits, 10) || 0;
-      const bNum = parseInt(bDigits, 10) || 0;
-
-      if (aNum !== bNum) {
-        return descending ? bNum - aNum : aNum - bNum;
-      }
-      const aTitle = a.title?.toLowerCase() || '';
-      const bTitle = b.title?.toLowerCase() || '';
-      return aTitle.localeCompare(bTitle);
+      return compareStrings(extractDateNumbers(a.date), extractDateNumbers(b.date), descending);
     }
-
     if (columnId === 'pages') {
-      const aPages = a.meta?.pages || 0;
-      const bPages = b.meta?.pages || 0;
-
-      if (aPages !== bPages) {
-        return descending ? bPages - aPages : aPages - bPages;
-      }
-      return 0;
+      return compareNumbers(a.meta?.pages, b.meta?.pages, descending);
     }
-
     if (columnId === 'duration') {
-      const aDuration = a.meta?.duration || 0;
-      const bDuration = b.meta?.duration || 0;
-
-      if (aDuration !== bDuration) {
-        return descending ? bDuration - aDuration : aDuration - bDuration;
-      }
-      return 0;
+      return compareNumbers(a.meta?.duration, b.meta?.duration, descending);
     }
-
     if (columnId === 'rating') {
-      const aRating = a.rating ?? 0;
-      const bRating = b.rating ?? 0;
-
-      if (aRating !== bRating) {
-        return descending ? bRating - aRating : aRating - bRating;
-      }
-      return 0;
+      return compareNumbers(a.rating ?? -1, b.rating ?? -1, descending);
     }
-
-    let aVal: any = (a as any)[columnId];
-    let bVal: any = (b as any)[columnId];
-
-    if (aVal == null) aVal = '';
-    if (bVal == null) bVal = '';
-
-    if (typeof aVal === 'string') {
-      aVal = aVal.toLowerCase();
-      bVal = bVal.toLowerCase();
-      const cmp = aVal.localeCompare(bVal);
-      return descending ? -cmp : cmp;
-    }
-
-    if (aVal < bVal) return descending ? 1 : -1;
-    if (aVal > bVal) return descending ? -1 : 1;
-    return 0;
+    return compareAny((a as any)[columnId], (b as any)[columnId], descending);
   });
 
   return sorted;

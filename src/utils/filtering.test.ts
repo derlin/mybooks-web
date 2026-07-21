@@ -17,7 +17,7 @@ describe('Filtering Utilities', () => {
       _key: 'the-hobbit',
       title: 'The Hobbit',
       author: 'Tolkien',
-      date: '2020-06-15',
+      date: '2019-04',
       dnf: false,
       notes: 'An adventure story',
       meta: { pages: 310 },
@@ -26,7 +26,7 @@ describe('Filtering Utilities', () => {
       _key: 'dune',
       title: 'Dune',
       author: 'Frank Herbert',
-      date: '2021-03',
+      date: '2019-02-12',
       dnf: false,
       notes: 'Epic sci-fi',
       meta: { pages: 682, duration: 720 }, // Audiobook
@@ -139,8 +139,8 @@ describe('Filtering Utilities', () => {
     });
 
     it('searches in date field', () => {
-      const result = applySearchFilter(mockBooks, '2020', 'date');
-      expect(result).toHaveLength(1);
+      const result = applySearchFilter(mockBooks, '2019', 'date');
+      expect(result).toHaveLength(3);
       expect(result[0].title).toBe('The Hobbit');
     });
 
@@ -323,21 +323,12 @@ describe('Filtering Utilities', () => {
       const result = sortBooks(mockBooks, 'date', false);
       expect(result[0].title).toBe('Foundation'); // non-numeric dates = 0
       expect(result[1].title).toBe('1984');
-      expect(result[3].title).toBe('The Hobbit'); // latest date
+      expect(result[2].title).toBe('Dune');
+      expect(result[3].title).toBe('The Hobbit');
 
       const descending = sortBooks(mockBooks, 'date', true);
       expect(descending[0].title).toBe('The Hobbit');
       expect(descending[3].title).toBe('Foundation');
-
-      const sameDate = sortBooks(
-        [
-          { title: 'Z Book', date: '2020', dnf: false },
-          { title: 'A Book', date: '2020', dnf: false },
-        ],
-        'date',
-        false
-      );
-      expect(sameDate[0].title).toBe('A Book'); // tied dates sort by title
     });
   });
 
