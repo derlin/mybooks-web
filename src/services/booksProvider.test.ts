@@ -3,8 +3,40 @@
 import type { Mocked } from 'vitest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Book } from '../types';
-import { BooksProvider } from './booksProvider';
+import { __TEST__, BooksProvider } from './booksProvider';
 import type { IDropboxService } from './dropboxService';
+
+describe('removeEmpty', () => {
+  it('removes null and undefined values from objects', () => {
+    const input = {
+      name: 'Alice',
+      age: 30,
+      middleName: null,
+      nickname: undefined,
+      tags: [],
+      other_tags: [1],
+      metadata: {
+        created: null,
+        nestedEmpty: {
+          a: null,
+          b: [],
+        },
+      },
+      posts: [
+        { title: 'First Post', tags: [] },
+        { title: null, tags: [] }, // becomes empty object -> stripped from array
+      ],
+    };
+
+    const result = __TEST__.removeEmpty(input);
+    expect(result).toEqual({
+      name: 'Alice',
+      age: 30,
+      other_tags: [1],
+      posts: [{ title: 'First Post' }],
+    });
+  });
+});
 
 describe('BooksProvider', () => {
   let mockDropboxService: Mocked<IDropboxService>;
@@ -67,75 +99,6 @@ describe('BooksProvider', () => {
           dnf: false,
           notes: '',
         },
-      });
-    });
-
-    describe('meta field serialization', () => {
-      it.each([
-        {
-          description: 'undefined meta',
-          meta: undefined,
-          shouldSerialize: false,
-        },
-        {
-          description: 'empty meta object',
-          meta: {},
-          shouldSerialize: false,
-        },
-        {
-          description: 'meta with all null values',
-          meta: { GoodreadsID: null, ISBN: null, pubDate: null, pages: null },
-          shouldSerialize: false,
-        },
-        {
-          description: 'meta with all undefined values',
-          meta: { GoodreadsID: undefined, ISBN: undefined },
-          shouldSerialize: false,
-        },
-        {
-          description: 'meta with mixed null and undefined',
-          meta: { GoodreadsID: null, ISBN: undefined, pubDate: null },
-          shouldSerialize: false,
-        },
-        {
-          description: 'meta with one valid value among nulls',
-          meta: { GoodreadsID: '12345', ISBN: null, pubDate: null },
-          shouldSerialize: true,
-          expectedMeta: { GoodreadsID: '12345' },
-        },
-        {
-          description: 'meta with multiple valid values',
-          meta: { pages: 300, duration: 600, ISBN: null },
-          shouldSerialize: true,
-          expectedMeta: { pages: 300, duration: 600 },
-        },
-      ])('$description: serializes=$shouldSerialize', async ({ meta, shouldSerialize, expectedMeta }) => {
-        const books: Book[] = [
-          {
-            title: 'Test Book',
-            author: 'Author',
-            date: '2023',
-            dnf: false,
-            notes: '',
-            ...(meta !== undefined && { meta }),
-            _key: 'test book',
-          },
-        ];
-
-        mockDropboxService.uploadFile.mockResolvedValueOnce({ rev: 'rev123' });
-
-        await booksProvider.uploadBooks(books);
-
-        const uploadedBlob = mockDropboxService.uploadFile.mock.calls[0][1];
-        const content = await uploadedBlob.text();
-        const serialized = JSON.parse(content);
-
-        if (shouldSerialize) {
-          expect(serialized['test book']).toHaveProperty('meta');
-          expect(serialized['test book'].meta).toEqual(expectedMeta);
-        } else {
-          expect(serialized['test book']).not.toHaveProperty('meta');
-        }
       });
     });
 

@@ -2,6 +2,38 @@ import { BOOKS_FILE_PATH } from '../env';
 import type { Book } from '../types';
 import { type IDropboxService, NotFoundError } from './dropboxService';
 
+// -------
+
+function removeEmpty<T>(obj: T): Partial<T> | undefined {
+  if (obj === null || obj === undefined) {
+    return undefined;
+  }
+  // Handle Primitives & Non-Plain Objects (Dates, RegExps, etc.)
+  if (typeof obj !== 'object' || obj instanceof Date || obj instanceof RegExp) {
+    return obj;
+  }
+  // Handle Arrays
+  if (Array.isArray(obj)) {
+    const cleanedArray = obj
+      .map((item) => removeEmpty(item))
+      .filter((item): item is NonNullable<typeof item> => item !== undefined);
+
+    return (cleanedArray.length > 0 ? cleanedArray : undefined) as unknown as Partial<T>;
+  }
+  // Handle Objects
+  const cleanedObj: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    const cleanedValue = removeEmpty(value);
+    // Only keep properties that returned a defined, non-empty value
+    if (cleanedValue !== undefined) {
+      cleanedObj[key] = cleanedValue;
+    }
+  }
+  return Object.keys(cleanedObj).length > 0 ? (cleanedObj as Partial<T>) : undefined;
+}
+
+// -------
+
 export class BooksProvider {
   private syncedRevision: string | null = null;
 
@@ -24,14 +56,8 @@ export class BooksProvider {
 
   serializeBooks(books: Book[]): Record<string, any> {
     return Object.fromEntries(
-      books.map(({ _key, meta, ...rest }) => {
-        const serialized: any = rest;
-        if (meta) {
-          const cleanedMeta = Object.fromEntries(Object.entries(meta).filter(([, v]) => v != null));
-          if (Object.keys(cleanedMeta).length > 0) {
-            serialized.meta = cleanedMeta;
-          }
-        }
+      books.map(({ _key, ...value }) => {
+        const serialized: any = removeEmpty(value);
         return [_key, serialized];
       })
     );
@@ -83,3 +109,7 @@ export class BooksProvider {
     }
   }
 }
+
+export const __TEST__ = {
+  removeEmpty,
+};
