@@ -17,37 +17,42 @@ describe('Filtering Utilities', () => {
       _key: 'the-hobbit',
       title: 'The Hobbit',
       author: 'Tolkien',
-      date: '2019-04',
+      date_read: '2019-04',
+      format: 'print',
       dnf: false,
       notes: 'An adventure story',
-      meta: { pages: 310 },
+      pages: 310,
     },
     {
       _key: 'dune',
       title: 'Dune',
       author: 'Frank Herbert',
-      date: '2019-02-12',
+      date_read: '2019-02-12',
       dnf: false,
+      format: 'audio',
       notes: 'Epic sci-fi',
-      meta: { pages: 682, duration: 720 }, // Audiobook
+      pages: 682,
+      duration: 720, // Audiobook
     },
     {
       _key: '1984',
       title: '1984',
       author: 'George Orwell',
-      date: '2019',
+      date_read: '2019',
+      format: 'print',
       dnf: true, // Did not finish
       notes: 'Dystopian novel',
-      meta: { pages: 328 },
+      pages: 328,
     },
     {
       _key: 'foundation',
       title: 'Foundation',
       author: 'Isaac Asimov',
-      date: '??', // Non-standard date
+      format: 'print',
+      date_read: '??', // Non-standard date
       dnf: false,
       notes: 'Space empire foundation',
-      meta: { pages: 255 },
+      pages: 255,
     },
   ];
 
@@ -89,32 +94,27 @@ describe('Filtering Utilities', () => {
     });
 
     it('returns all books when filter is "all"', () => {
-      const result = applyDnfFilter(mockBooks, 'all');
-      expect(result).toHaveLength(4);
-    });
-
-    it('returns all books for unknown filter value', () => {
-      const result = applyDnfFilter(mockBooks, 'unknown');
+      const result = applyDnfFilter(mockBooks, '');
       expect(result).toHaveLength(4);
     });
   });
 
   describe('applyFormatFilter', () => {
     it('filters to only audiobooks', () => {
-      const result = applyFormatFilter(mockBooks, 'audiobook');
+      const result = applyFormatFilter(mockBooks, 'audio');
       expect(result).toHaveLength(1);
       expect(result[0].title).toBe('Dune');
-      expect(result[0].meta?.duration).toBe(720);
+      expect(result[0].duration).toBe(720);
     });
 
-    it('filters to only paper books', () => {
-      const result = applyFormatFilter(mockBooks, 'paper');
+    it('filters to only print books', () => {
+      const result = applyFormatFilter(mockBooks, 'print');
       expect(result).toHaveLength(3);
-      expect(result.every((b) => !b.meta?.duration)).toBe(true);
+      expect(result.every((b) => !b.duration)).toBe(true);
     });
 
     it('returns all books when filter is "all"', () => {
-      const result = applyFormatFilter(mockBooks, 'all');
+      const result = applyFormatFilter(mockBooks, '');
       expect(result).toHaveLength(4);
     });
   });
@@ -319,14 +319,14 @@ describe('Filtering Utilities', () => {
   });
 
   describe('sortBooks - Date Sorting', () => {
-    it('sorts by date ascending/descending and uses title as tiebreaker', () => {
-      const result = sortBooks(mockBooks, 'date', false);
+    it('sorts by date ascending/descending', () => {
+      const result = sortBooks(mockBooks, 'date_read', false);
       expect(result[0].title).toBe('Foundation'); // non-numeric dates = 0
       expect(result[1].title).toBe('1984');
       expect(result[2].title).toBe('Dune');
       expect(result[3].title).toBe('The Hobbit');
 
-      const descending = sortBooks(mockBooks, 'date', true);
+      const descending = sortBooks(mockBooks, 'date_read', true);
       expect(descending[0].title).toBe('The Hobbit');
       expect(descending[3].title).toBe('Foundation');
     });
@@ -339,8 +339,8 @@ describe('Filtering Utilities', () => {
       expect(result[3].title).toBe('Dune'); // 682
 
       const booksWithoutPages = [
-        { title: 'No Pages', meta: {}, dnf: false },
-        { title: 'Has Pages', meta: { pages: 100 }, dnf: false },
+        { title: 'No Pages', dnf: false },
+        { title: 'Has Pages', pages: 100, dnf: false },
       ];
       const noPageResult = sortBooks(booksWithoutPages, 'pages', false);
       expect(noPageResult[0].title).toBe('No Pages'); // null/undefined treated as 0
@@ -407,7 +407,7 @@ describe('Filtering Utilities', () => {
     it('applies all filters and sorts', () => {
       const result = filterAndSort(mockBooks, {
         dnfFilter: 'finished',
-        audiobookFilter: 'paper',
+        formatFilter: 'print',
         sortBy: 'title',
       });
 
@@ -449,7 +449,7 @@ describe('Filtering Utilities', () => {
 
       const result = filterAndSort(booksWithRatings, {
         dnfFilter: 'finished',
-        rating: { operator: 'gt', value: 3.5 },
+        ratingFilter: { operator: 'gt', value: 3.5 },
         sortBy: 'rating',
       });
 

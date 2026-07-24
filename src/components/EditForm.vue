@@ -57,9 +57,9 @@
           </label>
 
           <label class="form-label">
-            <span class="label-text">Date</span>
+            <span class="label-text">Date read</span>
             <input
-              v-model="formData.date"
+              v-model="formData.date_read"
               type="text"
               placeholder="YYYY-MM-DD or YYYY-MM or YYYY or ?"
               class="form-input"
@@ -70,6 +70,15 @@
           <label class="form-label">
             <input v-model="formData.dnf" type="checkbox" class="form-checkbox" />
             <span>Did Not Finish (DNF)</span>
+          </label>
+
+          <label class="form-label">
+            <span class="label-text">Format</span>
+            <select v-model="formData.format" class="form-input">
+              <option value="print">Print</option>
+              <option value="audio">Audio</option>
+              <option value="ebook">E-Book</option>
+            </select>
           </label>
 
           <!-- do NOT use label for the Tags, it messes the event system (clicking on the label triggers a remove event) -->
@@ -131,7 +140,7 @@
             <label class="form-label">
               <span class="label-text">Pages</span>
               <input
-                v-model.number="formData.meta.pages"
+                v-model.number="formData.pages"
                 type="number"
                 placeholder="Page count"
                 class="form-input"
@@ -142,7 +151,7 @@
             <label class="form-label">
               <span class="label-text">Duration (audiobook)</span>
               <input
-                v-model="formData.meta.duration"
+                v-model="formData.duration"
                 type="text"
                 placeholder="7h34 or 2h0"
                 class="form-input"
@@ -155,17 +164,17 @@
 
             <label class="form-label">
               <span class="label-text">Goodreads ID</span>
-              <input v-model="formData.meta.GoodreadsID" type="text" placeholder="Goodreads ID" class="form-input" />
+              <input v-model="formData.GoodreadsID" type="text" placeholder="Goodreads ID" class="form-input" />
             </label>
 
             <label class="form-label">
               <span class="label-text">ISBN</span>
-              <input v-model="formData.meta.ISBN" type="text" placeholder="ISBN" class="form-input" />
+              <input v-model="formData.isbn" type="text" placeholder="ISBN" class="form-input" />
             </label>
 
             <label class="form-label">
               <span class="label-text">Publication Date</span>
-              <input v-model="formData.meta.pubDate" type="text" placeholder="YYYY-MM-DD" class="form-input" />
+              <input v-model="formData.date_published" type="text" placeholder="YYYY-MM-DD" class="form-input" />
             </label>
           </div>
         </div>
@@ -212,17 +221,10 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, toRefs, watch } from 'vue';
 import { X, Check, Download, Maximize2 } from '@lucide/vue';
 import type { GoodreadsMetadata } from '../services/goodreads-fetcher';
-import type { Book, BookMeta } from '../types';
+import type { Book } from '../types';
 import { Storage } from '../utils/storage';
 import { TagsUtil } from '../utils/tags';
-import {
-  durationToMinutes,
-  formatDateString,
-  getFilteredAuthors,
-  getTodayDate,
-  minutesToDuration,
-  validateDuration,
-} from '../utils/validation';
+import * as validation from '../utils/validation';
 import GoodreadsModal from './GoodreadsModal.vue';
 import TagInput from './TagInput.vue';
 
@@ -240,12 +242,12 @@ const props = defineProps<{
   isSaving: boolean;
 }>();
 
-type FormData = Omit<Book, '_key' | 'meta' | 'tags' | 'rating'> & {
+type FormData = Omit<Book, '_key' | 'pages' | 'duration' | 'rating' | 'links'> & {
+  pages: number | null;
+  duration: string;
   tags: string[];
   rating: number | null;
-  meta: Omit<BookMeta, 'duration'> & {
-    duration: string;
-  };
+  GoodreadsID: string;
 };
 
 const newFormData = (book: Book | null | undefined = undefined): FormData => {
@@ -253,35 +255,33 @@ const newFormData = (book: Book | null | undefined = undefined): FormData => {
     return {
       title: book.title,
       author: book.author,
-      date: book.date,
+      date_published: book.date_published || '',
+      isbn: book.isbn || '',
+      pages: book.pages ? Number(book.pages) : null,
+      duration: book.duration ? validation.minutesToDuration(book.duration) : '',
+      date_read: book.date_read,
       dnf: book.dnf || false,
+      format: book.format ?? 'print',
       notes: book.notes || '',
-      tags: book.tags ?? [],
       rating: book.rating ?? null,
-      meta: {
-        pages: book.meta?.pages ? Number(book.meta.pages) : null,
-        duration: book.meta?.duration ? minutesToDuration(book.meta.duration) : '',
-        GoodreadsID: book.meta?.GoodreadsID || '',
-        ISBN: book.meta?.ISBN || '',
-        pubDate: book.meta?.pubDate || '',
-      },
+      tags: book.tags ?? [],
+      GoodreadsID: book.links?.goodreads?.id || '',
     };
   }
   return {
     title: '',
     author: '',
-    date: getTodayDate(),
+    date_published: '',
+    isbn: '',
+    pages: null,
+    duration: '',
+    date_read: validation.getTodayDate(),
     dnf: false,
+    format: 'print',
     notes: '',
     tags: [],
     rating: null,
-    meta: {
-      pages: null,
-      duration: '',
-      GoodreadsID: '',
-      ISBN: '',
-      pubDate: '',
-    },
+    GoodreadsID: '',
   };
 };
 
@@ -308,7 +308,7 @@ const getCurrentHash = (): string => {
 };
 
 const filteredAuthors = computed(() => {
-  return getFilteredAuthors(formData.value.author, props.allBooks);
+  return validation.getFilteredAuthors(formData.value.author, props.allBooks);
 });
 
 const hasChanged = computed(() => {
@@ -323,20 +323,20 @@ const isValid = computed(() => {
 });
 
 const formatDateInput = () => {
-  formData.value.date = formatDateString(formData.value.date);
+  formData.value.date_read = validation.formatDateString(formData.value.date_read);
 };
 
 const formatDurationInput = () => {
-  const duration = formData.value.meta.duration.trim();
+  const duration = formData.value.duration.trim();
   if (!duration) {
     durationError.value = null;
     return;
   }
 
-  const result = validateDuration(duration);
+  const result = validation.validateDuration(duration);
   durationError.value = result.error || null;
   if (result.formatted) {
-    formData.value.meta.duration = result.formatted;
+    formData.value.duration = result.formatted;
   }
 };
 
@@ -344,24 +344,13 @@ const validateRatingInput = () => {
   const rating = formData.value.rating;
   ratingError.value = null;
 
-  if(rating !== 0 && !rating) {
-    return;
-  }
-
-  const num = Number(rating);
-  if (isNaN(num)) {
-    ratingError.value = 'Rating must be a number';
-    return;
-  }
-
-  if (num < 0 || num > 5) {
+  if (!validation.isValidRating(rating)) {
     ratingError.value = 'Rating must be between 0 and 5';
     return;
   }
 
-  const decimalPlaces = (num.toString().split('.')[1] || '').length;
-  if (decimalPlaces > 1) {
-    formData.value.rating = Math.round(num * 10) / 10;
+  if (rating !== null && rating !== undefined && rating !== 0 && rating) {
+    formData.value.rating = Math.round(rating * 10) / 10;
   }
 };
 
@@ -422,13 +411,13 @@ const debounceAutoSaveNotes = () => {
 const handleGoodreadsData = (metadata: GoodreadsMetadata) => {
   formData.value.title = metadata.title;
   formData.value.author = metadata.author;
-  formData.value.meta.ISBN = metadata.isbn || '';
-  formData.value.meta.GoodreadsID = metadata.goodreadsId;
+  formData.value.isbn = metadata.isbn || '';
+  formData.value.GoodreadsID = metadata.goodreadsId;
   if (metadata.pages) {
-    formData.value.meta.pages = metadata.pages;
+    formData.value.pages = metadata.pages;
   }
   if (metadata.pubDate) {
-    formData.value.meta.pubDate = metadata.pubDate;
+    formData.value.date_published = metadata.pubDate;
   }
   goodreadsModalOpen.value = false;
 };
@@ -441,16 +430,18 @@ const cancel = () => {
 const save = () => {
   if (!isValid.value) return;
 
+  const { GoodreadsID, ...values } = formData.value;
   clearNotesFromLocalStorage();
   emit('save', {
-    ...formData.value,
-    rating: formData.value.rating ?? null,
-    meta: {
-      pages: formData.value.meta.pages ?? null,
-      duration: formData.value.meta.duration ? durationToMinutes(formData.value.meta.duration) : null,
-      GoodreadsID: formData.value.meta.GoodreadsID || null,
-      ISBN: formData.value.meta.ISBN || null,
-      pubDate: formData.value.meta.pubDate || null,
+    ...(props.book || {}),
+    ...values,
+    duration: values.duration ? validation.durationToMinutes(values.duration) : null,
+    rating: values.rating ?? null,
+    links: {
+      ...(props.book?.links || {}),
+      goodreads: GoodreadsID ?
+        { id: GoodreadsID, url: `https://www.goodreads.com/book/show/${GoodreadsID}` }
+        : undefined,
     },
   });
 };

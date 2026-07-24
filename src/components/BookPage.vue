@@ -71,21 +71,11 @@
     <div v-else class="table-wrapper">
       <div class="controls">
         <BookFilters
-          :search-query="filters.query"
-          :search-fields-filter="filters.searchField"
-          :audiobook-filter="filters.audiobook"
-          :dnf-filter="filters.dnf"
-          :tags-filter="filters.tags"
-          :rating-filter="filters.rating || null"
+          :filters="filters"
           :all-tags="TagsUtil.getAll(books)"
           :filtered-count="filteredAndSortedBooks.length"
           :total-count="books.length"
-          @update:search-query="filters.query = $event"
-          @update:search-fields-filter="filters.searchField = $event"
-          @update:audiobook-filter="filters.audiobook = $event"
-          @update:dnf-filter="filters.dnf = $event"
-          @update:tags-filter="filters.tags = $event"
-          @update:rating-filter="filters.rating = $event"
+          @update:filters="filters = $event"
         />
       </div>
 

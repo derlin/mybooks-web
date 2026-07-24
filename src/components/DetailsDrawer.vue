@@ -17,10 +17,10 @@
       <div class="drawer-content">
         <div class="header-section">
           <div class="info-prose">
-            by <span class="highlight">{{ book.author || '—' }}</span>
+            by <span class="highlight">{{ book.author }}</span>
           </div>
-          <div v-if="book.meta?.pubDate" class="info-prose">First published on {{ formatDate(book.meta.pubDate) }}</div>
-          <div class="info-prose">Read on {{ formatDate(book.date) }}</div>
+          <div v-if="book.date_published" class="info-prose">First published on {{ formatDate(book.date_published) }}</div>
+          <div class="info-prose">Read on {{ formatDate(book.date_read) }}</div>
 
           <div v-if="book.tags?.length" class="tags-section">
             <div class="tags-container">
@@ -34,13 +34,14 @@
             </div>
           </div>
 
-          <div v-if="hasAttributes" class="attributes">
+          <div class="attributes">
+            <FormatPill :format="book.format" />
             <RatingPill v-if="book.rating !== null && book.rating !== undefined" :rating="book.rating" />
-            <span v-if="book.meta?.pages" class="pill"> {{ book.meta.pages }} pages </span>
-            <span v-if="book.meta?.duration" class="pill">
-              {{ formatDuration(book.meta.duration) }}
+            <span v-if="book.pages" class="pill"> {{ book.pages }} pages </span>
+            <span v-if="book.duration" class="pill">
+              {{ formatDuration(book.duration) }}
             </span>
-            <span v-if="book.meta?.ISBN" class="pill isbn-pill" @click="copyISBN" title="Click to copy">ISBN: {{ book.meta.ISBN }}</span>
+            <span v-if="book.isbn" class="pill isbn-pill" @click="copyISBN" title="Click to copy">ISBN: {{ book.isbn }}</span>
             <span v-if="book.dnf" class="pill dnf">DNF</span>
           </div>
         </div>
@@ -50,7 +51,7 @@
             <Search :size="18" />
             <span>Google</span>
           </button>
-          <button v-if="book.meta?.GoodreadsID" class="btn-outline btn-secondary btn-icon-text" @click="openGoodreadsLink" title="Open on Goodreads">
+          <button v-if="book.links?.goodreads" class="btn-outline btn-secondary btn-icon-text" @click="openGoodreadsLink" title="Open on Goodreads">
             <ExternalLink :size="18" />
             <span>Goodreads</span>
           </button>
@@ -88,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { watch } from 'vue';
 import { X, Trash2, Pencil, ArrowLeft, Search, ExternalLink } from '@lucide/vue';
 import type { Book } from '../types';
 import { useDrag } from '../composables/useDrag';
@@ -96,6 +97,7 @@ import { useToast } from '../composables/useToast';
 import { formatDate, formatDuration } from '../utils/formatting';
 import { googleUrlFor } from '../utils/books';
 import TagPill from './TagPill.vue';
+import FormatPill from './FormatPill.vue';
 import RatingPill from './RatingPill.vue';
 
 const props = defineProps<{
@@ -127,14 +129,9 @@ watch(
   }
 );
 
-const hasAttributes = computed(() => {
-  return props.book.meta?.pages || props.book.meta?.duration || props.book.meta?.ISBN || props.book.dnf;
-});
-
 const openGoodreadsLink = () => {
-  if (props.book.meta?.GoodreadsID) {
-    const url = `https://www.goodreads.com/book/show/${props.book.meta.GoodreadsID}`;
-    window.open(url, '_blank');
+  if (props.book.links?.goodreads) {
+    window.open(props.book.links.goodreads.url, '_blank');
   }
 };
 
@@ -144,8 +141,8 @@ const openGoogleSearch = () => {
 };
 
 const copyISBN = async () => {
-  if (props.book.meta?.ISBN) {
-    await navigator.clipboard.writeText(props.book.meta.ISBN);
+  if (props.book.isbn) {
+    await navigator.clipboard.writeText(props.book.isbn);
     showInfo('ISBN copied to clipboard', undefined, 2000);
   }
 };

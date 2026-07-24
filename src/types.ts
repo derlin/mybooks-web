@@ -1,19 +1,37 @@
-export type BookMeta = {
-  GoodreadsID?: string | null;
-  ISBN?: string | null;
-  pubDate?: string | null; // ISO format
-  pages?: number | null;
-  duration?: number; // minutes; presence = is audiobook
+// v1
+
+export type BookFormat = 'print' | 'audio' | 'ebook';
+
+export type Settings = {
+  // Add any settings you want to store here
 };
 
-export type Book = {
+export type BookWithoutKey = {
+  // book info
   title: string;
   author: string;
-  date: string; // YYYY-MM, YYYY, or "?"
+  date_published: string; // YYYY-MM, YYYY, or "?"
+  isbn?: string;
+  pages?: number;
+  duration?: number; // minutes; presence = is audiobook
+  // book reading
+  date_read: string; // YYYY-MM, YYYY, or "?"
   dnf: boolean;
+  format: BookFormat;
   notes: string;
-  tags?: string[];
   rating?: number | null; // 0-5, one decimal place
-  meta?: BookMeta;
-  _key: string; // normalized title used as Dropbox map key (always present in memory)
+  // Other
+  links: Record<string, { id: string; url?: string }>;
+  tags?: string[];
+  extra?: {
+    [key: string]: unknown; // anything else
+  };
+};
+
+export type Book = BookWithoutKey & { _key: string };
+
+export type BooksFile = {
+  version: number;
+  settings: Settings;
+  books: BookWithoutKey[];
 };

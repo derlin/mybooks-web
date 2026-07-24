@@ -25,10 +25,13 @@
           v-for="row in books"
           :key="row._key"
           class="table-row"
-          :class="{ audiobook: row.meta?.duration, selected: row._key === selectedBookKey }"
+          :class="{ audiobook: row.format === 'audio', selected: row._key === selectedBookKey }"
           @click="openDrawer(row)"
         >
           <td>{{ row.author || '—' }}</td>
+          <td class="format-cell">
+            <FormatPill :format="row.format" />
+          </td>
           <td>
             <div class="title-with-tags">
               <span>{{ row.title }}</span>
@@ -43,16 +46,16 @@
               </div>
             </div>
           </td>
-          <td>{{ row.date || '—' }}</td>
+          <td>{{ row.date_read || '—' }}</td>
           <td class="rating-cell">
             <RatingPill v-if="row.rating !== null && row.rating !== undefined" :rating="row.rating" />
             <span v-else>—</span>
           </td>
           <td class="duration-cell">
-            {{ row.meta?.duration ? formatDuration(row.meta?.duration) : '—' }}
+            {{ row.duration ? formatDuration(row.duration) : '—' }}
           </td>
           <td class="pages-cell">
-            {{ row.meta?.pages || '—' }}
+            {{ row.pages || '—' }}
           </td>
           <td class="boolean-cell">
             <span v-if="row.dnf" class="badge dnf">DNF</span>
@@ -77,6 +80,7 @@ import { formatDuration } from '../utils/formatting';
 import { Pencil, Trash2, ChevronUp, ChevronDown } from '@lucide/vue';
 import TagPill from './TagPill.vue';
 import RatingPill from './RatingPill.vue';
+import FormatPill from './FormatPill.vue';
 
 type Column = {
   id: string;
@@ -93,8 +97,9 @@ defineProps<{
 
 const columns: Column[] = [
   { id: 'author', header: 'Author', enableSorting: true },
+  { id: 'format', header: '', enableSorting: false },
   { id: 'title', header: 'Title', enableSorting: true },
-  { id: 'date', header: 'Read', enableSorting: true },
+  { id: 'date_read', header: 'Read', enableSorting: true },
   { id: 'rating', header: 'Rating', enableSorting: true },
   { id: 'duration', header: 'Duration', enableSorting: true },
   { id: 'pages', header: 'Pages', enableSorting: true },
@@ -218,6 +223,11 @@ const handleTagClick = (tag: string) => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+td.format-cell {
+  text-align: center;
+  padding: 1rem 0rem;
 }
 
 .tags-container {

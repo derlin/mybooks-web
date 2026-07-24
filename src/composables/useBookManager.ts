@@ -3,13 +3,7 @@ import type { BooksProvider } from '../services/booksProvider';
 import type { Book } from '../types';
 import { normalizeTitle } from '../utils/books';
 import type { FilterState } from '../utils/filtering';
-import {
-  DEFAULT_AUDIOBOOK_FILTER,
-  DEFAULT_DNF_FILTER,
-  DEFAULT_RATING_FILTER,
-  DEFAULT_SEARCH_FIELD,
-  filterAndSort,
-} from '../utils/filtering';
+import { filterAndSort } from '../utils/filtering';
 import { checkDuplicateTitle } from '../utils/validation';
 import { useToast } from './useToast';
 
@@ -21,14 +15,14 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
   const loading = ref(true);
   const error = ref<string | null>(null);
   const filters = ref<FilterState>({
-    query: '',
-    dnf: DEFAULT_DNF_FILTER,
-    audiobook: DEFAULT_AUDIOBOOK_FILTER,
-    searchField: DEFAULT_SEARCH_FIELD,
+    searchQuery: '',
+    dnfFilter: '',
+    formatFilter: '',
+    searchField: '',
     tags: [],
-    rating: DEFAULT_RATING_FILTER,
+    ratingFilter: null,
   });
-  const currentSort = ref({ id: 'date', desc: true });
+  const currentSort = ref({ id: 'date_read', desc: true });
   const selectedBook = ref<Book | null>(null);
   const isEditFormOpen = ref(false);
   const pendingUndo = ref<Book | null>(null);
@@ -37,12 +31,7 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
   // Computed
   const filteredAndSortedBooks = computed(() => {
     return filterAndSort(books.value, {
-      dnfFilter: filters.value.dnf,
-      audiobookFilter: filters.value.audiobook,
-      searchQuery: filters.value.query,
-      searchField: filters.value.searchField,
-      tags: filters.value.tags,
-      rating: filters.value.rating,
+      ...filters.value,
       sortBy: currentSort.value.id,
       sortDesc: currentSort.value.desc,
     });
@@ -195,14 +184,7 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
       const newKey = normalizeTitle(editedBook.title);
 
       const bookToSave: Book = {
-        title: editedBook.title,
-        author: editedBook.author,
-        date: editedBook.date,
-        dnf: editedBook.dnf,
-        notes: editedBook.notes,
-        tags: editedBook.tags?.length > 0 ? editedBook.tags : undefined,
-        rating: editedBook.rating ?? null,
-        meta: editedBook.meta,
+        ...editedBook,
         _key: newKey,
       };
 

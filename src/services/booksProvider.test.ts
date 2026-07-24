@@ -13,6 +13,7 @@ describe('removeEmpty', () => {
       age: 30,
       middleName: null,
       nickname: undefined,
+      empty: '',
       tags: [],
       other_tags: [1],
       metadata: {
@@ -56,12 +57,12 @@ describe('BooksProvider', () => {
   });
 
   describe('serializeBooks (via uploadBooks)', () => {
-    it('converts list to map with _key as map key and removes _key from value', async () => {
+    it('converts and removes keys', async () => {
       const books: Book[] = [
         {
           title: 'The Hobbit',
           author: 'Tolkien',
-          date: '2023-01',
+          date_read: '2023-01',
           dnf: false,
           notes: '',
           _key: 'the hobbit',
@@ -69,7 +70,7 @@ describe('BooksProvider', () => {
         {
           title: 'Another Book',
           author: 'Another Author',
-          date: '2023',
+          date_read: '2023',
           dnf: true,
           notes: 'test notes',
           _key: 'another book',
@@ -85,20 +86,23 @@ describe('BooksProvider', () => {
       const serialized = JSON.parse(content);
 
       expect(serialized).toEqual({
-        'another book': {
-          title: 'Another Book',
-          author: 'Another Author',
-          date: '2023',
-          dnf: true,
-          notes: 'test notes',
-        },
-        'the hobbit': {
-          title: 'The Hobbit',
-          author: 'Tolkien',
-          date: '2023-01',
-          dnf: false,
-          notes: '',
-        },
+        settings: {},
+        version: 1,
+        books: [
+          {
+            title: 'Another Book',
+            author: 'Another Author',
+            date_read: '2023',
+            dnf: true,
+            notes: 'test notes',
+          },
+          {
+            title: 'The Hobbit',
+            author: 'Tolkien',
+            date_read: '2023-01',
+            dnf: false,
+          },
+        ],
       });
     });
 

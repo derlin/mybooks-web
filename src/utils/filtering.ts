@@ -1,48 +1,21 @@
-import type { Book } from '../types';
+import type { Book, BookFormat } from '../types';
 
-export type DnfFilter = 'all' | 'dnf' | 'finished';
-export type AudiobookFilter = 'all' | 'audiobook' | 'paper';
-export type SearchField = 'anything' | 'title' | 'author' | 'title+author' | 'date' | 'notes';
+export type DnfFilter = '' | 'dnf' | 'finished';
+export type FormatFilter = '' | BookFormat;
+export type SearchField = '' | 'title' | 'author' | 'title+author' | 'date' | 'notes';
 export type RatingFilter = {
   operator: 'eq' | 'lt' | 'gt';
   value: number;
 };
 
 export type FilterState = {
-  query: string;
-  dnf: DnfFilter;
-  audiobook: AudiobookFilter;
+  searchQuery: string;
+  dnfFilter: DnfFilter;
+  formatFilter: FormatFilter;
   searchField: SearchField;
   tags: string[];
-  rating?: RatingFilter | null;
+  ratingFilter: RatingFilter | null;
 };
-
-export const DEFAULT_DNF_FILTER: DnfFilter = 'all';
-export const DEFAULT_AUDIOBOOK_FILTER: AudiobookFilter = 'all';
-export const DEFAULT_SEARCH_FIELD: SearchField = 'anything';
-export const DEFAULT_TAGS_FILTER: string[] = [];
-export const DEFAULT_RATING_FILTER: RatingFilter | null = null;
-
-export const DNF_FILTER_OPTIONS: { value: DnfFilter; label: string }[] = [
-  { value: 'all', label: 'All books' },
-  { value: 'dnf', label: 'Did not finish' },
-  { value: 'finished', label: 'Finished' },
-];
-
-export const AUDIOBOOK_FILTER_OPTIONS: { value: AudiobookFilter; label: string }[] = [
-  { value: 'all', label: 'All formats' },
-  { value: 'audiobook', label: 'Audiobooks' },
-  { value: 'paper', label: 'Paper books' },
-];
-
-export const SEARCH_FIELD_OPTIONS: { value: SearchField; label: string }[] = [
-  { value: 'anything', label: 'Anything' },
-  { value: 'title', label: 'Title' },
-  { value: 'author', label: 'Author' },
-  { value: 'title+author', label: 'Title + Author' },
-  { value: 'date', label: 'Date' },
-  { value: 'notes', label: 'Notes' },
-];
 
 export const extractDateNumbers = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '';
@@ -50,23 +23,13 @@ export const extractDateNumbers = (dateStr: string | null | undefined): string =
 };
 
 export const applyDnfFilter = (books: Book[], dnfFilter: DnfFilter): Book[] => {
-  if (dnfFilter === 'dnf') {
-    return books.filter((b) => b.dnf);
-  }
-  if (dnfFilter === 'finished') {
-    return books.filter((b) => !b.dnf);
-  }
-  return books;
+  if (dnfFilter === '') return books;
+  return books.filter((b) => b.dnf === (dnfFilter === 'dnf'));
 };
 
-export const applyFormatFilter = (books: Book[], audiobookFilter: AudiobookFilter): Book[] => {
-  if (audiobookFilter === 'audiobook') {
-    return books.filter((b) => b.meta?.duration);
-  }
-  if (audiobookFilter === 'paper') {
-    return books.filter((b) => !b.meta?.duration);
-  }
-  return books;
+export const applyFormatFilter = (books: Book[], formatFilter: FormatFilter): Book[] => {
+  if (formatFilter === '') return books;
+  return books.filter((b) => b.format === formatFilter);
 };
 
 export const applySearchFilter = (books: Book[], query: string, searchField: SearchField): Book[] => {
@@ -83,14 +46,14 @@ export const applySearchFilter = (books: Book[], query: string, searchField: Sea
       case 'title+author':
         return b.title?.toLowerCase().includes(q) || b.author?.toLowerCase().includes(q);
       case 'date':
-        return b.date?.toLowerCase().includes(q);
+        return b.date_read?.toLowerCase().includes(q);
       case 'notes':
         return b.notes?.toLowerCase().includes(q);
       default:
         return (
           b.title?.toLowerCase().includes(q) ||
           b.author?.toLowerCase().includes(q) ||
-          b.date?.toLowerCase().includes(q) ||
+          b.date_read?.toLowerCase().includes(q) ||
           b.notes?.toLowerCase().includes(q)
         );
     }
@@ -156,14 +119,14 @@ const compareAny = (a: any, b: any, descending: boolean): number => {
 export const sortBooks = (books: Book[], columnId: string | null, descending: boolean): Book[] => {
   if (!columnId) return books;
   const sorted = [...books].sort((a, b) => {
-    if (columnId === 'date') {
-      return compareStrings(extractDateNumbers(a.date), extractDateNumbers(b.date), descending);
+    if (columnId === 'date_read') {
+      return compareStrings(extractDateNumbers(a.date_read), extractDateNumbers(b.date_read), descending);
     }
     if (columnId === 'pages') {
-      return compareNumbers(a.meta?.pages, b.meta?.pages, descending);
+      return compareNumbers(a.pages, b.pages, descending);
     }
     if (columnId === 'duration') {
-      return compareNumbers(a.meta?.duration, b.meta?.duration, descending);
+      return compareNumbers(a.duration, b.duration, descending);
     }
     if (columnId === 'rating') {
       return compareNumbers(a.rating ?? -1, b.rating ?? -1, descending);
@@ -174,40 +137,31 @@ export const sortBooks = (books: Book[], columnId: string | null, descending: bo
   return sorted;
 };
 
-export type FilterAndSortOptions = {
-  dnfFilter?: DnfFilter;
-  audiobookFilter?: AudiobookFilter;
-  searchQuery?: string;
-  searchField?: SearchField;
-  tags?: string[];
-  rating?: RatingFilter | null;
+export type FilterAndSortOptions = FilterState & {
   sortBy?: string | null;
   sortDesc?: boolean;
 };
 
-export const filterAndSort = (books: Book[], options: FilterAndSortOptions = {}): Book[] => {
-  const {
-    dnfFilter = DEFAULT_DNF_FILTER,
-    audiobookFilter = DEFAULT_AUDIOBOOK_FILTER,
-    searchQuery = '',
-    searchField = DEFAULT_SEARCH_FIELD,
-    tags = DEFAULT_TAGS_FILTER,
-    rating = DEFAULT_RATING_FILTER,
-    sortBy = null,
-    sortDesc = false,
-  } = options;
+export const filterAndSort = (books: Book[], options: Partial<FilterAndSortOptions> = {}): Book[] => {
+  const opts = {
+    searchQuery: '',
+    dnfFilter: '' as DnfFilter,
+    formatFilter: '' as FormatFilter,
+    searchField: '' as SearchField,
+    tags: [],
+    ratingFilter: null as RatingFilter | null,
+    sortBy: null,
+    sortDesc: false,
+    ...options,
+  };
 
   let result = books;
-
-  result = applyDnfFilter(result, dnfFilter);
-  result = applyFormatFilter(result, audiobookFilter);
-  result = applySearchFilter(result, searchQuery, searchField);
-  result = applyTagLikeFilter(result, 'tags', tags);
-  result = applyRatingFilter(result, rating);
-
-  if (sortBy) {
-    result = sortBooks(result, sortBy, sortDesc);
-  }
+  if (opts.dnfFilter) result = applyDnfFilter(result, opts.dnfFilter);
+  if (opts.formatFilter) result = applyFormatFilter(result, opts.formatFilter);
+  if (opts.searchQuery) result = applySearchFilter(result, opts.searchQuery, opts.searchField);
+  if (opts.tags.length) result = applyTagLikeFilter(result, 'tags', opts.tags);
+  if (opts.ratingFilter) result = applyRatingFilter(result, opts.ratingFilter);
+  if (opts.sortBy) result = sortBooks(result, opts.sortBy, opts.sortDesc);
 
   return result;
 };

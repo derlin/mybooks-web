@@ -35,7 +35,7 @@
 
       <div class="filters-row--desktop">
         <select v-model="localSearchFieldsFilter" class="filter-select">
-          <option value="anything">Anywhere</option>
+          <option value="">Anywhere</option>
           <option value="title">In title</option>
           <option value="author">In author</option>
           <option value="title+author">In title+author</option>
@@ -45,16 +45,17 @@
         <div class="filters">
           <div class="filter-group">
             <label>Format:</label>
-            <select v-model="localAudiobookFilter" class="filter-select">
-              <option value="all">All</option>
-              <option value="audiobook">Audio</option>
-              <option value="paper">Paper</option>
+            <select v-model="localFormatFilter" class="filter-select">
+              <option value="">All</option>
+              <option value="print">Print</option>
+              <option value="audio">Audio</option>
+              <option value="ebook">Ebook</option>
             </select>
           </div>
           <div class="filter-group">
             <label>Status:</label>
             <select v-model="localDnfFilter" class="filter-select">
-              <option value="all">All</option>
+              <option value="">All</option>
               <option value="finished">Done</option>
               <option value="dnf">DNF</option>
             </select>
@@ -89,7 +90,7 @@
 
     <div v-if="filtersOpen" class="filters-row--mobile">
       <select v-model="localSearchFieldsFilter" class="filter-select">
-        <option value="anything">Search: anywhere</option>
+        <option value="">Search: anywhere</option>
         <option value="title">Search: in title</option>
         <option value="author">Search: in author</option>
         <option value="title+author">Search: in title + author</option>
@@ -119,16 +120,17 @@
       <div class="filters">
         <div class="filter-group">
           <label>Format:</label>
-          <select v-model="localAudiobookFilter" class="filter-select">
-            <option value="all">All</option>
-            <option value="audiobook">Audio</option>
-            <option value="paper">Paper</option>
+          <select v-model="localFormatFilter" class="filter-select">
+              <option value="">All</option>
+              <option value="print">Print</option>
+              <option value="audio">Audio</option>
+              <option value="ebook">Ebook</option>
           </select>
         </div>
         <div class="filter-group">
           <label>Status:</label>
           <select v-model="localDnfFilter" class="filter-select">
-            <option value="all">All</option>
+            <option value="">All</option>
             <option value="finished">Done</option>
             <option value="dnf">DNF</option>
           </select>
@@ -151,28 +153,19 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { X, ListFilter } from '@lucide/vue';
-import type { SearchField, AudiobookFilter, DnfFilter, RatingFilter } from '@/utils/filtering';
+import type { FilterState } from '@/utils/filtering';
+import { isValidRating } from '@/utils/validation';
 import TagInput from './TagInput.vue';
 
 const props = defineProps<{
-  searchQuery: string;
-  searchFieldsFilter: SearchField;
-  audiobookFilter: AudiobookFilter;
-  dnfFilter: DnfFilter;
-  tagsFilter: string[];
-  ratingFilter: RatingFilter | null;
+  filters: FilterState;
   allTags: string[];
   filteredCount: number;
   totalCount: number;
 }>();
 
 const emit = defineEmits<{
-  'update:search-query': [string];
-  'update:search-fields-filter': [SearchField];
-  'update:audiobook-filter': [AudiobookFilter];
-  'update:dnf-filter': [DnfFilter];
-  'update:tags-filter': [string[]];
-  'update:rating-filter': [RatingFilter | null];
+  'update:filters': [FilterState];
 }>();
 
 const searchInput = ref<HTMLInputElement | null>(null);
@@ -180,29 +173,33 @@ const filtersOpen = ref(false);
 const localRatingOperator = ref<'eq' | 'lt' | 'gt'>('gt');
 const localRatingValue = ref<number | null>(null);
 
+const updateFilter = (field: keyof FilterState, value: any) => {
+  emit('update:filters', { ...props.filters, [field]: value });
+};
+
 const localSearchQuery = computed({
-  get: () => props.searchQuery,
-  set: (value) => emit('update:search-query', value),
+  get: () => props.filters.searchQuery,
+  set: (value) => updateFilter('searchQuery', value),
 });
 
 const localSearchFieldsFilter = computed({
-  get: () => props.searchFieldsFilter,
-  set: (value) => emit('update:search-fields-filter', value),
+  get: () => props.filters.searchField,
+  set: (value) => updateFilter('searchField', value),
 });
 
-const localAudiobookFilter = computed({
-  get: () => props.audiobookFilter,
-  set: (value) => emit('update:audiobook-filter', value),
+const localFormatFilter = computed({
+  get: () => props.filters.formatFilter,
+  set: (value) => updateFilter('formatFilter', value),
 });
 
 const localDnfFilter = computed({
-  get: () => props.dnfFilter,
-  set: (value) => emit('update:dnf-filter', value),
+  get: () => props.filters.dnfFilter,
+  set: (value) => updateFilter('dnfFilter', value),
 });
 
 const localTagsFilter = computed({
-  get: () => props.tagsFilter,
-  set: (value) => emit('update:tags-filter', value),
+  get: () => props.filters.tags,
+  set: (value) => updateFilter('tags', value),
 });
 
 const handleSearchKeyboard = (keyboardEvent: KeyboardEvent) => {
@@ -220,30 +217,24 @@ const validateRatingFilter = () => {
   const operator = localRatingOperator.value as 'eq' | 'lt' | 'gt';
   const value = localRatingValue.value;
 
-  if (!operator || (value !== 0 && !value)) {
-    emit('update:rating-filter', null);
+  if (value === null || value === undefined || !isValidRating(value)) {
+    updateFilter('ratingFilter', null);
     return;
   }
 
-  const num = Number(value);
-  if (isNaN(num) || num < 0 || num > 5) {
-    emit('update:rating-filter', null);
-    return;
-  }
-  const finalValue = Math.round(num * 10) / 10;
+  const finalValue = Math.round(value * 10) / 10;
   localRatingValue.value = finalValue;
 
-
-  emit('update:rating-filter', {
+  updateFilter('ratingFilter', {
     operator: operator,
     value: finalValue,
   });
 };
 
 const initializeRatingFromProps = () => {
-  if (props.ratingFilter) {
-    localRatingOperator.value = props.ratingFilter.operator;
-    localRatingValue.value = props.ratingFilter.value;
+  if (props.filters.ratingFilter) {
+    localRatingOperator.value = props.filters.ratingFilter.operator;
+    localRatingValue.value = props.filters.ratingFilter.value;
   } else {
     localRatingOperator.value = 'gt';
     localRatingValue.value = null;

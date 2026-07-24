@@ -1,11 +1,16 @@
 import { BOOKS_FILE_PATH } from '../env';
-import type { Book } from '../types';
+import type { Book, Settings } from '../types';
+import { normalizeTitle } from '../utils/books';
 import { type IDropboxService, NotFoundError } from './dropboxService';
+import { EMPTY, migrate } from './migrator';
 
 // -------
 
 function removeEmpty<T>(obj: T): Partial<T> | undefined {
   if (obj === null || obj === undefined) {
+    return undefined;
+  }
+  if (typeof obj === 'string' && obj === '') {
     return undefined;
   }
   // Handle Primitives & Non-Plain Objects (Dates, RegExps, etc.)
@@ -36,6 +41,7 @@ function removeEmpty<T>(obj: T): Partial<T> | undefined {
 
 export class BooksProvider {
   private syncedRevision: string | null = null;
+  private settings: Settings = {};
 
   constructor(private dropboxService: IDropboxService) {}
 
@@ -47,20 +53,17 @@ export class BooksProvider {
     this.syncedRevision = rev;
   }
 
-  private booksMapToArray(booksMap: Record<string, any>): Book[] {
-    return Object.entries(booksMap).map(([key, book]) => ({
-      ...(book as Omit<Book, '_key'>),
-      _key: key,
-    }));
-  }
-
   serializeBooks(books: Book[]): Record<string, any> {
-    return Object.fromEntries(
-      books.map(({ _key, ...value }) => {
-        const serialized: any = removeEmpty(value);
-        return [_key, serialized];
-      })
-    );
+    return {
+      ...EMPTY,
+      settings: this.settings,
+      books: books
+        // ensure stable order
+        .sort((a, b) => a._key.localeCompare(b._key))
+        .map(({ _key, ...book }) => {
+          return removeEmpty(book);
+        }),
+    };
   }
 
   async downloadBooks(): Promise<Book[]> {
@@ -70,9 +73,13 @@ export class BooksProvider {
       if (!metadata.fileContent) {
         throw new Error('No file content in response');
       }
-      const booksMap = JSON.parse(metadata.fileContent) as Record<string, any>;
+      const migrated = migrate(JSON.parse(metadata.fileContent));
+      this.settings = migrated.settings;
       this.setSyncedRevision(metadata.rev);
-      return this.booksMapToArray(booksMap);
+      const books = migrated.books.map((book) => {
+        return { _key: normalizeTitle(book.title), ...book };
+      });
+      return books;
     } catch (err: any) {
       if (err instanceof NotFoundError) {
         await this.uploadBooks([]);

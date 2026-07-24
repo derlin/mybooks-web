@@ -9,15 +9,16 @@
         v-for="book in books"
         :key="book._key"
         class="card"
-        :class="{ audiobook: book.meta?.duration, selected: book._key === selectedBookKey }"
+        :class="{ audiobook: book.format === 'audio', selected: book._key === selectedBookKey }"
         @click="openDrawer(book)"
       >
         <div class="card-content">
           <div class="card-main">
-            <div class="card-title">{{ book.title }}</div>
-            <p class="card-author">{{ book.author || '—' }}</p>
+            <div class="card-title">{{ book.title }} <FormatPill :format="book.format" /></div>
+            <p class="card-author">{{ book.author }}</p>
             <div v-if="book.tags?.length" class="card-tags">
               <TagPill
+              v-if="book.tags?.length"
                 v-for="tag in book.tags"
                 :key="tag"
                 :tag="tag"
@@ -27,11 +28,11 @@
             </div>
           </div>
           <div class="card-side">
-            <span v-if="book.date" class="card-date">{{ book.date }}</span>
+            <span v-if="book.date_read" class="card-date">{{ book.date_read }}</span>
             <div class="card-pills">
               <RatingPill v-if="book.rating !== null && book.rating !== undefined" :rating="book.rating" />
               <div v-if="book.dnf" class="badge dnf">DNF</div>
-              <div v-if="book.meta?.pages" class="pill pages">{{ book.meta.pages }} <span>p</span></div>
+              <div v-if="book.pages" class="pill pages">{{ book.pages }} <span>p</span></div>
             </div>
           </div>
         </div>
@@ -44,6 +45,7 @@
 import type { Book } from '../types';
 import SortDropdown from './SortDropdown.vue';
 import TagPill from './TagPill.vue';
+import FormatPill from './FormatPill.vue';
 import RatingPill from './RatingPill.vue';
 
 defineProps<{
