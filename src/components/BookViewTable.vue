@@ -76,7 +76,7 @@
 
 <script setup lang="ts">
 import type { Book } from '../types';
-import { formatDuration } from '../utils/formatting';
+import { formatDuration } from '../utils/helpers';
 import { Pencil, Trash2, ChevronUp, ChevronDown } from '@lucide/vue';
 import TagPill from './TagPill.vue';
 import RatingPill from './RatingPill.vue';

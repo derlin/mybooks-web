@@ -154,7 +154,7 @@
 import { computed, ref } from 'vue';
 import { X, ListFilter } from '@lucide/vue';
 import type { FilterState } from '@/utils/filtering';
-import { isValidRating } from '@/utils/validation';
+import { isValidRating } from '@/utils/helpers';
 import TagInput from './TagInput.vue';
 
 const props = defineProps<{

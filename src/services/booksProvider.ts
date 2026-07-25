@@ -1,6 +1,6 @@
 import { BOOKS_FILE_PATH } from '../env';
 import type { Book, Settings } from '../types';
-import { normalizeTitle } from '../utils/books';
+import { normalizeTitle } from '../utils/helpers';
 import { type IDropboxService, NotFoundError } from './dropboxService';
 import { EMPTY, migrate } from './migrator';
 

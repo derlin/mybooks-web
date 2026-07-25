@@ -224,7 +224,7 @@ import type { GoodreadsMetadata } from '../services/goodreads-fetcher';
 import type { Book } from '../types';
 import { Storage } from '../utils/storage';
 import { TagsUtil } from '../utils/tags';
-import * as validation from '../utils/validation';
+import * as validation from '../utils/helpers';
 import GoodreadsModal from './GoodreadsModal.vue';
 import TagInput from './TagInput.vue';
 

@@ -94,8 +94,7 @@ import { X, Trash2, Pencil, ArrowLeft, Search, ExternalLink } from '@lucide/vue'
 import type { Book } from '../types';
 import { useDrag } from '../composables/useDrag';
 import { useToast } from '../composables/useToast';
-import { formatDate, formatDuration } from '../utils/formatting';
-import { googleUrlFor } from '../utils/books';
+import { formatDate, formatDuration, googleUrlFor } from '../utils/helpers';
 import TagPill from './TagPill.vue';
 import FormatPill from './FormatPill.vue';
 import RatingPill from './RatingPill.vue';

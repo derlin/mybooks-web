@@ -1,10 +1,9 @@
 import { computed, type Ref, ref, watch } from 'vue';
 import type { BooksProvider } from '../services/booksProvider';
 import type { Book } from '../types';
-import { normalizeTitle } from '../utils/books';
 import type { FilterState } from '../utils/filtering';
 import { filterAndSort } from '../utils/filtering';
-import { checkDuplicateTitle } from '../utils/validation';
+import { checkDuplicateTitle, normalizeTitle } from '../utils/helpers';
 import { useToast } from './useToast';
 
 export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Ref<boolean>) {
