@@ -17,7 +17,14 @@ export async function fetchBookMetadata(url: string): Promise<GoodreadsMetadata>
 
   try {
     const response = await fetch(proxyUrl, { headers });
-    return response.json();
+    const parsed = await response.json();
+    if (!parsed) {
+      throw new Error('No data returned from Goodreads fetcher');
+    }
+    if (parsed.error) {
+      throw new Error(parsed.errror);
+    }
+    return parsed;
   } catch (err: any) {
     console.error(`Network error while fetching page from ${proxyUrl}:`, err);
     throw new Error(`Failed to fetch Goodreads page from ${proxyUrl}. Retry in a few seconds.`);

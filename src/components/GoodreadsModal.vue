@@ -33,7 +33,7 @@
           <X :size="18" />
           <span>Cancel</span>
         </button>
-        <button type="button" class="btn-solid btn-primary btn-icon-text" @click="submit" :disabled="!url.trim() || loading">
+        <button type="button" class="btn-solid btn-primary btn-icon-text" @click="submit" :disabled="loading || !isValidUrl(url)">
           <template v-if="loading"><span class="spinner"></span> Importing</template>
           <template v-else><Search :size="18" /> Import&nbsp;&nbsp;&nbsp;</template>
         </button>
@@ -58,7 +58,7 @@ const emit = defineEmits(['close', 'metadata-fetched']);
 
 const url = ref('');
 const loading = ref(false);
-const error = ref(null);
+const error = ref<string | null>(null);
 
 const close = () => {
   url.value = '';
@@ -66,8 +66,23 @@ const close = () => {
   emit('close');
 };
 
+const isValidUrl = (urlString: string) => {
+  if(!urlString.trim()) return false;
+  try {
+    const url = new URL(urlString);
+    return url.hostname === 'www.goodreads.com' && url.pathname.startsWith('/book/show/');
+  } catch (err) {
+    return false;
+  }
+};
+
 const submit = async () => {
   if (!url.value.trim() || loading.value) return;
+
+  if (!isValidUrl(url.value)) {
+    error.value = 'Please enter a valid Goodreads book URL.';
+    return;
+  }
 
   error.value = null;
   loading.value = true;
