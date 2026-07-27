@@ -122,6 +122,9 @@ export const sortBooks = (books: Book[], columnId: string | null, descending: bo
     if (columnId === 'date_read') {
       return compareStrings(extractDateNumbers(a.date_read), extractDateNumbers(b.date_read), descending);
     }
+    if (columnId === 'date_published') {
+      return compareStrings(extractDateNumbers(a.date_published), extractDateNumbers(b.date_published), descending);
+    }
     if (columnId === 'pages') {
       return compareNumbers(a.pages, b.pages, descending);
     }

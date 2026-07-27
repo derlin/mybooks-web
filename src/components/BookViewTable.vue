@@ -57,9 +57,7 @@
           <td class="pages-cell">
             {{ row.pages || '—' }}
           </td>
-          <td class="boolean-cell">
-            <span v-if="row.dnf" class="badge dnf">DNF</span>
-          </td>
+          <td>{{ row.date_published || '—' }}</td>
           <td class="actions-cell">
             <button class="action-btn edit-btn" title="Edit" @click.stop="openEdit(row)">
               <Pencil :size="18" />
@@ -103,7 +101,7 @@ const columns: Column[] = [
   { id: 'rating', header: 'Rating', enableSorting: true },
   { id: 'duration', header: 'Duration', enableSorting: true },
   { id: 'pages', header: 'Pages', enableSorting: true },
-  { id: 'dnf', header: 'DNF?', enableSorting: true },
+  { id: 'date_published', header: 'Published', enableSorting: true },
   { id: 'actions', header: 'Actions', enableSorting: false },
 ];
 
