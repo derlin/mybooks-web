@@ -21,7 +21,7 @@ export type BookWithoutKey = {
   notes: string;
   rating?: number | null; // 0-5, one decimal place
   // Other
-  links: Record<string, { id: string; url?: string }>;
+  links: Record<string, { id: string; url: string }>;
   tags?: string[];
   extra?: {
     [key: string]: unknown; // anything else

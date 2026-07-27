@@ -47,13 +47,19 @@
         </div>
 
         <div class="actions-section">
-          <button class="btn-outline btn-secondary btn-icon-text" @click="openGoogleSearch" title="Search on Google">
+          <button class="btn-outline btn-secondary btn-icon-text" @click="openLink(googleUrlFor(props.book))" title="Search on Google">
             <Search :size="18" />
             <span>Google</span>
           </button>
-          <button v-if="book.links?.goodreads" class="btn-outline btn-secondary btn-icon-text" @click="openGoodreadsLink" title="Open on Goodreads">
+          <button
+            v-for="[key, link] in Object.entries(book.links || {})"
+            :key="key"
+            class="btn-outline btn-secondary btn-icon-text"
+            @click="openLink(link.url)"
+            :title="`Open in ${key}`"
+          >
             <ExternalLink :size="18" />
-            <span>Goodreads</span>
+            <span>{{ key.charAt(0).toUpperCase() + key.slice(1) }}</span>
           </button>
         </div>
 
@@ -128,14 +134,7 @@ watch(
   }
 );
 
-const openGoodreadsLink = () => {
-  if (props.book.links?.goodreads) {
-    window.open(props.book.links.goodreads.url, '_blank');
-  }
-};
-
-const openGoogleSearch = () => {
-  const url = googleUrlFor(props.book);
+const openLink = (url: string) => {
   window.open(url, '_blank');
 };
 
