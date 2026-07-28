@@ -179,14 +179,26 @@
                   placeholder="URL *"
                   class="form-input link-input"
                 />
-                <button
-                  type="button"
-                  class="btn-icon-only btn-remove"
-                  @click="formData.links.splice(index, 1)"
-                  title="Remove link"
-                >
-                  <X :size="18" />
-                </button>
+                <div class="link-actions">
+                  <a
+                    v-if="link.url"
+                    :href="link.url"
+                    target="_blank"
+                    rel="noopener,noreferrer"
+                    class="btn-icon-only btn-open"
+                    title="Open link"
+                  >
+                    <ExternalLink :size="18" />
+                  </a>
+                  <button
+                    type="button"
+                    class="btn-icon-only btn-remove"
+                    @click="formData.links.splice(index, 1)"
+                    title="Remove link"
+                  >
+                    <X :size="18" />
+                  </button>
+                </div>
               </div>
             </div>
             <button
@@ -261,7 +273,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, toRefs, watch } from 'vue';
-import { X, Check, Download, Maximize2 } from '@lucide/vue';
+import { X, Check, Download, Maximize2, ExternalLink } from '@lucide/vue';
 import type { GoodreadsMetadata } from '../services/goodreads-fetcher';
 import type { Book } from '../types';
 import { Storage } from '../utils/storage';
@@ -845,7 +857,7 @@ button[type="button"].btn-icon-text {
 
 .link-entry {
   display: grid;
-  grid-template-columns: 1fr 1fr 2fr 40px;
+  grid-template-columns: 1fr 1fr 2fr auto;
   gap: 0.75rem;
   align-items: center;
 }
@@ -854,7 +866,14 @@ button[type="button"].btn-icon-text {
   width: 100%;
 }
 
-.btn-remove {
+.link-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.btn-remove,
+.btn-open {
   width: 40px;
   height: 40px;
   padding: 0;
@@ -867,6 +886,17 @@ button[type="button"].btn-icon-text {
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s;
+  text-decoration: none;
+}
+
+.btn-open {
+  border: none;
+}
+
+.btn-open:hover {
+  background-color: rgba(100, 200, 255, 0.1);
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
 }
 
 .btn-remove:hover {
