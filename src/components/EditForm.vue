@@ -832,19 +832,6 @@ button[type="button"].btn-icon-text {
   font-size: 0.85rem;
 }
 
-@media (max-width: 600px) {
-  .form-footer {
-    padding: 1rem;
-    gap: 0.75rem;
-  }
-
-  button[type="submit"],
-  button[type="button"].btn-icon-text {
-    flex: 1;
-    min-width: unset;
-  }
-}
-
 .notes-header {
   display: flex;
   align-items: center;
@@ -1033,6 +1020,29 @@ button[type="button"].btn-icon-text {
 
   .notes-fullscreen-help {
     display: none;
+  }
+
+  .form-footer {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+
+  button[type="submit"],
+  button[type="button"].btn-icon-text {
+    flex: 1;
+    min-width: unset;
+  }
+
+  .link-entry {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+    border: 4px solid var(--bg-secondary);
+    border-radius: 10px;
+    gap: 0.5rem;
+  }
+
+  .link-entry > :last-child {
+    grid-column: 1;
   }
 }
 </style>
