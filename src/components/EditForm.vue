@@ -175,7 +175,7 @@
                 />
                 <input
                   v-model="link.url"
-                  type="text"
+                  type="url"
                   placeholder="URL *"
                   class="form-input link-input"
                 />
@@ -387,7 +387,11 @@ const isValid = computed(() => {
     if (fields.some(f => f) && !fields.every(f => f)) {
       return false;
     }
+    if (link.url && !validation.isValidUrl(link.url)) {
+      return false;
+    }
   }
+
   return true;
 });
 
@@ -708,6 +712,11 @@ onUnmounted(() => {
 .form-textarea:focus {
   outline: none;
   border-color: var(--accent-primary);
+}
+
+.form-input:invalid:not(:placeholder-shown) {
+  border-color: var(--warning);
+  background-color: rgba(255, 107, 107, 0.05);
 }
 
 .form-textarea {

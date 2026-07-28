@@ -150,3 +150,15 @@ export const getFilteredAuthors = (query: string, allBooks: Book[]): string[] =>
 
   return Array.from(authors).sort();
 };
+
+// ===== URL validation =====
+export const isValidUrl = (urlString: string): boolean => {
+  if (!urlString.trim()) return true;
+  try {
+    const url = new URL(urlString);
+    // Ensure hostname has at least one dot (for a TLD)
+    return url.hostname.includes('.');
+  } catch {
+    return false;
+  }
+};

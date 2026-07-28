@@ -272,3 +272,26 @@ describe('getFilteredAuthors', () => {
     expect(result).toEqual(expected);
   });
 });
+
+describe('isValidUrl', () => {
+  const cases = [
+    // Valid URLs
+    ['http://example.com', true],
+    ['https://www.goodreads.com/book/show/123456', true],
+    ['https://app.thestorygraph.com/books/xyz', true],
+    ['https://example.co.uk?query=lala&foo=1', true],
+    // Empty/whitespace (treated as valid - optional field)
+    ['', true],
+    ['  ', true],
+    // Invalid URLs
+    ['not a url', false],
+    ['ht!tp://example.com', false],
+    ['example.com', false],
+    ['://', false],
+    ['https://ex', false],
+  ];
+
+  it.each(cases)('%s => %s', (url, expected) => {
+    expect(helpers.isValidUrl(url)).toBe(expected);
+  });
+});
