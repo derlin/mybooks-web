@@ -55,33 +55,95 @@
               </div>
             </div>
           </label>
+        </div>
 
-          <label class="form-label">
-            <span class="label-text">Date read</span>
-            <input
-              v-model="formData.date_read"
-              type="text"
-              placeholder="YYYY-MM-DD or YYYY-MM or YYYY or ?"
-              class="form-input"
-              @blur="formatDateInput"
-            />
-          </label>
+        <div class="form-section metadata-section">
+          <div class="metadata-grid">
+            <label class="form-label form-label-inline">
+              <span class="label-text">Date read</span>
+              <input
+                v-model="formData.date_read"
+                type="text"
+                placeholder="YYYY-MM-DD"
+                class="form-input"
+                @blur="formatDateInput"
+              />
+            </label>
 
+            <label class="form-label form-label-inline">
+              <span class="label-text">Format</span>
+              <select v-model="formData.format" class="form-input">
+                <option value="print">Print</option>
+                <option value="audio">Audio</option>
+                <option value="ebook">E-Book</option>
+              </select>
+            </label>
+
+            <label class="form-label form-label-inline">
+              <span class="label-text">Rating</span>
+              <input
+                v-model.number="formData.rating"
+                type="number"
+                placeholder="0-5 (e.g., 4.2)"
+                class="form-input"
+                min="0"
+                max="5"
+                step="0.1"
+                @change="validateRatingInput"
+              />
+              <div v-if="ratingError" class="error-message">
+                {{ ratingError }}
+              </div>
+            </label>
+
+            <label class="form-label form-label-inline">
+              <span class="label-text">Pages</span>
+              <input
+                v-model.number="formData.pages"
+                type="number"
+                placeholder="Page count"
+                class="form-input"
+                min="0"
+              />
+            </label>
+
+            <label class="form-label form-label-inline">
+              <span class="label-text">Duration</span>
+              <input
+                v-model="formData.duration"
+                type="text"
+                placeholder="7h34"
+                class="form-input"
+                @blur="formatDurationInput"
+              />
+              <div v-if="durationError" class="error-message">
+                {{ durationError }}
+              </div>
+            </label>
+
+
+            <label class="form-label form-label-inline">
+              <span class="label-text">ISBN</span>
+              <input v-model="formData.isbn" type="text" placeholder="ISBN" class="form-input" />
+            </label>
+
+            <label class="form-label form-label-inline">
+              <span class="label-text">Publication Date</span>
+              <input v-model="formData.date_published" type="text" placeholder="YYYY-MM-DD" class="form-input" />
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
           <label class="form-label">
             <input v-model="formData.dnf" type="checkbox" class="form-checkbox" />
             <span>Did Not Finish (DNF)</span>
           </label>
+        </div>
 
-          <label class="form-label">
-            <span class="label-text">Format</span>
-            <select v-model="formData.format" class="form-input">
-              <option value="print">Print</option>
-              <option value="audio">Audio</option>
-              <option value="ebook">E-Book</option>
-            </select>
-          </label>
 
-          <!-- do NOT use label for the Tags, it messes the event system (clicking on the label triggers a remove event) -->
+        <!-- do NOT use label for the Tags, it messes the event system (clicking on the label triggers a remove event) -->
+        <div class="form-section">
           <div class="form-label">
             <span class="label-text">Tags</span>
             <TagInput
@@ -92,23 +154,49 @@
             />
             <div class="form-helper">Max 32 characters per tag, no spaces.</div>
           </div>
+        </div>
 
-          <label class="form-label">
-            <span class="label-text">Rating</span>
-            <input
-              v-model.number="formData.rating"
-              type="number"
-              placeholder="0-5 (e.g., 4.2)"
-              class="form-input"
-              min="0"
-              max="5"
-              step="0.1"
-              @change="validateRatingInput"
-            />
-            <div v-if="ratingError" class="error-message">
-              {{ ratingError }}
+        <div class="form-section">
+          <div class="form-label">
+            <span class="label-text">Links</span>
+            <div class="links-list">
+              <div v-for="(link, index) in formData.links" :key="index" class="link-entry">
+                <input
+                  v-model="link.name"
+                  type="text"
+                  placeholder="Name *"
+                  class="form-input link-input"
+                />
+                <input
+                  v-model="link.id"
+                  type="text"
+                  placeholder="ID *"
+                  class="form-input link-input"
+                />
+                <input
+                  v-model="link.url"
+                  type="text"
+                  placeholder="URL *"
+                  class="form-input link-input"
+                />
+                <button
+                  type="button"
+                  class="btn-icon-only btn-remove"
+                  @click="formData.links.splice(index, 1)"
+                  title="Remove link"
+                >
+                  <X :size="18" />
+                </button>
+              </div>
             </div>
-          </label>
+            <button
+              type="button"
+              class="btn-outline btn-secondary btn-add-link"
+              @click="formData.links.push({ name: '', id: '', url: '' })"
+            >
+              + Add Link
+            </button>
+          </div>
         </div>
 
         <div class="form-section notes-section">
@@ -131,52 +219,6 @@
               class="form-textarea"
             ></textarea>
           </label>
-        </div>
-
-        <div class="form-section">
-          <h3 class="section-title">Metadata</h3>
-
-          <div class="metadata-form">
-            <label class="form-label">
-              <span class="label-text">Pages</span>
-              <input
-                v-model.number="formData.pages"
-                type="number"
-                placeholder="Page count"
-                class="form-input"
-                min="0"
-              />
-            </label>
-
-            <label class="form-label">
-              <span class="label-text">Duration (audiobook)</span>
-              <input
-                v-model="formData.duration"
-                type="text"
-                placeholder="7h34 or 2h0"
-                class="form-input"
-                @blur="formatDurationInput"
-              />
-              <div v-if="durationError" class="error-message">
-                {{ durationError }}
-              </div>
-            </label>
-
-            <label class="form-label">
-              <span class="label-text">Goodreads ID</span>
-              <input v-model="formData.GoodreadsID" type="text" placeholder="Goodreads ID" class="form-input" />
-            </label>
-
-            <label class="form-label">
-              <span class="label-text">ISBN</span>
-              <input v-model="formData.isbn" type="text" placeholder="ISBN" class="form-input" />
-            </label>
-
-            <label class="form-label">
-              <span class="label-text">Publication Date</span>
-              <input v-model="formData.date_published" type="text" placeholder="YYYY-MM-DD" class="form-input" />
-            </label>
-          </div>
         </div>
       </div>
       <div class="form-footer">
@@ -247,10 +289,18 @@ type FormData = Omit<Book, '_key' | 'pages' | 'duration' | 'rating' | 'links'> &
   duration: string;
   tags: string[];
   rating: number | null;
-  GoodreadsID: string;
+  links: Array<{ name: string; id: string; url: string }>;
 };
 
 const newFormData = (book: Book | null | undefined = undefined): FormData => {
+  const linksArray = book?.links
+    ? Object.entries(book.links).map(([name, link]) => ({
+        name,
+        id: link.id,
+        url: link.url,
+      }))
+    : [];
+
   if (book) {
     return {
       title: book.title,
@@ -265,7 +315,7 @@ const newFormData = (book: Book | null | undefined = undefined): FormData => {
       notes: book.notes || '',
       rating: book.rating ?? null,
       tags: book.tags ?? [],
-      GoodreadsID: book.links?.goodreads?.id || '',
+      links: linksArray,
     };
   }
   return {
@@ -281,7 +331,7 @@ const newFormData = (book: Book | null | undefined = undefined): FormData => {
     notes: '',
     tags: [],
     rating: null,
-    GoodreadsID: '',
+    links: [],
   };
 };
 
@@ -319,6 +369,13 @@ const isValid = computed(() => {
   if (!formData.value.title.trim() || !formData.value.author.trim()) return false;
   if (durationError.value) return false;
   if (ratingError.value) return false;
+
+  for (const link of formData.value.links) {
+    const fields = [link.name, link.id, link.url].map(f => f.trim());
+    if (fields.some(f => f) && !fields.every(f => f)) {
+      return false;
+    }
+  }
   return true;
 });
 
@@ -412,12 +469,24 @@ const handleGoodreadsData = (metadata: GoodreadsMetadata) => {
   formData.value.title = metadata.title;
   formData.value.author = metadata.author;
   formData.value.isbn = metadata.isbn || '';
-  formData.value.GoodreadsID = metadata.goodreadsId;
   if (metadata.pages) {
     formData.value.pages = metadata.pages;
   }
   if (metadata.pubDate) {
     formData.value.date_published = metadata.pubDate;
+  }
+  if (metadata.goodreadsId) {
+    const existingIndex = formData.value.links.findIndex(l => l.name.toLowerCase() === 'goodreads');
+    const goodreadsLink = {
+      name: 'goodreads',
+      id: metadata.goodreadsId,
+      url: `https://www.goodreads.com/book/show/${metadata.goodreadsId}`,
+    };
+    if (existingIndex >= 0) {
+      formData.value.links[existingIndex] = goodreadsLink;
+    } else {
+      formData.value.links.push(goodreadsLink);
+    }
   }
   goodreadsModalOpen.value = false;
 };
@@ -430,19 +499,24 @@ const cancel = () => {
 const save = () => {
   if (!isValid.value) return;
 
-  const { GoodreadsID, ...values } = formData.value;
+  const { links: linksArray, ...values } = formData.value;
+  const linksRecord = linksArray.reduce(
+    (acc, link) => {
+      if (link.name && link.id && link.url) {
+        acc[link.name.toLowerCase()] = { id: link.id, url: link.url };
+      }
+      return acc;
+    },
+    {} as Record<string, { id: string; url: string }>
+  );
+
   clearNotesFromLocalStorage();
   emit('save', {
     ...(props.book || {}),
     ...values,
     duration: values.duration ? validation.durationToMinutes(values.duration) : null,
     rating: values.rating ?? null,
-    links: {
-      ...(props.book?.links || {}),
-      goodreads: GoodreadsID ?
-        { id: GoodreadsID, url: `https://www.goodreads.com/book/show/${GoodreadsID}` }
-        : undefined,
-    },
+    links: linksRecord,
   });
 };
 
@@ -679,23 +753,27 @@ onUnmounted(() => {
   background-color: var(--bg-hover);
 }
 
-.section-title {
-  margin: 0 0 1rem 0;
-  color: var(--accent-primary);
-  font-size: 0.95rem;
-  font-weight: 600;
+.metadata-section {
+  max-width: 700px;
 }
 
-.metadata-form {
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 1rem;
-  margin-bottom: 1rem;
+.metadata-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5em 0;
 }
 
-.metadata-form .form-label {
-  margin-bottom: 0.75rem;
+.form-label-inline {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.form-label-inline .label-text {
+  margin-bottom: 0;
 }
 
 .error-message {
@@ -756,6 +834,49 @@ button[type="button"].btn-icon-text {
 
 .notes-label {
   display: block;
+}
+
+.links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.link-entry {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr 40px;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.link-input {
+  width: 100%;
+}
+
+.btn-remove {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-remove:hover {
+  background-color: rgba(255, 107, 107, 0.1);
+  color: var(--warning);
+  border-color: var(--warning);
+}
+
+.btn-add-link {
+  align-self: flex-start;
 }
 
 @keyframes fadeIn {
