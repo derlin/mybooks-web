@@ -9,7 +9,8 @@
     >
       <option value="title">Title</option>
       <option value="author">Author</option>
-      <option value="date_read">Date</option>
+      <option value="date_read">Date read</option>
+      <option value="date_published">Date published</option>
       <option value="pages">Pages</option>
       <option value="duration">Duration</option>
       <option value="rating">Rating</option>
