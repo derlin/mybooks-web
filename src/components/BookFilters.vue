@@ -62,20 +62,21 @@
           </div>
           <div class="filter-group filter-group--rating">
             <label>Rating:</label>
-            <select v-model="localRatingOperator" class="filter-select filter-select--compact" @change="validateRatingFilter">
+            <select v-model="ratingOperatorValue" class="filter-select filter-select--compact" @change="validateRatingFilter">
               <option value="eq">=</option>
               <option value="lt">&lt;</option>
               <option value="gt">&gt;</option>
             </select>
             <input
-              v-model.number="localRatingValue"
+              ref="ratingInput"
+              v-model.number="ratingNumberValue"
               type="number"
               placeholder="0-5"
               class="filter-select filter-select--rating-input"
               min="0"
               max="5"
               step="0.1"
-              @change="validateRatingFilter"
+              @input="validateRatingFilter"
             />
           </div>
         </div>
@@ -100,20 +101,21 @@
       <div class="filter-group filter-group--rating-mobile">
         <label>Rating:</label>
         <div class="rating-input-group">
-          <select v-model="localRatingOperator" class="filter-select filter-select--compact" @change="validateRatingFilter">
+          <select v-model="ratingOperatorValue" class="filter-select filter-select--compact" @change="validateRatingFilter">
             <option value="eq">=</option>
             <option value="lt">&lt;</option>
             <option value="gt">&gt;</option>
           </select>
           <input
-            v-model.number="localRatingValue"
+            ref="ratingInput"
+            v-model.number="ratingNumberValue"
             type="number"
             placeholder="0-5"
             class="filter-select filter-select--rating-input"
             min="0"
             max="5"
             step="0.1"
-            @change="validateRatingFilter"
+            @input="validateRatingFilter"
           />
         </div>
       </div>
@@ -169,9 +171,10 @@ const emit = defineEmits<{
 }>();
 
 const searchInput = ref<HTMLInputElement | null>(null);
+const ratingInput = ref<HTMLInputElement | null>(null);
 const filtersOpen = ref(false);
-const localRatingOperator = ref<'eq' | 'lt' | 'gt'>('gt');
-const localRatingValue = ref<number | null>(null);
+const ratingOperatorValue = ref<'eq' | 'lt' | 'gt'>('gt');
+const ratingNumberValue = ref<number | null>(null);
 
 const updateFilter = (field: keyof FilterState, value: any) => {
   emit('update:filters', { ...props.filters, [field]: value });
@@ -214,16 +217,23 @@ const clearSearch = () => {
 };
 
 const validateRatingFilter = () => {
-  const operator = localRatingOperator.value as 'eq' | 'lt' | 'gt';
-  const value = localRatingValue.value;
+  const operator = ratingOperatorValue.value as 'eq' | 'lt' | 'gt';
+  const inputValue = ratingInput.value?.value ?? '';
 
+  if (inputValue === '' || inputValue === null || inputValue === undefined) {
+    ratingNumberValue.value = null;
+    updateFilter('ratingFilter', null);
+    return;
+  }
+
+  const value = ratingNumberValue.value;
   if (value === null || value === undefined || !isValidRating(value)) {
     updateFilter('ratingFilter', null);
     return;
   }
 
   const finalValue = Math.round(value * 10) / 10;
-  localRatingValue.value = finalValue;
+  ratingNumberValue.value = finalValue;
 
   updateFilter('ratingFilter', {
     operator: operator,
@@ -233,11 +243,11 @@ const validateRatingFilter = () => {
 
 const initializeRatingFromProps = () => {
   if (props.filters.ratingFilter) {
-    localRatingOperator.value = props.filters.ratingFilter.operator;
-    localRatingValue.value = props.filters.ratingFilter.value;
+    ratingOperatorValue.value = props.filters.ratingFilter.operator;
+    ratingNumberValue.value = props.filters.ratingFilter.value;
   } else {
-    localRatingOperator.value = 'gt';
-    localRatingValue.value = null;
+    ratingOperatorValue.value = 'gt';
+    ratingNumberValue.value = null;
   }
 };
 
