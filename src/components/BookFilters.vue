@@ -2,6 +2,14 @@
   <div class="filters-wrapper">
     <div class="filters-row--main">
       <div class="filters-row--search">
+        <button
+          type="button"
+          class="btn-icon-only btn-outline btn-dimmed reset-filters-btn"
+          @click="resetFilters"
+          title="Reset all filters"
+        >
+          <RotateCcw :size="20" />
+        </button>
         <div class="search-input-wrapper">
           <input
             ref="searchInput"
@@ -154,8 +162,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { X, ListFilter } from '@lucide/vue';
-import type { FilterState } from '@/utils/filtering';
+import { X, ListFilter, RotateCcw } from '@lucide/vue';
+import { FilterState, emptyFilters } from '@/utils/filtering';
 import { isValidRating } from '@/utils/helpers';
 import TagInput from './TagInput.vue';
 
@@ -214,6 +222,10 @@ const handleSearchKeyboard = (keyboardEvent: KeyboardEvent) => {
 const clearSearch = () => {
   localSearchQuery.value = '';
   searchInput.value?.blur();
+};
+
+const resetFilters = () => {
+  emit('update:filters', emptyFilters());
 };
 
 const validateRatingFilter = () => {
@@ -325,6 +337,10 @@ initializeRatingFromProps();
 
 .clear-search-btn:hover {
   color: var(--text-primary);
+}
+
+.reset-filters-btn {
+  flex-shrink: 0;
 }
 
 .filters-toggle-btn {

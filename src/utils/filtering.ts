@@ -17,6 +17,15 @@ export type FilterState = {
   ratingFilter: RatingFilter | null;
 };
 
+export const emptyFilters = (): FilterState => ({
+  searchQuery: '',
+  dnfFilter: '',
+  formatFilter: '',
+  searchField: '',
+  tags: [],
+  ratingFilter: null,
+});
+
 export const extractDateNumbers = (dateStr: string | null | undefined): string => {
   if (!dateStr) return '';
   return dateStr.replace(/\D/g, '');

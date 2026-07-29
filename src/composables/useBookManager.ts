@@ -1,8 +1,7 @@
 import { computed, type Ref, ref, watch } from 'vue';
 import type { BooksProvider } from '../services/booksProvider';
 import type { Book } from '../types';
-import type { FilterState } from '../utils/filtering';
-import { filterAndSort } from '../utils/filtering';
+import { emptyFilters, type FilterState, filterAndSort } from '../utils/filtering';
 import { checkDuplicateTitle, normalizeTitle } from '../utils/helpers';
 import { useToast } from './useToast';
 
@@ -13,14 +12,7 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
   const books = ref<Book[]>([]);
   const loading = ref(true);
   const error = ref<string | null>(null);
-  const filters = ref<FilterState>({
-    searchQuery: '',
-    dnfFilter: '',
-    formatFilter: '',
-    searchField: '',
-    tags: [],
-    ratingFilter: null,
-  });
+  const filters = ref<FilterState>(emptyFilters());
   const currentSort = ref({ id: 'date_read', desc: true });
   const selectedBook = ref<Book | null>(null);
   const isEditFormOpen = ref(false);
