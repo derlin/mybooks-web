@@ -201,13 +201,26 @@
                 </div>
               </div>
             </div>
-            <button
-              type="button"
-              class="btn-outline btn-secondary btn-add-link"
-              @click="formData.links.push({ name: '', id: '', url: '' })"
-            >
-              + Add Link
-            </button>
+            <div class="links-button-group">
+              <button
+                type="button"
+                class="btn-outline btn-secondary btn-icon-text btn-add-link"
+                @click="formData.links.push({ name: '', id: '', url: '' })"
+              >
+                <Plus :size="18" /> Add Link
+              </button>
+              <button
+                v-if="formData.isbn"
+                type="button"
+                class="btn-outline btn-secondary btn-icon-text btn-storygraph"
+                @click="fetchStorygraphLink"
+                :disabled="storygraphLoading"
+                title="Fetch Storygraph link"
+              >
+                <template v-if="storygraphLoading"><span class="spinner"></span> Fetching</template>
+                <template v-else><Download :size="18" /> Storygraph</template>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -273,8 +286,9 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, toRefs, watch } from 'vue';
-import { X, Check, Download, Maximize2, ExternalLink } from '@lucide/vue';
+import { X, Check, Download, Maximize2, ExternalLink, Plus } from '@lucide/vue';
 import type { GoodreadsMetadata } from '../services/goodreads-fetcher';
+import { fetchStorygraphMetadata } from '../services/goodreads-fetcher';
 import type { Book } from '../types';
 import { Storage } from '../utils/storage';
 import { TagsUtil } from '../utils/tags';
@@ -362,6 +376,7 @@ const fullscreenNotesTextarea = ref<HTMLTextAreaElement | null>(null);
 const goodreadsModalOpen = ref(false);
 const fullscreenNotesOpen = ref(false);
 const notesSaveTimeout = ref<NodeJS.Timeout | null>(null);
+const storygraphLoading = ref(false);
 
 const NOTES_AUTO_SAVE_KEY = 'mybooks_editform_draft';
 
@@ -505,6 +520,30 @@ const handleGoodreadsData = (metadata: GoodreadsMetadata) => {
     }
   }
   goodreadsModalOpen.value = false;
+};
+
+const fetchStorygraphLink = async () => {
+  if (!formData.value.isbn) return;
+
+  storygraphLoading.value = true;
+  try {
+    const metadata = await fetchStorygraphMetadata(formData.value.isbn);
+    const existingIndex = formData.value.links.findIndex(l => l.name.toLowerCase() === 'storygraph');
+    const storygraphLink = {
+      name: 'storygraph',
+      id: metadata.id,
+      url: `https://app.thestorygraph.com/books/${metadata.id}`,
+    };
+    if (existingIndex >= 0) {
+      formData.value.links[existingIndex] = storygraphLink;
+    } else {
+      formData.value.links.push(storygraphLink);
+    }
+  } catch (err) {
+    console.error('Failed to fetch Storygraph metadata:', err);
+  } finally {
+    storygraphLoading.value = false;
+  }
 };
 
 const cancel = () => {
@@ -825,7 +864,7 @@ onUnmounted(() => {
 }
 
 button[type="submit"],
-button[type="button"].btn-icon-text {
+.form-footer button[type="button"].btn-icon-text {
   flex: 0 0 400px;
   padding: 0.5rem 1.5rem;
   border-radius: 4px;
@@ -901,7 +940,15 @@ button[type="button"].btn-icon-text {
   border-color: var(--warning);
 }
 
-.btn-add-link {
+.links-button-group {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btn-add-link,
+.btn-storygraph {
   align-self: flex-start;
 }
 
@@ -1028,7 +1075,7 @@ button[type="button"].btn-icon-text {
   }
 
   button[type="submit"],
-  button[type="button"].btn-icon-text {
+  .form-footer button[type="button"].btn-icon-text {
     flex: 1;
     min-width: unset;
   }

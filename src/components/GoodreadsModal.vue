@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { X, Search } from '@lucide/vue';
-import { fetchBookMetadata } from '../services/goodreads-fetcher.js';
+import { fetchGoodreadsBookMetadata } from '../services/goodreads-fetcher.js';
 
 defineProps({
   isOpen: {
@@ -70,7 +70,7 @@ const isValidUrl = (urlString: string) => {
   if(!urlString.trim()) return false;
   try {
     const url = new URL(urlString);
-    return url.hostname === 'www.goodreads.com' && url.pathname.startsWith('/book/show/');
+    return url.hostname === 'www.goodreads.com' && url.pathname.includes('/book/show/');
   } catch (err) {
     return false;
   }
@@ -88,7 +88,7 @@ const submit = async () => {
   loading.value = true;
 
   try {
-    const metadata = await fetchBookMetadata(url.value);
+    const metadata = await fetchGoodreadsBookMetadata(url.value);
     emit('metadata-fetched', metadata);
     url.value = '';
     error.value = null;
