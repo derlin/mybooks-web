@@ -88,7 +88,6 @@ type Column = {
 
 defineProps<{
   books: Book[];
-  allBooks: Book[];
   currentSort: { id: string; desc: boolean };
   selectedBookKey?: string;
 }>();
@@ -208,8 +207,7 @@ const handleTagClick = (tag: string) => {
 
 .rating-cell,
 .duration-cell,
-.pages-cell,
-.boolean-cell {
+.pages-cell {
   text-align: center;
 }
 
@@ -232,19 +230,6 @@ td.format-cell {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-}
-
-.badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.badge.dnf {
-  background-color: rgba(255, 107, 107, 0.2);
-  color: var(--warning);
 }
 
 .actions-cell {

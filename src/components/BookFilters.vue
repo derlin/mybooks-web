@@ -161,7 +161,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { X, ListFilter, RotateCcw } from '@lucide/vue';
 import { FilterState, emptyFilters } from '@/utils/filtering';
 import { isValidRating } from '@/utils/helpers';
@@ -264,6 +264,10 @@ const initializeRatingFromProps = () => {
 };
 
 initializeRatingFromProps();
+
+// Keep the local rating inputs in sync when the filter changes from the
+// parent (e.g. the reset button emitting emptyFilters()).
+watch(() => props.filters.ratingFilter, initializeRatingFromProps);
 </script>
 
 <style scoped>

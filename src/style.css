@@ -9,7 +9,6 @@
   --light-accent-primary: #0077a3;
   --light-accent-secondary: #e65100;
   --light-warning: #a51c1c;
-  --light-success: #2d6a2d;
   --light-border: #d9d9d9;
   --light-shadow: rgba(0, 0, 0, 0.06);
   --light-logo-drop-shadow: var(--light-accent-primary);
@@ -25,7 +24,6 @@
   --dark-accent-primary: #00d9ff;
   --dark-accent-secondary: #ffc107;
   --dark-warning: #ff9999;
-  --dark-success: #51cf66;
   --dark-border: #2a3a4a;
   --dark-shadow: rgba(0, 0, 0, 0.3);
   --dark-logo-drop-shadow: transparent;
@@ -37,13 +35,11 @@
   --bg-secondary: var(--dark-bg-secondary);
   --bg-hover: var(--dark-bg-hover);
   --bg-audiobook: var(--dark-bg-audiobook);
-  --logo-drop-shadown: var(--dark-logo-drop-shadow);
   --text-primary: var(--dark-text-primary);
   --text-secondary: var(--dark-text-secondary);
   --accent-primary: var(--dark-accent-primary);
   --accent-secondary: var(--dark-accent-secondary);
   --warning: var(--dark-warning);
-  --success: var(--dark-success);
   --border: var(--dark-border);
   --shadow: var(--dark-shadow);
   --logo-drop-shadow: var(--dark-logo-drop-shadow);
@@ -51,7 +47,6 @@
   --tag-pill-hover: var(--dark-tag-pill-hover);
 
   color-scheme: dark;
-  --mobile-breakpoint: 768px;
 }
 
 @media (prefers-color-scheme: light) {
@@ -60,13 +55,11 @@
     --bg-secondary: var(--light-bg-secondary);
     --bg-hover: var(--light-bg-hover);
     --bg-audiobook: var(--light-bg-audiobook);
-    --logo-drop-shadown: var(--light-logo-drop-shadow);
     --text-primary: var(--light-text-primary);
     --text-secondary: var(--light-text-secondary);
     --accent-primary: var(--light-accent-primary);
     --accent-secondary: var(--light-accent-secondary);
     --warning: var(--light-warning);
-    --success: var(--light-success);
     --border: var(--light-border);
     --shadow: var(--light-shadow);
     --logo-drop-shadow: var(--light-logo-drop-shadow);
@@ -81,13 +74,11 @@ html[data-theme="light"] {
   --bg-secondary: var(--light-bg-secondary);
   --bg-hover: var(--light-bg-hover);
   --bg-audiobook: var(--light-bg-audiobook);
-  --logo-drop-shadown: var(--light-logo-drop-shadow);
   --text-primary: var(--light-text-primary);
   --text-secondary: var(--light-text-secondary);
   --accent-primary: var(--light-accent-primary);
   --accent-secondary: var(--light-accent-secondary);
   --warning: var(--light-warning);
-  --success: var(--light-success);
   --border: var(--light-border);
   --shadow: var(--light-shadow);
   --logo-drop-shadow: var(--light-logo-drop-shadow);

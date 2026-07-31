@@ -210,13 +210,13 @@ function scheduleDropdownClose() {
 }
 
 .tag-input__option:hover {
-  background: var(--accent-light);
+  background: var(--bg-hover);
   color: var(--text-primary);
 }
 
 .tag-input__option--new {
   cursor: default;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-size: 0.8125rem;
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
@@ -245,11 +245,11 @@ function scheduleDropdownClose() {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.15s;
+  transition: opacity 0.15s;
 }
 
 .tag-input__add-btn:hover {
-  background: var(--accent-dark);
+  opacity: 0.85;
 }
 
 .tag-input__add-btn:active {

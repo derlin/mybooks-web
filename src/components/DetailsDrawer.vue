@@ -108,7 +108,6 @@ import RatingPill from './RatingPill.vue';
 const props = defineProps<{
   book: Book;
   isOpen: boolean;
-  allBooks?: Book[];
 }>();
 
 const emit = defineEmits<{

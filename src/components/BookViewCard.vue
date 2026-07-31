@@ -50,7 +50,6 @@ import RatingPill from './RatingPill.vue';
 
 defineProps<{
   books: Book[];
-  allBooks: Book[];
   currentSort: { id: string; desc: boolean };
   selectedBookKey?: string;
 }>();

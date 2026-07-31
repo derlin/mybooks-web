@@ -74,8 +74,3 @@ export function migrate(data: any): BooksFile {
     return migratedData;
   }, data) as BooksFile;
 }
-
-// import * as fs from 'fs';
-
-// const data = JSON.parse(fs.readFileSync('/tmp/mybooks.json', 'utf-8'));
-// fs.writeFileSync('/tmp/mybooks_migrated.json', JSON.stringify(migrate(data), null, 2), 'utf-8');

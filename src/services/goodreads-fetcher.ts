@@ -34,7 +34,7 @@ async function fetchFromProxy(proxyUrl: string): Promise<any> {
       throw new Error('No data returned from Goodreads fetcher');
     }
     if (parsed.error) {
-      throw new Error(parsed.errror);
+      throw new Error(parsed.error);
     }
     return parsed;
   } catch (err: any) {

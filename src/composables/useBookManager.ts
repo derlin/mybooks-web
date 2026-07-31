@@ -182,7 +182,7 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
       // Build new books array
       let newBooks: Book[];
       if (editedBookKey) {
-        if (editedBook === newKey) {
+        if (editedBookKey === newKey) {
           // Edit without rename: replace in place
           newBooks = books.value.map((b) => (b._key === editedBookKey ? bookToSave : b));
         } else {
@@ -275,7 +275,6 @@ export function useBookManager(booksProvider: BooksProvider, onFilesChanged?: Re
     selectedBook,
     isEditFormOpen,
     isSaving,
-    pendingUndo,
 
     // Computed
     filteredAndSortedBooks,

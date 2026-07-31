@@ -82,7 +82,6 @@
       <BookViewTable
         v-if="currentViewType === 'table'"
         :books="filteredAndSortedBooks"
-        :all-books="books"
         :current-sort="currentSort"
         :selected-book-key="selectedBook?._key"
         @toggle-sort="toggleSort"
@@ -95,7 +94,6 @@
       <BookViewCard
         v-else
         :books="filteredAndSortedBooks"
-        :all-books="books"
         :current-sort="currentSort"
         :selected-book-key="selectedBook?._key"
         @toggle-sort="handleCardSort"
@@ -108,7 +106,6 @@
       v-if="selectedBook"
       :book="selectedBook"
       :isOpen="drawerOpen"
-      :all-books="books"
       @close="closeDrawer"
       @edit="openEditForm(selectedBook)"
       @delete="
@@ -165,7 +162,6 @@ type ViewPreference = 'default' | 'cards' | 'table';
 const props = defineProps<{
   booksProvider: BooksProvider;
   filesChanged?: boolean;
-  viewType?: 'table' | 'cards' | 'auto';
 }>();
 const emit = defineEmits(['logout', 'files-refreshed']);
 
@@ -401,26 +397,6 @@ h1 {
   align-items: center;
 }
 
-.add-btn {
-  background-color: var(--accent-primary);
-  color: var(--bg-primary);
-  border: none;
-  width: 40px;
-  aspect-ratio: 1;
-  border-radius: 4px;
-  font-size: 1.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.add-btn:hover {
-  opacity: 0.9;
-}
-
 .view-mode-btn {
   background-color: var(--bg-primary);
   color: var(--text-primary);
@@ -441,27 +417,6 @@ h1 {
 
 .menu-container {
   position: relative;
-}
-
-.menu-btn {
-  background-color: var(--text-secondary);
-  color: var(--bg-primary);
-  border: none;
-  width: 40px;
-  aspect-ratio: 1;
-  border-radius: 4px;
-  font-size: 1.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-.menu-btn:hover {
-  opacity: 0.9;
 }
 
 .menu-dropdown {
@@ -554,17 +509,8 @@ h1 {
   color: var(--text-secondary);
 }
 
-.loading {
-  color: var(--text-primary);
-  font-size: 1.1rem;
-}
-
 .error {
   color: var(--warning);
-}
-
-.empty {
-  color: var(--text-secondary);
 }
 
 .empty-state {
