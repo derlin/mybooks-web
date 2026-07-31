@@ -1,12 +1,12 @@
 <template>
-  <div class="tag-popup" @click.self="close">
+  <div class="tag-popup modal-overlay" @click.self="close">
     <div class="tag-popup__card">
       <div class="tag-popup__header">
         <h3 class="tag-popup__title">
           {{ screenTitle }}
         </h3>
-        <button class="tag-popup__close" @click="close" type="button" aria-label="Close">
-          ✕
+        <button class="btn-icon-only" @click="close" type="button" aria-label="Close">
+          <X :size="20" />
         </button>
       </div>
 
@@ -82,7 +82,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue';
 import type { Book } from '@/types';
-import { ArrowLeft, ListFilter, Pencil, Trash2, Check } from '@lucide/vue';
+import { ArrowLeft, ListFilter, Pencil, Trash2, Check, X } from '@lucide/vue';
 import { TagLikeFieldUtil } from '@/utils/tags';
 import type { TagPopupAction } from '@/composables/useTagPopup';
 
@@ -174,25 +174,10 @@ watch(
 </script>
 
 <style scoped>
+/* .modal-overlay provides the scaffold; these are tag-popup's overrides. */
 .tag-popup {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 2000;
-  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(2px);
-  animation: fadeIn 0.15s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 .tag-popup__card {
@@ -204,17 +189,6 @@ watch(
   animation: slideUp 0.2s ease;
   display: flex;
   flex-direction: column;
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(10px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
 }
 
 .tag-popup__header {
@@ -230,25 +204,6 @@ watch(
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
-}
-
-.tag-popup__close {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 0;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.15s;
-}
-
-.tag-popup__close:hover {
-  color: var(--text-primary);
 }
 
 .tag-popup__content {
@@ -289,7 +244,7 @@ watch(
 .tag-popup__input:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.1);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .tag-popup__error {

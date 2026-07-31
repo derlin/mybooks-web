@@ -85,17 +85,17 @@ const handleAction = async (toast: any) => {
 }
 
 .toast-success {
-  background-color: rgba(81, 207, 102, 0.95);
+  background-color: var(--toast-success);
   color: #fff;
 }
 
 .toast-error {
-  background-color: rgba(255, 107, 107, 0.95);
+  background-color: var(--toast-error);
   color: #fff;
 }
 
 .toast-info {
-  background-color: rgba(66, 165, 245, 0.95);
+  background-color: var(--toast-info);
   color: #fff;
 }
 

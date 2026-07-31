@@ -156,7 +156,7 @@ function scheduleDropdownClose() {
 
 .tag-input:focus-within {
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.1);
+  box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .tag-input__selected {

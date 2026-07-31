@@ -114,7 +114,7 @@ const openDrawer = (book: Book) => {
 }
 
 .card.audiobook:hover {
-  border-color: rgba(33, 150, 243, 0.8);
+  border-color: var(--audiobook);
 }
 
 .card-content {
@@ -184,7 +184,7 @@ const openDrawer = (book: Book) => {
 }
 
 .badge.dnf {
-  background-color: rgba(255, 107, 107, 0.2);
+  background-color: var(--warning-bg);
   color: var(--warning);
 }
 

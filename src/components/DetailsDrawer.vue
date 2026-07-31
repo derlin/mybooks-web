@@ -9,7 +9,7 @@
     >
       <div class="drawer-header">
         <h2>{{ book.title }}</h2>
-        <button class="close-btn" @click="close" title="Close">
+        <button class="btn-icon-only" @click="close" title="Close">
           <X :size="20" />
         </button>
       </div>
@@ -206,31 +206,6 @@ const close = () => {
   flex: 1;
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition:
-    background-color 0.15s,
-    color 0.15s;
-  flex-shrink: 0;
-}
-
-.close-btn:hover {
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
 .drawer-content {
   flex: 1;
   padding: 1rem;
@@ -278,7 +253,7 @@ const close = () => {
 }
 
 .pill.dnf {
-  background-color: rgba(255, 107, 107, 0.15);
+  background-color: var(--warning-bg);
   border-color: var(--warning);
   color: var(--warning);
 }

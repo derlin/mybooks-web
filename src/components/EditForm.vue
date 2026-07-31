@@ -258,12 +258,12 @@
       </div>
     </form>
 
-    <div v-if="fullscreenNotesOpen" class="notes-fullscreen-modal-overlay" @click="toggleFullscreenNotes">
+    <div v-if="fullscreenNotesOpen" class="modal-overlay notes-fullscreen-modal-overlay" @click="toggleFullscreenNotes">
       <div class="notes-fullscreen-modal" @click.stop>
         <div class="notes-fullscreen-header">
           <h2>Notes</h2>
           <div class="notes-fullscreen-help">Cmd+Enter to close (or click outside)</div>
-          <button type="button" class="notes-fullscreen-close" @click="toggleFullscreenNotes">
+          <button type="button" class="btn-icon-only" @click="toggleFullscreenNotes">
             <X :size="20" />
           </button>
         </div>
@@ -672,7 +672,7 @@ onUnmounted(() => {
 }
 
 .error-banner {
-  background-color: rgba(255, 107, 107, 0.1);
+  background-color: var(--warning-bg);
   color: var(--warning);
   padding: 1rem;
   border-bottom: 1px solid var(--warning);
@@ -722,13 +722,6 @@ onUnmounted(() => {
   margin-bottom: 1rem;
 }
 
-.label-text {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: var(--text-primary);
-  font-weight: 500;
-  font-size: 0.9rem;
-}
 
 .form-input,
 .form-textarea {
@@ -755,7 +748,7 @@ onUnmounted(() => {
 
 .form-input:invalid:not(:placeholder-shown) {
   border-color: var(--warning);
-  background-color: rgba(255, 107, 107, 0.05);
+  background-color: var(--warning-bg-subtle);
 }
 
 .form-textarea {
@@ -935,7 +928,7 @@ button[type="submit"],
 }
 
 .btn-remove:hover {
-  background-color: rgba(255, 107, 107, 0.1);
+  background-color: var(--warning-bg);
   color: var(--warning);
   border-color: var(--warning);
 }
@@ -952,27 +945,10 @@ button[type="submit"],
   align-self: flex-start;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
+/* .modal-overlay provides the scaffold; these are the notes modal's overrides. */
 .notes-fullscreen-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   background-color: rgba(0, 0, 0, 0.7);
   z-index: 2000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: fadeIn 0.15s ease-out;
 }
 
 .notes-fullscreen-modal {
@@ -1008,28 +984,6 @@ button[type="submit"],
 .notes-fullscreen-help {
   color: var(--text-secondary);
   font-size: 0.85rem;
-}
-
-.notes-fullscreen-close {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0.5rem;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-
-.notes-fullscreen-close:hover {
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
 }
 
 .notes-fullscreen-textarea {

@@ -102,29 +102,6 @@ const submit = async () => {
 </script>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.15s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 .modal-dialog {
   background-color: var(--bg-primary);
   border: 1px solid var(--border);
@@ -134,17 +111,6 @@ const submit = async () => {
   display: flex;
   flex-direction: column;
   animation: slideUp 0.15s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
 }
 
 .modal-header {
@@ -177,7 +143,7 @@ const submit = async () => {
 }
 
 .error-banner {
-  background-color: rgba(255, 107, 107, 0.1);
+  background-color: var(--warning-bg);
   color: var(--warning);
   padding: 0.75rem;
   border-radius: 4px;
@@ -191,13 +157,6 @@ const submit = async () => {
   display: block;
 }
 
-.label-text {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: var(--text-primary);
-  font-weight: 500;
-  font-size: 0.9rem;
-}
 
 .form-input {
   width: 100%;

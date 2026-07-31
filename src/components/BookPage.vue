@@ -498,7 +498,7 @@ h1 {
 }
 
 .menu-item-danger:hover {
-  background-color: rgba(211, 47, 47, 0.1);
+  background-color: var(--warning-bg);
 }
 
 .content {

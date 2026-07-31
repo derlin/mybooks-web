@@ -189,7 +189,7 @@ const handleTagClick = (tag: string) => {
 }
 
 .books-table tbody tr.audiobook:hover {
-  background-color: rgba(33, 150, 243, 0.28);
+  background-color: var(--bg-audiobook-hover);
 }
 
 .books-table tbody tr:not(.audiobook):hover {

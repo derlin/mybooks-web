@@ -12,12 +12,13 @@
       type="button"
       aria-label="Remove tag"
     >
-      ×
+      <X :size="14" />
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
+import { X } from '@lucide/vue';
 
 defineProps<{
   tag: string;

@@ -134,7 +134,7 @@ h1 {
 .error-message {
   color: var(--warning);
   padding: 1rem;
-  background-color: rgba(255, 107, 107, 0.1);
+  background-color: var(--warning-bg);
   border-radius: 4px;
   margin-bottom: 1.5rem;
 }

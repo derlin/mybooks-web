@@ -1,9 +1,12 @@
 :root {
   /* Color definitions (only place they're defined) */
+  /* Audiobook accent (theme-independent Material blue, single source of truth) */
+  --audiobook: #2196f3;
+
   --light-bg-primary: #fafafa;
   --light-bg-secondary: #f0f0f0;
   --light-bg-hover: #e8e8e8;
-  --light-bg-audiobook: rgba(33, 150, 243, 0.08);
+  --light-bg-audiobook: color-mix(in srgb, var(--audiobook) 8%, transparent);
   --light-text-primary: #333333;
   --light-text-secondary: #666666;
   --light-accent-primary: #0077a3;
@@ -18,7 +21,7 @@
   --dark-bg-primary: #0a1123;
   --dark-bg-secondary: #1a2a3a;
   --dark-bg-hover: #2a3a4a;
-  --dark-bg-audiobook: rgba(33, 150, 243, 0.15);
+  --dark-bg-audiobook: color-mix(in srgb, var(--audiobook) 15%, transparent);
   --dark-text-primary: #f5f5f5;
   --dark-text-secondary: #a0a0a0;
   --dark-accent-primary: #00d9ff;
@@ -45,6 +48,18 @@
   --logo-drop-shadow: var(--dark-logo-drop-shadow);
   --tag-pill: var(--dark-tag-pill);
   --tag-pill-hover: var(--dark-tag-pill-hover);
+
+  /* Derived surfaces — resolve against the active theme's accent/warning,
+     so a single definition works in both light and dark. */
+  --focus-ring: color-mix(in srgb, var(--accent-primary) 20%, transparent);
+  --warning-bg: color-mix(in srgb, var(--warning) 15%, transparent);
+  --warning-bg-subtle: color-mix(in srgb, var(--warning) 6%, transparent);
+  --bg-audiobook-hover: color-mix(in srgb, var(--audiobook) 28%, transparent);
+
+  /* Status surfaces for toasts (fixed colour chips with white text) */
+  --toast-success: rgba(81, 207, 102, 0.95);
+  --toast-error: rgba(255, 107, 107, 0.95);
+  --toast-info: rgba(66, 165, 245, 0.95);
 
   color-scheme: dark;
 }
@@ -145,7 +160,16 @@ input:focus,
 textarea:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.1);
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+/* Form field label */
+.label-text {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.9rem;
 }
 
 /* Pill styling */
@@ -357,5 +381,37 @@ textarea:focus {
   }
   100% {
     inset: 0 35px 35px 0;
+  }
+}
+
+/* Modal / dialog scaffolding (shared overlay + animations) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
