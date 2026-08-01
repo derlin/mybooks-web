@@ -238,7 +238,6 @@
           </div>
           <label class="form-label notes-label">
             <textarea
-              ref="inlineNotesTextarea"
               v-model="formData.notes"
               placeholder="Your notes and summary..."
               class="form-textarea"
@@ -285,23 +284,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, toRefs, watch } from 'vue';
+import { computed, ref, toRefs, watch } from 'vue';
 import { X, Check, Download, Maximize2, ExternalLink, Plus } from '@lucide/vue';
 import type { GoodreadsMetadata } from '../services/goodreads-fetcher';
 import { fetchStorygraphMetadata } from '../services/goodreads-fetcher';
 import type { Book } from '../types';
-import { Storage } from '../utils/storage';
 import { TagsUtil } from '../utils/tags';
+import { type FormData, bookToFormData, formDataToBook } from '../utils/book-form';
+import { useNotesDraft } from '../composables/useNotesDraft';
+import { useFullscreenNotes } from '../composables/useFullscreenNotes';
 import * as validation from '../utils/helpers';
 import GoodreadsModal from './GoodreadsModal.vue';
 import TagInput from './TagInput.vue';
-
-const storage = new Storage({ silentFail: true });
-
-type DraftNotes = {
-  hash: string;
-  notes: string;
-};
 
 const props = defineProps<{
   book: Book | null;
@@ -310,79 +304,28 @@ const props = defineProps<{
   isSaving: boolean;
 }>();
 
-type FormData = Omit<Book, '_key' | 'pages' | 'duration' | 'rating' | 'links'> & {
-  pages: number | null;
-  duration: string;
-  tags: string[];
-  rating: number | null;
-  links: Array<{ name: string; id: string; url: string }>;
-};
-
-const newFormData = (book: Book | null | undefined = undefined): FormData => {
-  const linksArray = book?.links
-    ? Object.entries(book.links).map(([name, link]) => ({
-        name,
-        id: link.id,
-        url: link.url,
-      }))
-    : [];
-
-  if (book) {
-    return {
-      title: book.title,
-      author: book.author,
-      date_published: book.date_published || '',
-      isbn: book.isbn || '',
-      pages: book.pages ? Number(book.pages) : null,
-      duration: book.duration ? validation.minutesToDuration(book.duration) : '',
-      date_read: book.date_read,
-      dnf: book.dnf || false,
-      format: book.format ?? 'print',
-      notes: book.notes || '',
-      rating: book.rating ?? null,
-      tags: book.tags ?? [],
-      links: linksArray,
-    };
-  }
-  return {
-    title: '',
-    author: '',
-    date_published: '',
-    isbn: '',
-    pages: null,
-    duration: '',
-    date_read: validation.getTodayDate(),
-    dnf: false,
-    format: 'print',
-    notes: '',
-    tags: [],
-    rating: null,
-    links: [],
-  };
-};
-
 const { isSaving } = toRefs(props);
 
 const emit = defineEmits(['save', 'cancel']);
 
-const formData = ref<FormData>(newFormData());
+const formData = ref<FormData>(bookToFormData());
 
 const originalData = ref<typeof formData.value>();
 const showAuthorDropdown = ref(false);
 const durationError = ref<string | null>(null);
 const ratingError = ref<string | null>(null);
-const inlineNotesTextarea = ref<HTMLTextAreaElement | null>(null);
-const fullscreenNotesTextarea = ref<HTMLTextAreaElement | null>(null);
 const goodreadsModalOpen = ref(false);
-const fullscreenNotesOpen = ref(false);
-const notesSaveTimeout = ref<NodeJS.Timeout | null>(null);
 const storygraphLoading = ref(false);
 
-const NOTES_AUTO_SAVE_KEY = 'mybooks_editform_draft';
+const { clearDraft } = useNotesDraft(
+  () => props.book?._key ?? 'new',
+  () => formData.value.notes,
+  (notes) => {
+    formData.value.notes = notes;
+  }
+);
 
-const getCurrentHash = (): string => {
-  return props.book?._key ?? 'new';
-};
+const { fullscreenNotesOpen, fullscreenNotesTextarea, toggleFullscreenNotes } = useFullscreenNotes();
 
 const filteredAuthors = computed(() => {
   return validation.getFilteredAuthors(formData.value.author, props.allBooks);
@@ -448,54 +391,6 @@ const closeAuthorDropdown = () => {
   }, 150);
 };
 
-const toggleFullscreenNotes = () => {
-  fullscreenNotesOpen.value = !fullscreenNotesOpen.value;
-  if (fullscreenNotesOpen.value) {
-    nextTick(() => {
-      fullscreenNotesTextarea.value?.focus();
-    });
-  }
-};
-
-const handleKeyDown = (e: KeyboardEvent) => {
-  const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
-  const isToggleKey = isMac ? e.metaKey && e.code === 'Enter' : e.ctrlKey && e.code === 'Enter';
-
-  if (isToggleKey) {
-    e.preventDefault();
-    toggleFullscreenNotes();
-  }
-};
-
-const saveNotesToLocalStorage = () => {
-  const draft: DraftNotes = {
-    hash: getCurrentHash(),
-    notes: formData.value.notes,
-  };
-  storage.saveJson(NOTES_AUTO_SAVE_KEY, draft);
-};
-
-const restoreNotesFromLocalStorage = () => {
-  const draft = storage.loadJson<DraftNotes>(NOTES_AUTO_SAVE_KEY);
-  if (draft && draft.hash === getCurrentHash()) {
-    formData.value.notes = draft.notes;
-  }
-};
-
-const clearNotesFromLocalStorage = () => {
-  storage.clear(NOTES_AUTO_SAVE_KEY);
-};
-
-const debounceAutoSaveNotes = () => {
-  if (notesSaveTimeout.value) {
-    clearTimeout(notesSaveTimeout.value);
-  }
-
-  notesSaveTimeout.value = setTimeout(() => {
-    saveNotesToLocalStorage();
-  }, 300);
-};
-
 const handleGoodreadsData = (metadata: GoodreadsMetadata) => {
   formData.value.title = metadata.title;
   formData.value.author = metadata.author;
@@ -547,58 +442,27 @@ const fetchStorygraphLink = async () => {
 };
 
 const cancel = () => {
-  clearNotesFromLocalStorage();
+  clearDraft();
   emit('cancel');
 };
 
 const save = () => {
   if (!isValid.value) return;
 
-  const { links: linksArray, ...values } = formData.value;
-  const linksRecord = linksArray.reduce(
-    (acc, link) => {
-      if (link.name && link.id && link.url) {
-        acc[link.name.toLowerCase()] = { id: link.id, url: link.url };
-      }
-      return acc;
-    },
-    {} as Record<string, { id: string; url: string }>
-  );
-
-  clearNotesFromLocalStorage();
-  emit('save', {
-    ...(props.book || {}),
-    ...values,
-    duration: values.duration ? validation.durationToMinutes(values.duration) : null,
-    rating: values.rating ?? null,
-    links: linksRecord,
-  });
+  clearDraft();
+  emit('save', formDataToBook(formData.value, props.book));
 };
 
 watch(
   () => props.book,
   () => {
-    formData.value = newFormData(props.book || undefined);
+    formData.value = bookToFormData(props.book || undefined);
     originalData.value = JSON.parse(JSON.stringify(formData.value));
     durationError.value = null;
     ratingError.value = null;
   },
   { immediate: true, deep: true }
 );
-
-watch(() => formData.value.notes, debounceAutoSaveNotes);
-
-onMounted(() => {
-  restoreNotesFromLocalStorage();
-  window.addEventListener('keydown', handleKeyDown);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown);
-  if (notesSaveTimeout.value) {
-    clearTimeout(notesSaveTimeout.value);
-  }
-});
 </script>
 
 <style scoped>

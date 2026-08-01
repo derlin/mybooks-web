@@ -13,7 +13,7 @@ export interface Toast {
 }
 
 interface ToastInternal extends Toast {
-  timeoutId?: NodeJS.Timeout;
+  timeoutId?: ReturnType<typeof setTimeout>;
 }
 
 const TOAST_KEY = Symbol('toast');
