@@ -37,6 +37,7 @@
             </div>
             <div class="menu-section">
               <div class="menu-header">Actions</div>
+              <button @click="openTsvPopup" class="menu-item" role="menuitem">Download TSV</button>
               <button @click="downloadJson" class="menu-item" role="menuitem">Download JSON</button>
               <button @click="triggerFileUpload" class="menu-item" role="menuitem">Upload JSON</button>
               <button @click="emit('logout')" class="menu-item menu-item-danger" role="menuitem">
@@ -127,6 +128,18 @@
     @cancel="closeForm"
   />
 
+  <!-- TSV Export Popup -->
+  <TsvExportPopup
+    v-if="tsvPopupOpen"
+    :columns="tsvColumns"
+    :initial-selected-ids="tsvPrefs.columnIds"
+    :initial-sort-by="tsvPrefs.sortBy"
+    :initial-sort-desc="tsvPrefs.sortDesc"
+    :initial-save="tsvSavePref"
+    @export="handleTsvExport"
+    @close="tsvPopupOpen = false"
+  />
+
   <!-- Field Popup -->
   <TagBulkOperationsPopup
     v-if="activePopup"
@@ -149,6 +162,8 @@ import { useToast } from '../composables/useToast';
 import { Storage } from '../utils/storage';
 import { TagsUtil, TagLikeFieldUtil } from '../utils/tags';
 import { BOOKS_FILE_PATH } from '../env';
+import { sortBooks } from '../utils/filtering';
+import { getExportColumns, buildTsv, type TsvColumn } from '../utils/tsv-export';
 import type { TagPopupAction } from '../composables/useTagPopup';
 import BookFilters from './BookFilters.vue';
 import BookViewTable from './BookViewTable.vue';
@@ -156,6 +171,7 @@ import BookViewCard from './BookViewCard.vue';
 import DetailsDrawer from './DetailsDrawer.vue';
 import EditForm from './EditForm.vue';
 import TagBulkOperationsPopup from './TagBulkOperationsPopup.vue';
+import TsvExportPopup from './TsvExportPopup.vue';
 
 type ViewPreference = 'default' | 'cards' | 'table';
 
@@ -213,6 +229,61 @@ const downloadJson = () => {
   a.click();
   URL.revokeObjectURL(url);
   menuOpen.value = false;
+};
+
+// TSV export popup
+const TSV_EXPORT_STORAGE_KEY = 'tsvExport';
+const DEFAULT_TSV_COLUMN_IDS = ['title', 'author', 'rating', 'pages', 'date_read'];
+
+type TsvExportPrefs = { columnIds: string[]; sortBy: string; sortDesc: boolean };
+
+const tsvPopupOpen = ref(false);
+const tsvColumns = computed(() => getExportColumns(books.value));
+const tsvPrefs = ref<TsvExportPrefs>({
+  columnIds: DEFAULT_TSV_COLUMN_IDS,
+  sortBy: 'date_read',
+  sortDesc: true,
+});
+const tsvSavePref = ref(false);
+
+const openTsvPopup = () => {
+  const saved = storage.loadJson<TsvExportPrefs>(TSV_EXPORT_STORAGE_KEY);
+  if (saved) {
+    tsvPrefs.value = saved;
+    tsvSavePref.value = true;
+  } else {
+    tsvPrefs.value = { columnIds: DEFAULT_TSV_COLUMN_IDS, sortBy: 'date_read', sortDesc: true };
+    tsvSavePref.value = false;
+  }
+  tsvPopupOpen.value = true;
+  menuOpen.value = false;
+};
+
+const handleTsvExport = (payload: {
+  columns: TsvColumn[];
+  sortBy: string;
+  sortDesc: boolean;
+  save: boolean;
+}) => {
+  const sorted = sortBooks(books.value, payload.sortBy, payload.sortDesc);
+  const tsv = buildTsv(sorted, payload.columns);
+  const url = URL.createObjectURL(new Blob([tsv], { type: 'text/tab-separated-values' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (BOOKS_FILE_PATH.split('/').pop() || 'mybooks.json').replace(/\.json$/, '') + '.tsv';
+  a.click();
+  URL.revokeObjectURL(url);
+
+  if (payload.save) {
+    storage.saveJson<TsvExportPrefs>(TSV_EXPORT_STORAGE_KEY, {
+      columnIds: payload.columns.map((c) => c.id),
+      sortBy: payload.sortBy,
+      sortDesc: payload.sortDesc,
+    });
+  } else {
+    storage.clear(TSV_EXPORT_STORAGE_KEY);
+  }
+  tsvPopupOpen.value = false;
 };
 
 const fileInput = ref<HTMLInputElement | null>(null);
