@@ -468,7 +468,10 @@ watch(
 <style scoped>
 .form-wrapper {
   width: 100%;
-  height: 100svh;
+  /* dvh so the wrapper tracks the layout viewport when the mobile soft
+     keyboard opens (see interactive-widget=resizes-content in index.html),
+     keeping the footer above the keyboard. */
+  height: 100dvh;
   background-color: var(--bg-primary);
   display: flex;
   flex-direction: column;
@@ -715,9 +718,6 @@ watch(
   background-color: var(--bg-primary);
   justify-content: center;
   width: 100%;
-  position: sticky;
-  bottom: 0;
-  z-index: 5;
 }
 
 button[type="submit"],
