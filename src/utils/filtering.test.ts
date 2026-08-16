@@ -117,6 +117,12 @@ describe('Filtering Utilities', () => {
       const result = applyFormatFilter(mockBooks, '');
       expect(result).toHaveLength(4);
     });
+
+    it('filters to print/ebook books with "text" (excludes audio)', () => {
+      const result = applyFormatFilter(mockBooks, 'text');
+      expect(result).toHaveLength(3);
+      expect(result.every((b) => b.format !== 'audio')).toBe(true);
+    });
   });
 
   describe('applySearchFilter', () => {

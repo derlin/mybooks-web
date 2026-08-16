@@ -1,7 +1,8 @@
 import type { Book, BookFormat } from '../types';
 
 export type DnfFilter = '' | 'dnf' | 'finished';
-export type FormatFilter = '' | BookFormat;
+// 'text' is a filter-only pseudo-format matching print/ebook (i.e. non-audio) books.
+export type FormatFilter = '' | BookFormat | 'text';
 export type SearchField = '' | 'title' | 'author' | 'title+author' | 'date' | 'notes';
 export type RatingFilter = {
   operator: 'eq' | 'lt' | 'gt';
@@ -38,6 +39,7 @@ export const applyDnfFilter = (books: Book[], dnfFilter: DnfFilter): Book[] => {
 
 export const applyFormatFilter = (books: Book[], formatFilter: FormatFilter): Book[] => {
   if (formatFilter === '') return books;
+  if (formatFilter === 'text') return books.filter((b) => b.format !== 'audio');
   return books.filter((b) => b.format === formatFilter);
 };
 

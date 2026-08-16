@@ -55,8 +55,9 @@
             <label>Format:</label>
             <select v-model="localFormatFilter" class="filter-select">
               <option value="">All</option>
-              <option value="print">Print</option>
+              <option value="text">Text</option>
               <option value="audio">Audio</option>
+              <option value="print">Print</option>
               <option value="ebook">Ebook</option>
             </select>
           </div>
@@ -132,8 +133,9 @@
           <label>Format:</label>
           <select v-model="localFormatFilter" class="filter-select">
               <option value="">All</option>
-              <option value="print">Print</option>
+              <option value="text">Text</option>
               <option value="audio">Audio</option>
+              <option value="print">Print</option>
               <option value="ebook">Ebook</option>
           </select>
         </div>
