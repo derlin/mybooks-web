@@ -166,7 +166,7 @@
 import { computed, ref, watch } from 'vue';
 import { X, ListFilter, RotateCcw } from '@lucide/vue';
 import { FilterState, emptyFilters } from '@/utils/filtering';
-import { isValidRating } from '@/utils/helpers';
+import { isValidRating } from '@/utils/rating';
 import TagInput from './TagInput.vue';
 
 const props = defineProps<{

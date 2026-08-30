@@ -17,7 +17,7 @@
       <div class="drawer-content">
         <div class="header-section">
           <div class="header-top">
-            <BookCover :title="book.title" :cover-image="book.cover_image" :isbn="book.isbn" />
+            <BookCover :title="book.title" :cover-image="book.cover_image" :isbn="book.isbn" :width="DRAWER_COVER_WIDTH" />
             <div class="info-block">
               <div class="info-prose">
                 by <span class="highlight">{{ book.author }}</span>
@@ -106,6 +106,7 @@ import type { Book } from '../types';
 import { useDrag } from '../composables/useDrag';
 import { useToast } from '../composables/useToast';
 import { formatDate, formatDuration, googleUrlFor } from '../utils/helpers';
+import { DRAWER_COVER_WIDTH } from '../utils/covers';
 import TagPill from './TagPill.vue';
 import FormatPill from './FormatPill.vue';
 import RatingPill from './RatingPill.vue';
@@ -233,7 +234,8 @@ const close = () => {
 }
 
 .header-top {
-  --cover-width: 110px;
+  /* Matches the rendered size of a grid tile. DRAWER_COVER_WIDTH requests 2x this. */
+  --cover-width: 160px;
   display: flex;
   gap: 1rem;
   align-items: flex-start;
@@ -357,7 +359,7 @@ const close = () => {
   }
 
   .header-top {
-    --cover-width: 80px;
+    --cover-width: 120px;
   }
 }
 </style>

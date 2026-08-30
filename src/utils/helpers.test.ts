@@ -184,28 +184,6 @@ describe('validateDuration', () => {
   });
 });
 
-describe('isValidRating', () => {
-  const cases = [
-    // Valid ratings
-    [0, true],
-    [1, true],
-    [2.5, true],
-    [5, true],
-    [3.7, true],
-    // Invalid
-    [-1, false],
-    [6, false],
-    [NaN, true], // NaN is treated as falsy, returns true
-    // Empty/null
-    [null, true],
-    [undefined, true],
-  ];
-
-  it.each(cases)('%s => %s', (input, expected) => {
-    expect(helpers.isValidRating(input)).toBe(expected);
-  });
-});
-
 describe('getTodayDate', () => {
   it('returns date in YYYY-MM-DD format', () => {
     const result = helpers.getTodayDate();

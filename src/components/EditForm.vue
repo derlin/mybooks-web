@@ -138,7 +138,7 @@
             </label>
           </div>
           <div class="cover-preview">
-            <BookCover :title="formData.title" :cover-image="formData.cover_image" :isbn="formData.isbn" />
+            <BookCover :title="formData.title" :cover-image="formData.cover_image" :isbn="formData.isbn" :width="160" />
           </div>
         </div>
 
@@ -302,6 +302,7 @@ import { type FormData, bookToFormData, formDataToBook } from '../utils/book-for
 import { useNotesDraft } from '../composables/useNotesDraft';
 import { useFullscreenNotes } from '../composables/useFullscreenNotes';
 import * as validation from '../utils/helpers';
+import { isValidRating } from '../utils/rating';
 import GoodreadsModal from './GoodreadsModal.vue';
 import TagInput from './TagInput.vue';
 import BookCover from './BookCover.vue';
@@ -384,7 +385,7 @@ const validateRatingInput = () => {
   const rating = formData.value.rating;
   ratingError.value = null;
 
-  if (!validation.isValidRating(rating)) {
+  if (!isValidRating(rating)) {
     ratingError.value = 'Rating must be between 0 and 5';
     return;
   }

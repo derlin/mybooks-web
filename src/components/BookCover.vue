@@ -29,14 +29,16 @@ const props = withDefaults(
     title: string;
     coverImage?: string | null;
     isbn?: string | null;
+    width?: number;
   }>(),
   {
     coverImage: null,
     isbn: null,
+    width: undefined,
   }
 );
 
-const candidates = computed(() => coverCandidates(props.coverImage, props.isbn));
+const candidates = computed(() => coverCandidates(props.coverImage, props.isbn, { width: props.width }));
 
 const index = ref(0);
 const isLoading = ref(candidates.value.length > 0);

@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { Storage } from '../utils/storage';
 
 type Theme = 'light' | 'dark' | 'auto';
@@ -37,9 +37,16 @@ if (typeof document !== 'undefined') {
   loadTheme();
 }
 
+const isDark = computed(() => {
+  return (
+    theme.value === 'dark' || (theme.value === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  );
+});
+
 export function useTheme() {
   return {
     theme,
     applyTheme,
+    isDark,
   };
 }

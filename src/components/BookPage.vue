@@ -92,6 +92,15 @@
         @open-tag-popup="openTagPopup"
       />
 
+      <BookViewGrid
+        v-else-if="currentViewType === 'grid'"
+        :books="filteredAndSortedBooks"
+        :current-sort="currentSort"
+        :selected-book-key="selectedBook?._key"
+        @toggle-sort="handleCardSort"
+        @open-drawer="openDrawer"
+      />
+
       <BookViewCard
         v-else
         :books="filteredAndSortedBooks"
@@ -168,12 +177,13 @@ import type { TagPopupAction } from '../composables/useTagPopup';
 import BookFilters from './BookFilters.vue';
 import BookViewTable from './BookViewTable.vue';
 import BookViewCard from './BookViewCard.vue';
+import BookViewGrid from './BookViewGrid.vue';
 import DetailsDrawer from './DetailsDrawer.vue';
 import EditForm from './EditForm.vue';
 import TagBulkOperationsPopup from './TagBulkOperationsPopup.vue';
 import TsvExportPopup from './TsvExportPopup.vue';
 
-type ViewPreference = 'default' | 'cards' | 'table';
+type ViewPreference = 'default' | 'cards' | 'table' | 'grid';
 
 const props = defineProps<{
   booksProvider: BooksProvider;
@@ -187,7 +197,7 @@ const viewPreference = ref<ViewPreference>(
   (storage.load('viewPreference') as ViewPreference) || 'default'
 );
 
-const currentViewType = computed<'table' | 'cards'>(() => {
+const currentViewType = computed<'table' | 'cards' | 'grid'>(() => {
   if (viewPreference.value !== 'default') return viewPreference.value;
   return window.innerWidth <= 768 ? 'cards' : 'table';
 });
@@ -197,12 +207,13 @@ const getViewModeLabel = (mode: ViewPreference): string => {
     default: 'Auto',
     cards: 'List',
     table: 'Table',
+    grid: 'Grid',
   };
   return labels[mode];
 };
 
 const cycleViewMode = () => {
-  const modes: ViewPreference[] = ['default', 'cards', 'table'];
+  const modes: ViewPreference[] = ['default', 'cards', 'table', 'grid'];
   const nextIndex = (modes.indexOf(viewPreference.value) + 1) % modes.length;
   viewPreference.value = modes[nextIndex];
   storage.save('viewPreference', viewPreference.value);

@@ -1,5 +1,5 @@
 <template>
-  <span class="pill rating" :style="{ backgroundColor }">
+  <span class="pill rating" :style="{ backgroundColor, color }">
     {{ rating }}
   </span>
 </template>
@@ -13,23 +13,14 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useTheme } from '../composables/useTheme';
+import { ratingColor, ratingTextColor } from '../utils/rating';
 
 const props = defineProps<{
   rating: number;
 }>();
 
-const { theme } = useTheme();
+const { isDark } = useTheme();
 
-const isDarkMode = computed(() => {
-  return (
-    theme.value === 'dark' ||
-    (theme.value === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  );
-});
-
-const backgroundColor = computed(() => {
-  const hue = (props.rating / 5) * 120; // 0° red → 120° green
-  const lightness = isDarkMode.value ? 30 : 90;
-  return `hsl(${hue}, 70%, ${lightness}%)`;
-});
+const backgroundColor = computed(() => ratingColor(props.rating, isDark.value));
+const color = computed(() => ratingTextColor(props.rating, isDark.value));
 </script>

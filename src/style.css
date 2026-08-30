@@ -3,6 +3,12 @@
   /* Audiobook accent (theme-independent Material blue, single source of truth) */
   --audiobook: #2196f3;
 
+  /* Neutrals for text placed on top of a saturated color, such as the rating
+     pill. Theme independent: which one is used depends on the color underneath,
+     not on the theme. */
+  --on-color-light: #ffffff;
+  --on-color-dark: #111111;
+
   --light-bg-primary: #fafafa;
   --light-bg-secondary: #f0f0f0;
   --light-bg-hover: #e8e8e8;

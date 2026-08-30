@@ -118,13 +118,6 @@ export const durationToMinutes = (durationStr: string | null | undefined): numbe
   return hours * 60 + minutes;
 };
 
-// ===== Rating validation =====
-export const isValidRating = (rating: number | null | undefined): boolean => {
-  if (rating !== 0 && !rating) return true;
-  const num = Number(rating);
-  return !Number.isNaN(num) && num >= 0 && num <= 5;
-};
-
 // ===== Duplicate checking =====
 type DuplicateCheck = {
   isDuplicate: boolean;
