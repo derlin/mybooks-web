@@ -16,21 +16,26 @@
 
       <div class="drawer-content">
         <div class="header-section">
-          <div class="info-prose">
-            by <span class="highlight">{{ book.author }}</span>
-          </div>
-          <div v-if="book.date_published" class="info-prose">First published on {{ formatDate(book.date_published) }}</div>
-          <div class="info-prose">Read on {{ formatDate(book.date_read) }}</div>
+          <div class="header-top">
+            <BookCover :title="book.title" :cover-image="book.cover_image" :isbn="book.isbn" />
+            <div class="info-block">
+              <div class="info-prose">
+                by <span class="highlight">{{ book.author }}</span>
+              </div>
+              <div v-if="book.date_published" class="info-prose">First published on {{ formatDate(book.date_published) }}</div>
+              <div class="info-prose">Read on {{ formatDate(book.date_read) }}</div>
 
-          <div v-if="book.tags?.length" class="tags-section">
-            <div class="tags-container">
-              <TagPill
-                v-for="tag in book.tags"
-                :key="tag"
-                :tag="tag"
-                interactive
-                @interact="handleTagClick(tag)"
-              />
+              <div v-if="book.tags?.length" class="tags-section">
+                <div class="tags-container">
+                  <TagPill
+                    v-for="tag in book.tags"
+                    :key="tag"
+                    :tag="tag"
+                    interactive
+                    @interact="handleTagClick(tag)"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -104,6 +109,7 @@ import { formatDate, formatDuration, googleUrlFor } from '../utils/helpers';
 import TagPill from './TagPill.vue';
 import FormatPill from './FormatPill.vue';
 import RatingPill from './RatingPill.vue';
+import BookCover from './BookCover.vue';
 
 const props = defineProps<{
   book: Book;
@@ -226,6 +232,17 @@ const close = () => {
   gap: 0.5rem;
 }
 
+.header-top {
+  --cover-width: 110px;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.info-block {
+  min-width: 0;
+}
+
 .info-prose {
   color: var(--text-primary);
   font-size: 0.95rem;
@@ -337,6 +354,10 @@ const close = () => {
 
   .drawer {
     width: 100%;
+  }
+
+  .header-top {
+    --cover-width: 80px;
   }
 }
 </style>

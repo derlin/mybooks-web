@@ -8,6 +8,7 @@ const sampleBook = {
   author: 'Frank Herbert',
   date_published: '1965',
   isbn: '9780441013593',
+  cover_image: 'https://example.com/dune.jpg',
   pages: 412,
   duration: 454, // minutes -> "7h34"
   date_read: '2024-01-15',
@@ -40,6 +41,7 @@ describe('bookToFormData', () => {
   it('maps an existing book into editable form state', () => {
     const form = bookToFormData(sampleBook);
     expect(form.title).toBe('Dune');
+    expect(form.cover_image).toBe('https://example.com/dune.jpg');
     expect(form.pages).toBe(412);
     expect(form.duration).toBe('7h34'); // minutes rendered as human string
     expect(form.rating).toBe(4.5);
@@ -62,6 +64,7 @@ describe('bookToFormData', () => {
     };
     const form = bookToFormData(minimal);
     expect(form.isbn).toBe('');
+    expect(form.cover_image).toBe('');
     expect(form.pages).toBeNull();
     expect(form.duration).toBe('');
     expect(form.rating).toBeNull();
@@ -107,6 +110,7 @@ describe('formDataToBook', () => {
   it('round-trips a book through form and back without losing data', () => {
     const result = formDataToBook(bookToFormData(sampleBook), sampleBook);
     expect(result.title).toBe(sampleBook.title);
+    expect(result.cover_image).toBe(sampleBook.cover_image);
     expect(result.pages).toBe(sampleBook.pages);
     expect(result.duration).toBe(sampleBook.duration);
     expect(result.rating).toBe(sampleBook.rating);

@@ -12,6 +12,7 @@ export type BookWithoutKey = {
   author: string;
   date_published: string; // YYYY-MM, YYYY, or "?"
   isbn?: string;
+  cover_image?: string; // URL, usually from Goodreads
   pages?: number;
   duration?: number; // minutes; presence = is audiobook
   // book reading

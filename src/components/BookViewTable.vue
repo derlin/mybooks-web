@@ -27,6 +27,7 @@
           class="table-row"
           :class="{ audiobook: row.format === 'audio', selected: row._key === selectedBookKey }"
           @click="openDrawer(row)"
+          @mouseenter="prefetchCover(row)"
         >
           <td>{{ row.author || '—' }}</td>
           <td class="format-cell">
@@ -75,6 +76,7 @@
 <script setup lang="ts">
 import type { Book } from '../types';
 import { formatDuration } from '../utils/helpers';
+import { prefetchCover } from '../utils/covers';
 import { Pencil, Trash2, ChevronUp, ChevronDown } from '@lucide/vue';
 import TagPill from './TagPill.vue';
 import RatingPill from './RatingPill.vue';

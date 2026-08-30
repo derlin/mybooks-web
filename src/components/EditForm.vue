@@ -131,6 +131,14 @@
               <span class="label-text">Publication Date</span>
               <input v-model="formData.date_published" type="text" placeholder="YYYY-MM-DD" class="form-input" />
             </label>
+
+            <label class="form-label form-label-inline">
+              <span class="label-text">Cover image</span>
+              <input v-model="formData.cover_image" type="text" placeholder="https://..." class="form-input" />
+            </label>
+          </div>
+          <div class="cover-preview">
+            <BookCover :title="formData.title" :cover-image="formData.cover_image" :isbn="formData.isbn" />
           </div>
         </div>
 
@@ -296,6 +304,7 @@ import { useFullscreenNotes } from '../composables/useFullscreenNotes';
 import * as validation from '../utils/helpers';
 import GoodreadsModal from './GoodreadsModal.vue';
 import TagInput from './TagInput.vue';
+import BookCover from './BookCover.vue';
 
 const props = defineProps<{
   book: Book | null;
@@ -395,6 +404,7 @@ const handleGoodreadsData = (metadata: BookMetadata) => {
   formData.value.title = metadata.title;
   formData.value.author = metadata.authors[0];
   formData.value.isbn = metadata.isbn || '';
+  formData.value.cover_image = metadata.coverImage || '';
   if (metadata.pages) {
     formData.value.pages = metadata.pages;
   }
@@ -423,6 +433,9 @@ const fetchStorygraphLink = async () => {
   storygraphLoading.value = true;
   try {
     const metadata = await fetchStorygraphMetadata(formData.value.isbn);
+    if (!formData.value.cover_image && metadata.coverImage) {
+      formData.value.cover_image = metadata.coverImage;
+    }
     const existingIndex = formData.value.links.findIndex(l => l.name.toLowerCase() === 'storygraph');
     const storygraphLink = {
       name: 'storygraph',
@@ -675,6 +688,11 @@ watch(
 
 .metadata-section {
   max-width: 700px;
+}
+
+.cover-preview {
+  --cover-width: 60px;
+  padding-bottom: 1.5em;
 }
 
 .metadata-grid {

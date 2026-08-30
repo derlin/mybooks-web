@@ -11,6 +11,7 @@
         class="card"
         :class="{ audiobook: book.format === 'audio', selected: book._key === selectedBookKey }"
         @click="openDrawer(book)"
+        @mouseenter="prefetchCover(book)"
       >
         <div class="card-content">
           <div class="card-main">
@@ -43,6 +44,7 @@
 
 <script setup lang="ts">
 import type { Book } from '../types';
+import { prefetchCover } from '../utils/covers';
 import SortDropdown from './SortDropdown.vue';
 import TagPill from './TagPill.vue';
 import FormatPill from './FormatPill.vue';
