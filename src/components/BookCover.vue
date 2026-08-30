@@ -70,7 +70,6 @@ const fontScale = computed(() => {
   width: var(--cover-width, 110px);
   flex-shrink: 0;
   aspect-ratio: 2 / 3;
-  border-radius: 4px;
   overflow: hidden;
   container-type: inline-size;
 }

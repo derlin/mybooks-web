@@ -1,9 +1,11 @@
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
+import { useEscapeKey } from './useEscapeKey';
 
 /**
  * Fullscreen toggle for the notes editor, plus the Cmd+Enter (Mac) /
  * Ctrl+Enter (Windows/Linux) shortcut that toggles it. On open, focus moves to
  * the fullscreen textarea — bind the returned `fullscreenNotesTextarea` to it.
+ * Escape closes it too, taking priority over any overlay underneath.
  */
 export function useFullscreenNotes() {
   const fullscreenNotesOpen = ref(false);
@@ -27,6 +29,8 @@ export function useFullscreenNotes() {
       toggleFullscreenNotes();
     }
   };
+
+  useEscapeKey(toggleFullscreenNotes, fullscreenNotesOpen);
 
   onMounted(() => {
     window.addEventListener('keydown', handleKeyDown);

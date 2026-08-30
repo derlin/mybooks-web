@@ -91,19 +91,16 @@
             <span>Edit Book</span>
           </button>
         </div>
-        <button type="button" class="btn-outline btn-dimmed btn-icon-text" @click="close">
-          <ArrowLeft :size="18" />
-          <span>Close</span>
-        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ArrowLeft, ExternalLink, Pencil, Search, Trash2, X } from '@lucide/vue';
+import { ExternalLink, Pencil, Search, Trash2, X } from '@lucide/vue';
 import { watch } from 'vue';
 import { useDrag } from '../composables/useDrag';
+import { useEscapeKey } from '../composables/useEscapeKey';
 import { useToast } from '../composables/useToast';
 import type { Book } from '../types';
 import { DRAWER_COVER_WIDTH } from '../utils/covers';
@@ -155,6 +152,8 @@ const copyISBN = async () => {
 const close = () => {
   emit('close');
 };
+
+useEscapeKey(close, () => props.isOpen);
 </script>
 
 <style scoped>

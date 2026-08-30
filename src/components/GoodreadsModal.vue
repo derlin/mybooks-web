@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" class="modal-overlay" @click="close">
+  <div v-if="isOpen" class="modal-overlay" @click.self="close">
     <div class="modal-dialog" @click.stop>
       <div class="modal-header">
         <h2>Import from Goodreads</h2>
@@ -45,9 +45,10 @@
 <script setup lang="ts">
 import { Search, X } from '@lucide/vue';
 import { ref } from 'vue';
+import { useEscapeKey } from '../composables/useEscapeKey';
 import { fetchGoodreadsBookMetadata } from '../services/goodreads-fetcher.js';
 
-defineProps({
+const props = defineProps({
   isOpen: {
     type: Boolean,
     required: true,
@@ -65,6 +66,8 @@ const close = () => {
   error.value = null;
   emit('close');
 };
+
+useEscapeKey(close, () => props.isOpen);
 
 const isValidUrl = (urlString: string) => {
   if (!urlString.trim()) return false;

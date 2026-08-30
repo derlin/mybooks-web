@@ -38,7 +38,6 @@
             type="text"
             class="tag-popup__input"
             @keydown.enter="handleRename"
-            @keydown.escape="activeScreen = 'menu'"
           />
           <p v-if="error" class="tag-popup__error">{{ error }}</p>
           <div class="tag-popup__actions edit">
@@ -83,6 +82,7 @@
 <script setup lang="ts">
 import { ArrowLeft, Check, ListFilter, Pencil, Trash2, X } from '@lucide/vue';
 import { computed, nextTick, ref } from 'vue';
+import { useEscapeKey } from '@/composables/useEscapeKey';
 import type { TagPopupAction } from '@/composables/useTagPopup';
 import type { Book } from '@/types';
 import type { TagLikeFieldUtil } from '@/utils/tags';
@@ -156,6 +156,14 @@ function handleDelete() {
   emit('action', { type: 'delete', oldTag: props.value });
   emit('close');
 }
+
+useEscapeKey(() => {
+  if (activeScreen.value === 'menu') {
+    close();
+  } else {
+    activeScreen.value = 'menu';
+  }
+});
 
 function close() {
   emit('close');

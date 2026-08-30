@@ -68,6 +68,7 @@
 <script setup lang="ts">
 import { Download, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import { useEscapeKey } from '../composables/useEscapeKey';
 import type { TsvColumn } from '../utils/tsv-export';
 
 const props = defineProps<{
@@ -116,6 +117,8 @@ const handleExport = () => {
 };
 
 const close = () => emit('close');
+
+useEscapeKey(close);
 </script>
 
 <style scoped>
