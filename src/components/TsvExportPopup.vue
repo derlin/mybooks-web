@@ -66,8 +66,8 @@
 </template>
 
 <script setup lang="ts">
+import { Download, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
-import { X, Download } from '@lucide/vue';
 import type { TsvColumn } from '../utils/tsv-export';
 
 const props = defineProps<{
@@ -85,26 +85,18 @@ const emit = defineEmits<{
 
 // Only real book fields can be sorted (reuses sortBooks upstream); tags and the
 // expanded link columns are export-only.
-const sortableColumns = computed(() =>
-  props.columns.filter((c) => c.id !== 'tags' && !c.id.startsWith('links.'))
-);
+const sortableColumns = computed(() => props.columns.filter((c) => c.id !== 'tags' && !c.id.startsWith('links.')));
 
 const availableIds = new Set(props.columns.map((c) => c.id));
 const selectedIds = ref<string[]>(props.initialSelectedIds.filter((id) => availableIds.has(id)));
 
 const sortableIds = new Set(sortableColumns.value.map((c) => c.id));
-const sortBy = ref(
-  sortableIds.has(props.initialSortBy)
-    ? props.initialSortBy
-    : sortableColumns.value[0]?.id ?? ''
-);
+const sortBy = ref(sortableIds.has(props.initialSortBy) ? props.initialSortBy : (sortableColumns.value[0]?.id ?? ''));
 const sortDesc = ref(props.initialSortDesc);
 const save = ref(props.initialSave);
 
 // Preserve the columns' natural order regardless of check order.
-const selectedColumns = computed(() =>
-  props.columns.filter((c) => selectedIds.value.includes(c.id))
-);
+const selectedColumns = computed(() => props.columns.filter((c) => selectedIds.value.includes(c.id)));
 
 const selectAll = () => {
   selectedIds.value = props.columns.map((c) => c.id);

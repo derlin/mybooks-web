@@ -11,6 +11,7 @@
           <span class="toast-message">{{ toast.message }}</span>
           <button
             v-if="toast.action"
+            type="button"
             class="toast-action-btn"
             @click="handleAction(toast)"
           >
@@ -18,6 +19,7 @@
           </button>
         </div>
         <button
+          type="button"
           class="toast-close-btn"
           @click="dismiss(toast.id)"
           title="Close"

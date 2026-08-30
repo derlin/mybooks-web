@@ -9,7 +9,7 @@
     >
       <div class="drawer-header">
         <h2>{{ book.title }}</h2>
-        <button class="btn-icon-only" @click="close" title="Close">
+        <button type="button" class="btn-icon-only" @click="close" title="Close">
           <X :size="20" />
         </button>
       </div>
@@ -52,13 +52,14 @@
         </div>
 
         <div class="actions-section">
-          <button class="btn-outline btn-secondary btn-icon-text" @click="openLink(googleUrlFor(props.book))" title="Search on Google">
+          <button type="button" class="btn-outline btn-secondary btn-icon-text" @click="openLink(googleUrlFor(props.book))" title="Search on Google">
             <Search :size="18" />
             <span>Google</span>
           </button>
           <button
             v-for="[key, link] in Object.entries(book.links || {})"
             :key="key"
+            type="button"
             class="btn-outline btn-secondary btn-icon-text"
             @click="openLink(link.url)"
             :title="`Open in ${key}`"
@@ -81,16 +82,16 @@
 
       <div class="drawer-footer">
         <div class="actions-row">
-          <button class="btn-outline btn-warning btn-icon-text" @click="$emit('delete')">
+          <button type="button" class="btn-outline btn-warning btn-icon-text" @click="$emit('delete')">
             <Trash2 :size="18" />
             <span>Delete</span>
           </button>
-          <button class="btn-solid btn-primary btn-icon-text" @click="$emit('edit')">
+          <button type="button" class="btn-solid btn-primary btn-icon-text" @click="$emit('edit')">
             <Pencil :size="18" />
             <span>Edit Book</span>
           </button>
         </div>
-        <button class="btn-outline btn-dimmed btn-icon-text" @click="close">
+        <button type="button" class="btn-outline btn-dimmed btn-icon-text" @click="close">
           <ArrowLeft :size="18" />
           <span>Close</span>
         </button>
@@ -100,17 +101,17 @@
 </template>
 
 <script setup lang="ts">
+import { ArrowLeft, ExternalLink, Pencil, Search, Trash2, X } from '@lucide/vue';
 import { watch } from 'vue';
-import { X, Trash2, Pencil, ArrowLeft, Search, ExternalLink } from '@lucide/vue';
-import type { Book } from '../types';
 import { useDrag } from '../composables/useDrag';
 import { useToast } from '../composables/useToast';
-import { formatDate, formatDuration, googleUrlFor } from '../utils/helpers';
+import type { Book } from '../types';
 import { DRAWER_COVER_WIDTH } from '../utils/covers';
-import TagPill from './TagPill.vue';
+import { formatDate, formatDuration, googleUrlFor } from '../utils/helpers';
+import BookCover from './BookCover.vue';
 import FormatPill from './FormatPill.vue';
 import RatingPill from './RatingPill.vue';
-import BookCover from './BookCover.vue';
+import TagPill from './TagPill.vue';
 
 const props = defineProps<{
   book: Book;

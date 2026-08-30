@@ -4,7 +4,7 @@
       <img src="@/assets/logo.svg" alt="MyBooks" class="logo" />
       <p class="subtitle">Manage your book collection</p>
 
-      <button @click="authenticate" :disabled="loading" class="auth-button">
+      <button type="button" @click="authenticate" :disabled="loading" class="auth-button">
         <span v-if="!loading">Connect to Dropbox</span>
         <span v-else>Connecting...</span>
       </button>

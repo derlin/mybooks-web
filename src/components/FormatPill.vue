@@ -5,8 +5,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
 import { BookOpenText, Music, Smartphone } from '@lucide/vue';
+import { computed } from 'vue';
 import type { BookFormat } from '../types';
 
 const props = defineProps<{

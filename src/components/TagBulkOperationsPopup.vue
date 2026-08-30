@@ -12,18 +12,18 @@
 
       <div class="tag-popup__content">
         <!-- Menu Screen -->
-        <div v-if="screen === 'menu'">
+        <div v-if="activeScreen === 'menu'">
           <p class="tag-popup__subtitle">"<span class="highlight">{{ value }}</span>" matches <span class="highlight">{{ bookCount }}</span> book{{ bookCount !== 1 ? 's' : '' }}</p>
           <div class="tag-popup__actions menu">
-            <button class="btn btn-outline btn-primary btn-icon-text" @click="handleFilter">
+            <button type="button" class="btn btn-outline btn-primary btn-icon-text" @click="handleFilter">
               <ListFilter :size="18" />
               <span>Filter</span>
             </button>
-            <button class="btn btn-outline btn-secondary btn-icon-text" @click="screen = 'rename'">
+            <button type="button" class="btn btn-outline btn-secondary btn-icon-text" @click="activeScreen = 'rename'">
               <Pencil :size="18" />
               <span>Rename</span>
             </button>
-            <button class="btn btn-outline btn-warning btn-icon-text" @click="screen = 'delete'">
+            <button type="button" class="btn btn-outline btn-warning btn-icon-text" @click="activeScreen = 'delete'">
               <Trash2 :size="18" />
               <span>Delete</span>
             </button>
@@ -31,22 +31,23 @@
         </div>
 
         <!-- Rename Screen -->
-        <div v-else-if="screen === 'rename'">
+        <div v-else-if="activeScreen === 'rename'">
           <input
             ref="renameInputEl"
             v-model="newTagName"
             type="text"
             class="tag-popup__input"
             @keydown.enter="handleRename"
-            @keydown.escape="screen = 'menu'"
+            @keydown.escape="activeScreen = 'menu'"
           />
           <p v-if="error" class="tag-popup__error">{{ error }}</p>
           <div class="tag-popup__actions edit">
-              <button type="button" class="btn-outline btn-dimmed btn-icon-text" @click="screen = 'menu'">
+              <button type="button" class="btn-outline btn-dimmed btn-icon-text" @click="activeScreen = 'menu'">
                 <ArrowLeft :size="18" />
                 <span>Back</span>
               </button>
             <button
+              type="button"
               class="btn btn-solid btn-icon-text"
               :class="hasConflict ? 'btn-warning' : 'btn-primary'"
               @click="handleRename"
@@ -58,17 +59,17 @@
         </div>
 
         <!-- Delete Screen -->
-        <div v-else-if="screen === 'delete'">
+        <div v-else-if="activeScreen === 'delete'">
           <p class="tag-popup__warning">
             You have <strong>{{ bookCount }}</strong> associated book{{ bookCount !== 1 ? 's' : '' }}.
             <br/>Are you sure?
           </p>
           <div class="tag-popup__actions delete">
-            <button type="button" class="btn-outline btn-dimmed btn-icon-text" @click="screen = 'menu'">
+            <button type="button" class="btn-outline btn-dimmed btn-icon-text" @click="activeScreen = 'menu'">
               <ArrowLeft :size="18" />
               <span>Back</span>
             </button>
-            <button class="btn btn-solid btn-warning btn-icon-text" @click="handleDelete">
+            <button type="button" class="btn btn-solid btn-warning btn-icon-text" @click="handleDelete">
               <Trash2 :size="18" />
               <span>Delete</span>
             </button>
@@ -80,11 +81,11 @@
 </template>
 
 <script setup lang="ts">
+import { ArrowLeft, Check, ListFilter, Pencil, Trash2, X } from '@lucide/vue';
 import { computed, nextTick, ref } from 'vue';
-import type { Book } from '@/types';
-import { ArrowLeft, ListFilter, Pencil, Trash2, Check, X } from '@lucide/vue';
-import { TagLikeFieldUtil } from '@/utils/tags';
 import type { TagPopupAction } from '@/composables/useTagPopup';
+import type { Book } from '@/types';
+import type { TagLikeFieldUtil } from '@/utils/tags';
 
 const props = defineProps<{
   value: string;
@@ -99,7 +100,7 @@ const emit = defineEmits<{
 
 type Screen = 'menu' | 'rename' | 'delete';
 
-const screen = ref<Screen>('menu');
+const activeScreen = ref<Screen>('menu');
 const newTagName = ref(props.value);
 const error = ref('');
 const renameInputEl = ref<HTMLInputElement>();
@@ -109,7 +110,7 @@ const bookCount = computed(() => {
 });
 
 const hasConflict = computed(() => {
-  if (screen.value !== 'rename' || !newTagName.value || newTagName.value === props.value) {
+  if (activeScreen.value !== 'rename' || !newTagName.value || newTagName.value === props.value) {
     return false;
   }
   const validation = props.fieldUtil.validate(newTagName.value);
@@ -118,7 +119,7 @@ const hasConflict = computed(() => {
 });
 
 const screenTitle = computed(() => {
-  switch (screen.value) {
+  switch (activeScreen.value) {
     case 'menu':
       return props.value;
     case 'rename':
@@ -137,7 +138,7 @@ function handleRename() {
   const validation = props.fieldUtil.validate(newTagName.value);
 
   if (!validation.isValid) {
-    error.value = validation.error!;
+    error.value = validation.error;
     return;
   }
 
@@ -160,10 +161,11 @@ function close() {
   emit('close');
 }
 
-// Focus rename input when switching to rename screen
+// Focus rename input when switching to rename activeScreen
 import { watch } from 'vue';
+
 watch(
-  () => screen.value,
+  () => activeScreen.value,
   async (newScreen) => {
     if (newScreen === 'rename') {
       await nextTick();

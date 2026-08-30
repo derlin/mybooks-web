@@ -45,10 +45,10 @@
 <script setup lang="ts">
 import type { Book } from '../types';
 import { prefetchCover } from '../utils/covers';
-import SortDropdown from './SortDropdown.vue';
-import TagPill from './TagPill.vue';
 import FormatPill from './FormatPill.vue';
 import RatingPill from './RatingPill.vue';
+import SortDropdown from './SortDropdown.vue';
+import TagPill from './TagPill.vue';
 
 defineProps<{
   books: Book[];

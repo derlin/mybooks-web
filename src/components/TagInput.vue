@@ -23,7 +23,7 @@
       @click="showDropdown = true"
       @blur="scheduleDropdownClose"
       @keydown="handleBackspaceKeydown"
-      @input="showDropdown = true; handleTextInput($event)"
+      @input="handleTextInput($event)"
     />
     <button
       v-if="inputValue && allowNew"
@@ -55,8 +55,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { TagsUtil } from '@/utils/tags';
 import { useToast } from '@/composables/useToast';
+import { TagsUtil } from '@/utils/tags';
 import TagPill from './TagPill.vue';
 
 const props = defineProps<{
@@ -76,12 +76,10 @@ const inputEl = ref<HTMLInputElement>();
 const toast = useToast();
 
 const filteredTags = computed(() => {
-  if (!inputValue.value) return props.allTags.filter(tag => !props.modelValue.includes(tag));
+  if (!inputValue.value) return props.allTags.filter((tag) => !props.modelValue.includes(tag));
 
   const lower = inputValue.value.toLowerCase();
-  return props.allTags.filter(
-    tag => tag.toLowerCase().includes(lower) && !props.modelValue.includes(tag)
-  );
+  return props.allTags.filter((tag) => tag.toLowerCase().includes(lower) && !props.modelValue.includes(tag));
 });
 
 function addTag(tag: string) {
@@ -89,7 +87,7 @@ function addTag(tag: string) {
   const validation = TagsUtil.validate(normalized);
 
   if (!validation.isValid) {
-    toast.showError(validation.error!);
+    toast.showError(validation.error);
     return;
   }
 
@@ -104,7 +102,10 @@ function addTag(tag: string) {
 }
 
 function removeTag(tag: string) {
-  emit('update:modelValue', props.modelValue.filter(t => t !== tag));
+  emit(
+    'update:modelValue',
+    props.modelValue.filter((t) => t !== tag)
+  );
 }
 
 function handleBackspaceKeydown(event: KeyboardEvent) {
@@ -123,7 +124,8 @@ function handleTextInput(event: InputEvent) {
   // that can be trusted on mobile for regular characters. However, it does't fire
   // inputType == "deleteContentBackward" (backspace) if the input is empty.
   console.log(event.data, event.inputType, event);
-  if (event.inputType == 'insertText' && event.data === ' ') {
+  showDropdown.value = true;
+  if (event.inputType === 'insertText' && event.data === ' ') {
     event.preventDefault();
     inputValue.value = inputValue.value.trim();
     if (props.allowNew && inputValue.value) {

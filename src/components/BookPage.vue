@@ -3,14 +3,15 @@
     <div class="header">
       <img src="@/assets/logo.svg" alt="MyBooks" class="logo logo-header" />
       <div class="header-actions">
-        <button @click="cycleViewMode" class="view-mode-btn" :title="`Switch view (currently: ${getViewModeLabel(viewPreference)})`">
+        <button type="button" @click="cycleViewMode" class="view-mode-btn" :title="`Switch view (currently: ${getViewModeLabel(viewPreference)})`">
           {{ getViewModeLabel(viewPreference) }}
         </button>
-        <button @click="openNewBook" class="btn-icon-only btn-solid btn-primary" title="Add new book">
+        <button type="button" @click="openNewBook" class="btn-icon-only btn-solid btn-primary" title="Add new book">
           <Plus :size="24" :strokeWidth="4" />
         </button>
         <div ref="menuContainer" class="menu-container">
           <button
+            type="button"
             @click="menuOpen = !menuOpen"
             class="btn-icon-only btn-outline btn-dimmed"
             aria-haspopup="menu"
@@ -37,10 +38,10 @@
             </div>
             <div class="menu-section">
               <div class="menu-header">Actions</div>
-              <button @click="openTsvPopup" class="menu-item" role="menuitem">Download TSV</button>
-              <button @click="downloadJson" class="menu-item" role="menuitem">Download JSON</button>
-              <button @click="triggerFileUpload" class="menu-item" role="menuitem">Upload JSON</button>
-              <button @click="emit('logout')" class="menu-item menu-item-danger" role="menuitem">
+              <button type="button" @click="openTsvPopup" class="menu-item" role="menuitem">Download TSV</button>
+              <button type="button" @click="downloadJson" class="menu-item" role="menuitem">Download JSON</button>
+              <button type="button" @click="triggerFileUpload" class="menu-item" role="menuitem">Upload JSON</button>
+              <button type="button" @click="emit('logout')" class="menu-item menu-item-danger" role="menuitem">
                 Logout
               </button>
             </div>
@@ -63,7 +64,7 @@
         <h2 class="empty-state-title">Welcome to MyBooks!</h2>
         <p class="empty-state-text">Start building your collection by adding your first book.</p>
       </div>
-      <button @click="openNewBook" class="btn-solid btn-primary btn-icon-text">
+      <button type="button" @click="openNewBook" class="btn-solid btn-primary btn-icon-text">
         <Plus :size="24" :strokeWidth="4" />
         <span>Add Your First Book</span>
       </button>
@@ -118,10 +119,7 @@
       :isOpen="drawerOpen"
       @close="closeDrawer"
       @edit="openEditForm(selectedBook)"
-      @delete="
-        deleteBook(selectedBook);
-        closeDrawer();
-      "
+      @delete="deleteSelectedBook"
       @open-tag-popup="openTagPopup"
     />
   </div>
@@ -161,23 +159,23 @@
 </template>
 
 <script setup lang="ts">
+import { BookOpenText, MoreVertical, Plus } from '@lucide/vue';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { Plus, MoreVertical, BookOpenText } from '@lucide/vue';
-import type { BooksProvider } from '../services/booksProvider';
-import type { Book } from '../types';
 import { useBookManager } from '../composables/useBookManager';
+import type { TagPopupAction } from '../composables/useTagPopup';
 import { useTheme } from '../composables/useTheme';
 import { useToast } from '../composables/useToast';
-import { Storage } from '../utils/storage';
-import { TagsUtil, TagLikeFieldUtil } from '../utils/tags';
 import { BOOKS_FILE_PATH } from '../env';
+import type { BooksProvider } from '../services/booksProvider';
+import type { Book } from '../types';
 import { sortBooks } from '../utils/filtering';
-import { getExportColumns, buildTsv, type TsvColumn } from '../utils/tsv-export';
-import type { TagPopupAction } from '../composables/useTagPopup';
+import { Storage } from '../utils/storage';
+import { type TagLikeFieldUtil, TagsUtil } from '../utils/tags';
+import { buildTsv, getExportColumns, type TsvColumn } from '../utils/tsv-export';
 import BookFilters from './BookFilters.vue';
-import BookViewTable from './BookViewTable.vue';
 import BookViewCard from './BookViewCard.vue';
 import BookViewGrid from './BookViewGrid.vue';
+import BookViewTable from './BookViewTable.vue';
 import DetailsDrawer from './DetailsDrawer.vue';
 import EditForm from './EditForm.vue';
 import TagBulkOperationsPopup from './TagBulkOperationsPopup.vue';
@@ -193,9 +191,7 @@ const emit = defineEmits(['logout', 'files-refreshed']);
 
 const storage = new Storage({ silentFail: true });
 
-const viewPreference = ref<ViewPreference>(
-  (storage.load('viewPreference') as ViewPreference) || 'default'
-);
+const viewPreference = ref<ViewPreference>((storage.load('viewPreference') as ViewPreference) || 'default');
 
 const currentViewType = computed<'table' | 'cards' | 'grid'>(() => {
   if (viewPreference.value !== 'default') return viewPreference.value;
@@ -270,18 +266,13 @@ const openTsvPopup = () => {
   menuOpen.value = false;
 };
 
-const handleTsvExport = (payload: {
-  columns: TsvColumn[];
-  sortBy: string;
-  sortDesc: boolean;
-  save: boolean;
-}) => {
+const handleTsvExport = (payload: { columns: TsvColumn[]; sortBy: string; sortDesc: boolean; save: boolean }) => {
   const sorted = sortBooks(books.value, payload.sortBy, payload.sortDesc);
   const tsv = buildTsv(sorted, payload.columns);
   const url = URL.createObjectURL(new Blob([tsv], { type: 'text/tab-separated-values' }));
   const a = document.createElement('a');
   a.href = url;
-  a.download = (BOOKS_FILE_PATH.split('/').pop() || 'mybooks.json').replace(/\.json$/, '') + '.tsv';
+  a.download = `${(BOOKS_FILE_PATH.split('/').pop() || 'mybooks.json').replace(/\.json$/, '')}.tsv`;
   a.click();
   URL.revokeObjectURL(url);
 
@@ -318,7 +309,7 @@ const handleFileUpload = async (e: Event) => {
 
   try {
     const content = await file.text();
-    let uploadedBooks;
+    let uploadedBooks: Record<string, any>;
     try {
       uploadedBooks = JSON.parse(content);
     } catch {
@@ -326,7 +317,7 @@ const handleFileUpload = async (e: Event) => {
       return;
     }
     await props.booksProvider.uploadBookMapToDropbox(uploadedBooks);
-    window.location.reload()
+    window.location.reload();
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to upload JSON';
     toast.showError(message);
@@ -356,7 +347,10 @@ const {
   handleEditSave,
   handleBulkEditSave,
   init,
-} = useBookManager(props.booksProvider, computed(() => props.filesChanged));
+} = useBookManager(
+  props.booksProvider,
+  computed(() => props.filesChanged)
+);
 
 // View-specific state
 const drawerOpen = ref(false);
@@ -376,6 +370,12 @@ const closeDrawer = () => {
   selectedBook.value = null;
 };
 
+const deleteSelectedBook = () => {
+  if (!selectedBook.value) return;
+  deleteBook(selectedBook.value);
+  closeDrawer();
+};
+
 const handleCardSort = (sortId: string, desc: boolean) => {
   currentSort.value = { id: sortId, desc };
 };
@@ -390,14 +390,15 @@ const handleTagPopupAction = async (action: TagPopupAction) => {
       filters.value.tags.push(action.oldTag);
     }
   } else if (action.type === 'rename' && action.newTag) {
-    const validation = TagsUtil.validate(action.newTag);
+    const newTag = action.newTag;
+    const validation = TagsUtil.validate(newTag);
     if (!validation.isValid) {
       toast.showError(validation.error);
       return;
     }
     await handleBulkEditSave(
-      (booksToUpdate) => TagsUtil.rename(action.oldTag, action.newTag!, booksToUpdate),
-      `Renamed "${action.oldTag}" to "${action.newTag}"`
+      (booksToUpdate) => TagsUtil.rename(action.oldTag, newTag, booksToUpdate),
+      `Renamed "${action.oldTag}" to "${newTag}"`
     );
   } else if (action.type === 'delete') {
     const bookCount = TagsUtil.getCount(action.oldTag, books.value);

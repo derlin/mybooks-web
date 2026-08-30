@@ -2,9 +2,8 @@
 
 export type BookFormat = 'print' | 'audio' | 'ebook';
 
-export type Settings = {
-  // Add any settings you want to store here
-};
+// Add any settings you want to store here
+export type Settings = object;
 
 export type BookWithoutKey = {
   // book info

@@ -16,6 +16,7 @@
       <option value="rating">Rating</option>
     </select>
     <button
+      type="button"
       class="btn-icon-only btn-outline btn-dimmed"
       :title="modelValue.desc ? 'Descending' : 'Ascending'"
       @click="toggleDirection"

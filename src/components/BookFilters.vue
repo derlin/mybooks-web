@@ -163,9 +163,9 @@
 </template>
 
 <script setup lang="ts">
+import { ListFilter, RotateCcw, X } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
-import { X, ListFilter, RotateCcw } from '@lucide/vue';
-import { FilterState, emptyFilters } from '@/utils/filtering';
+import { emptyFilters, type FilterState } from '@/utils/filtering';
 import { isValidRating } from '@/utils/rating';
 import TagInput from './TagInput.vue';
 
@@ -354,7 +354,7 @@ watch(() => props.filters.ratingFilter, initializeRatingFromProps);
 }
 
 .filters-toggle-btn.active {
-  background-color: var(--accent-primary) !important;
+  background-color: var(--accent-primary);
 }
 
 .filters-row--desktop {

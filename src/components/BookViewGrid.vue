@@ -26,8 +26,8 @@
 </template>
 
 <script setup lang="ts">
-import type { Book } from '../types';
 import { useTheme } from '../composables/useTheme';
+import type { Book } from '../types';
 import { ratingColor } from '../utils/rating';
 import BookCover from './BookCover.vue';
 import SortDropdown from './SortDropdown.vue';

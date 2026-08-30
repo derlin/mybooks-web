@@ -3,7 +3,7 @@
     <div class="modal-dialog" @click.stop>
       <div class="modal-header">
         <h2>Import from Goodreads</h2>
-        <button class="btn-icon-only" @click="close" aria-label="Close">
+        <button type="button" class="btn-icon-only" @click="close" aria-label="Close">
           <X :size="20" />
         </button>
       </div>
@@ -43,8 +43,8 @@
 </template>
 
 <script setup lang="ts">
+import { Search, X } from '@lucide/vue';
 import { ref } from 'vue';
-import { X, Search } from '@lucide/vue';
 import { fetchGoodreadsBookMetadata } from '../services/goodreads-fetcher.js';
 
 defineProps({
@@ -67,11 +67,11 @@ const close = () => {
 };
 
 const isValidUrl = (urlString: string) => {
-  if(!urlString.trim()) return false;
+  if (!urlString.trim()) return false;
   try {
     const url = new URL(urlString);
     return url.hostname === 'www.goodreads.com' && url.pathname.includes('/book/show/');
-  } catch (err) {
+  } catch {
     return false;
   }
 };
@@ -93,7 +93,7 @@ const submit = async () => {
     url.value = '';
     error.value = null;
   } catch (err: any) {
-    console.error("[Goodreads] Failed to read metadata", err);
+    console.error('[Goodreads] Failed to read metadata', err);
     error.value = err.message;
   } finally {
     loading.value = false;

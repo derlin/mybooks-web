@@ -19,14 +19,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
-import AuthCallback from "./components/AuthCallback.vue";
-import AuthScreen from "./components/AuthScreen.vue";
-import BookPage from "./components/BookPage.vue";
-import ToastContainer from "./components/ToastContainer.vue";
-import { BooksProvider } from "./services/booksProvider";
-import { DropboxService } from "./services/dropboxService";
-import { createToastProvider } from "./composables/useToast";
+import { onMounted, ref } from 'vue';
+import AuthCallback from './components/AuthCallback.vue';
+import AuthScreen from './components/AuthScreen.vue';
+import BookPage from './components/BookPage.vue';
+import ToastContainer from './components/ToastContainer.vue';
+import { createToastProvider } from './composables/useToast';
+import { BooksProvider } from './services/booksProvider';
+import { DropboxService } from './services/dropboxService';
 
 const isAuthenticated = ref(false);
 const isAuthCallback = ref(false);
@@ -43,32 +43,29 @@ if (import.meta.env.DEV) {
 }
 
 const handleVisibilityChange = async () => {
-  if (document.visibilityState === "visible" && isAuthenticated.value) {
+  if (document.visibilityState === 'visible' && isAuthenticated.value) {
     try {
       const revisionChanged = await booksProvider.checkFileRevision();
       if (revisionChanged) {
-        console.log("File revision has changed, refreshing book list.");
+        console.log('File revision has changed, refreshing book list.');
         filesChanged.value = true;
       }
     } catch (err) {
-      console.error("Error checking file revision:", err);
+      console.error('Error checking file revision:', err);
     }
   }
 };
 
 onMounted(async () => {
-  document.addEventListener("visibilitychange", handleVisibilityChange);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 
-  if (
-    window.location.pathname.endsWith("/auth-callback.html") &&
-    window.location.search.includes("code=")
-  ) {
+  if (window.location.pathname.endsWith('/auth-callback.html') && window.location.search.includes('code=')) {
     isAuthCallback.value = true;
   } else {
     try {
       isAuthenticated.value = await dropboxService.tryLogin();
     } catch (err) {
-      console.error("Failed to login to dropbox:", err);
+      console.error('Failed to login to dropbox:', err);
       handleLogout();
       return;
     }

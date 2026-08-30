@@ -60,10 +60,10 @@
           </td>
           <td>{{ row.date_published || '—' }}</td>
           <td class="actions-cell">
-            <button class="action-btn edit-btn" title="Edit" @click.stop="openEdit(row)">
+            <button type="button" class="action-btn edit-btn" title="Edit" @click.stop="openEdit(row)">
               <Pencil :size="18" />
             </button>
-            <button class="action-btn delete-btn" title="Delete" @click.stop="deleteBook(row)">
+            <button type="button" class="action-btn delete-btn" title="Delete" @click.stop="deleteBook(row)">
               <Trash2 :size="18" />
             </button>
           </td>
@@ -74,13 +74,13 @@
 </template>
 
 <script setup lang="ts">
+import { ChevronDown, ChevronUp, Pencil, Trash2 } from '@lucide/vue';
 import type { Book } from '../types';
-import { formatDuration } from '../utils/helpers';
 import { prefetchCover } from '../utils/covers';
-import { Pencil, Trash2, ChevronUp, ChevronDown } from '@lucide/vue';
-import TagPill from './TagPill.vue';
-import RatingPill from './RatingPill.vue';
+import { formatDuration } from '../utils/helpers';
 import FormatPill from './FormatPill.vue';
+import RatingPill from './RatingPill.vue';
+import TagPill from './TagPill.vue';
 
 type Column = {
   id: string;
@@ -110,7 +110,7 @@ const emit = defineEmits<{
   'toggle-sort': [columnId: string];
   'open-drawer': [book: Book];
   'open-edit': [book: Book];
-  'delete': [book: Book];
+  delete: [book: Book];
   'open-tag-popup': [tag: string];
 }>();
 

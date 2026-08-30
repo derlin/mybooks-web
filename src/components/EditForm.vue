@@ -6,11 +6,11 @@
         <h1>{{ !book ? 'Add' : 'Edit' }}</h1>
       </div>
       <div class="form-header-actions">
-        <button class="btn-outline btn-secondary btn-icon-text" @click="goodreadsModalOpen = true" title="Import metadata from Goodreads">
+        <button type="button" class="btn-outline btn-secondary btn-icon-text" @click="goodreadsModalOpen = true" title="Import metadata from Goodreads">
           <Download :size="18" />
           <span>From Goodreads</span>
         </button>
-        <button class="btn-icon-only" @click="cancel" title="Cancel">
+        <button type="button" class="btn-icon-only" @click="cancel" title="Cancel">
           <X :size="20" />
         </button>
       </div>
@@ -45,10 +45,7 @@
                   v-for="author in filteredAuthors"
                   :key="author"
                   class="autocomplete-item"
-                  @click="
-                    formData.author = author;
-                    showAuthorDropdown = false;
-                  "
+                  @click="selectAuthor(author)"
                 >
                   {{ author }}
                 </div>
@@ -292,20 +289,20 @@
 </template>
 
 <script setup lang="ts">
+import { Check, Download, ExternalLink, Maximize2, Plus, X } from '@lucide/vue';
 import { computed, ref, toRefs, watch } from 'vue';
-import { X, Check, Download, Maximize2, ExternalLink, Plus } from '@lucide/vue';
+import { useFullscreenNotes } from '../composables/useFullscreenNotes';
+import { useNotesDraft } from '../composables/useNotesDraft';
 import type { BookMetadata } from '../services/goodreads-fetcher';
 import { fetchStorygraphMetadata } from '../services/goodreads-fetcher';
 import type { Book } from '../types';
-import { TagsUtil } from '../utils/tags';
-import { type FormData, bookToFormData, formDataToBook } from '../utils/book-form';
-import { useNotesDraft } from '../composables/useNotesDraft';
-import { useFullscreenNotes } from '../composables/useFullscreenNotes';
+import { bookToFormData, type FormData, formDataToBook } from '../utils/book-form';
 import * as validation from '../utils/helpers';
 import { isValidRating } from '../utils/rating';
+import { TagsUtil } from '../utils/tags';
+import BookCover from './BookCover.vue';
 import GoodreadsModal from './GoodreadsModal.vue';
 import TagInput from './TagInput.vue';
-import BookCover from './BookCover.vue';
 
 const props = defineProps<{
   book: Book | null;
@@ -351,8 +348,8 @@ const isValid = computed(() => {
   if (ratingError.value) return false;
 
   for (const link of formData.value.links) {
-    const fields = [link.name, link.id, link.url].map(f => f.trim());
-    if (fields.some(f => f) && !fields.every(f => f)) {
+    const fields = [link.name, link.id, link.url].map((f) => f.trim());
+    if (fields.some((f) => f) && !fields.every((f) => f)) {
       return false;
     }
     if (link.url && !validation.isValidUrl(link.url)) {
@@ -401,6 +398,11 @@ const closeAuthorDropdown = () => {
   }, 150);
 };
 
+const selectAuthor = (author: string) => {
+  formData.value.author = author;
+  showAuthorDropdown.value = false;
+};
+
 const handleGoodreadsData = (metadata: BookMetadata) => {
   formData.value.title = metadata.title;
   formData.value.author = metadata.authors[0];
@@ -413,7 +415,7 @@ const handleGoodreadsData = (metadata: BookMetadata) => {
     formData.value.date_published = metadata.pubDate;
   }
   if (metadata.id) {
-    const existingIndex = formData.value.links.findIndex(l => l.name.toLowerCase() === 'goodreads');
+    const existingIndex = formData.value.links.findIndex((l) => l.name.toLowerCase() === 'goodreads');
     const goodreadsLink = {
       name: 'goodreads',
       id: metadata.id,
@@ -437,7 +439,7 @@ const fetchStorygraphLink = async () => {
     if (!formData.value.cover_image && metadata.coverImage) {
       formData.value.cover_image = metadata.coverImage;
     }
-    const existingIndex = formData.value.links.findIndex(l => l.name.toLowerCase() === 'storygraph');
+    const existingIndex = formData.value.links.findIndex((l) => l.name.toLowerCase() === 'storygraph');
     const storygraphLink = {
       name: 'storygraph',
       id: metadata.id,
@@ -586,10 +588,6 @@ watch(
   text-align: center;
 }
 
-.notes-section .form-textarea {
-  max-width: 100%;
-}
-
 .form-section {
   margin-bottom: 2rem;
 }
@@ -638,24 +636,16 @@ watch(
   line-height: 1.5;
 }
 
+.notes-section .form-textarea {
+  max-width: 100%;
+}
+
 .form-checkbox {
   width: 18px;
   height: 18px;
   cursor: pointer;
   margin-right: 0.75rem;
   vertical-align: middle;
-}
-
-.form-label:has(.form-checkbox) {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.form-label:has(.form-checkbox) .label-text {
-  margin: 0;
-  font-weight: normal;
-  display: inline;
 }
 
 .autocomplete-wrapper {
@@ -713,6 +703,18 @@ watch(
 
 .form-label-inline .label-text {
   margin-bottom: 0;
+}
+
+.form-label:has(.form-checkbox) {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.form-label:has(.form-checkbox) .label-text {
+  margin: 0;
+  font-weight: normal;
+  display: inline;
 }
 
 .error-message {

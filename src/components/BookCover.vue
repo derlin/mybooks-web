@@ -43,7 +43,7 @@ const candidates = computed(() => coverCandidates(props.coverImage, props.isbn, 
 const index = ref(0);
 const isLoading = ref(candidates.value.length > 0);
 
-watch(candidates, newCandidates => {
+watch(candidates, (newCandidates) => {
   index.value = 0;
   isLoading.value = newCandidates.length > 0;
 });
