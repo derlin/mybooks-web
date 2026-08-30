@@ -9,7 +9,7 @@
         v-for="book in books"
         :key="book._key"
         class="card"
-        :class="{ audiobook: book.format === 'audio', selected: book._key === selectedBookKey }"
+        :class="{ selected: book._key === selectedBookKey }"
         @click="openDrawer(book)"
         @mouseenter="prefetchCover(book)"
       >
@@ -111,12 +111,8 @@ const openDrawer = (book: Book) => {
   transition: all 0.15s;
 }
 
-.card.audiobook {
-    background-color: var(--bg-audiobook);
-}
-
-.card.audiobook:hover {
-  border-color: var(--audiobook);
+.card:nth-child(even) {
+  background-color: var(--row-tint);
 }
 
 .card-content {
@@ -203,7 +199,7 @@ const openDrawer = (book: Book) => {
   opacity: 0.7;
 }
 
-.card.selected {
+.cards-container .card.selected {
   background-color: var(--bg-hover);
   border-left: 3px solid var(--accent-primary);
 }

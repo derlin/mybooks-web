@@ -25,7 +25,7 @@
           v-for="row in books"
           :key="row._key"
           class="table-row"
-          :class="{ audiobook: row.format === 'audio', selected: row._key === selectedBookKey }"
+          :class="{ selected: row._key === selectedBookKey }"
           @click="openDrawer(row)"
           @mouseenter="prefetchCover(row)"
         >
@@ -186,15 +186,11 @@ const handleTagClick = (tag: string) => {
   cursor: pointer;
 }
 
-.books-table tbody tr.audiobook {
-  background-color: var(--bg-audiobook);
+.books-table tbody tr:nth-child(even) {
+  background-color: var(--row-tint);
 }
 
-.books-table tbody tr.audiobook:hover {
-  background-color: var(--bg-audiobook-hover);
-}
-
-.books-table tbody tr:not(.audiobook):hover {
+.books-table tbody tr:hover {
   background-color: var(--bg-hover);
 }
 
@@ -268,7 +264,7 @@ td.format-cell {
   color: var(--warning);
 }
 
-.table-row.selected {
+.books-table tbody tr.table-row.selected {
   background-color: var(--bg-hover);
   border-left: 3px solid var(--accent-primary);
 }
