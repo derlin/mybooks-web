@@ -1,25 +1,15 @@
 import { GOODREADS_FETCHER_API_KEY, GOODREADS_FETCHER_URL } from '../env';
 
-export type GoodreadsMetadata = {
-  goodreadsId: string;
+export type BookMetadata = {
+  id: string;
   title: string;
-  author: string;
+  authors: string[];
   description?: string;
   isbn?: string;
   pages?: number | null;
   pubDate?: string | null;
   genres: string[];
-};
-
-export type StorygraphMetadata = {
-  id: string;
-  title: string;
-  authors: string[];
-  description?: string | null;
-  isbn?: string;
-  pages?: number | null;
-  pubDate?: string | null;
-  genres: string[];
+  coverImage: string;
 };
 
 async function fetchFromProxy(proxyUrl: string): Promise<any> {
@@ -43,12 +33,12 @@ async function fetchFromProxy(proxyUrl: string): Promise<any> {
   }
 }
 
-export async function fetchGoodreadsBookMetadata(url: string): Promise<GoodreadsMetadata> {
+export async function fetchGoodreadsBookMetadata(url: string): Promise<BookMetadata> {
   const proxyUrl = `${GOODREADS_FETCHER_URL}/goodreads/metadata?url=${url}`;
   return fetchFromProxy(proxyUrl);
 }
 
-export async function fetchStorygraphMetadata(query: string): Promise<StorygraphMetadata> {
+export async function fetchStorygraphMetadata(query: string): Promise<BookMetadata> {
   const proxyUrl = `${GOODREADS_FETCHER_URL}/storygraph/search?query=${query}`;
   return fetchFromProxy(proxyUrl);
 }

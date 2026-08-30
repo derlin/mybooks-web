@@ -286,7 +286,7 @@
 <script setup lang="ts">
 import { computed, ref, toRefs, watch } from 'vue';
 import { X, Check, Download, Maximize2, ExternalLink, Plus } from '@lucide/vue';
-import type { GoodreadsMetadata } from '../services/goodreads-fetcher';
+import type { BookMetadata } from '../services/goodreads-fetcher';
 import { fetchStorygraphMetadata } from '../services/goodreads-fetcher';
 import type { Book } from '../types';
 import { TagsUtil } from '../utils/tags';
@@ -391,9 +391,9 @@ const closeAuthorDropdown = () => {
   }, 150);
 };
 
-const handleGoodreadsData = (metadata: GoodreadsMetadata) => {
+const handleGoodreadsData = (metadata: BookMetadata) => {
   formData.value.title = metadata.title;
-  formData.value.author = metadata.author;
+  formData.value.author = metadata.authors[0];
   formData.value.isbn = metadata.isbn || '';
   if (metadata.pages) {
     formData.value.pages = metadata.pages;
@@ -401,12 +401,12 @@ const handleGoodreadsData = (metadata: GoodreadsMetadata) => {
   if (metadata.pubDate) {
     formData.value.date_published = metadata.pubDate;
   }
-  if (metadata.goodreadsId) {
+  if (metadata.id) {
     const existingIndex = formData.value.links.findIndex(l => l.name.toLowerCase() === 'goodreads');
     const goodreadsLink = {
       name: 'goodreads',
-      id: metadata.goodreadsId,
-      url: `https://www.goodreads.com/book/show/${metadata.goodreadsId}`,
+      id: metadata.id,
+      url: `https://www.goodreads.com/book/show/${metadata.id}`,
     };
     if (existingIndex >= 0) {
       formData.value.links[existingIndex] = goodreadsLink;
