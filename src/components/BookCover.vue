@@ -13,7 +13,7 @@
       :alt="title"
       loading="lazy"
       decoding="async"
-      @load="isLoading = false"
+      @load="loadedSrc = currentSrc"
       @error="nextCandidate"
     />
     <span v-else class="book-cover-title">{{ title }}</span>
@@ -41,18 +41,25 @@ const props = withDefaults(
 const candidates = computed(() => coverCandidates(props.coverImage, props.isbn, { width: props.width }));
 
 const index = ref(0);
-const isLoading = ref(candidates.value.length > 0);
+const loadedSrc = ref<string | null>(null);
 
-watch(candidates, (newCandidates) => {
-  index.value = 0;
-  isLoading.value = newCandidates.length > 0;
-});
+// Only the list content matters: `candidates` is a new array on every prop
+// change, so watching it directly would restart the loading state even when
+// the URL we are showing is unchanged (e.g. typing in the ISBN field while a
+// cover_image is set), and no @load would ever come to clear it again.
+watch(
+  () => candidates.value.join('|'),
+  () => {
+    index.value = 0;
+  }
+);
 
 const currentSrc = computed(() => candidates.value[index.value]);
 
+const isLoading = computed(() => !!currentSrc.value && currentSrc.value !== loadedSrc.value);
+
 const nextCandidate = () => {
   index.value++;
-  isLoading.value = index.value < candidates.value.length;
 };
 
 const fontScale = computed(() => {
