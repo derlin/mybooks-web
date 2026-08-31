@@ -4,69 +4,70 @@ export const isValidRating = (rating: number | null | undefined): boolean => {
   return !Number.isNaN(num) && num >= 0 && num <= 5;
 };
 
-// One color per rating, shared by the grid tile border and the rating pill so the
-// two cannot drift apart. Bands rather than a continuous ramp: at a thin border
-// width a 3.8 and a 5.0 on one hue scale look identical. Each theme needs its own
-// numbers because the color has to stay legible against the page.
-type RatingBand = {
-  maxExclusive: number;
-  hue: number;
-  sat: { dark: number; light: number };
-  lightness: { dark: number; light: number };
-};
+// Bar length and color are driven from the same domain, so the two channels can
+// never disagree. It starts at 2 rather than 0 because almost nothing lands down
+// there, and a 0-5 domain squeezes every rating actually in use into the top.
+const DOMAIN_MIN = 2;
+const DOMAIN_MAX = 5;
 
-const RATING_BANDS: RatingBand[] = [
-  // Horrible. Ratings carry one decimal, so 1.05 means "up to and including 1.0".
-  { maxExclusive: 1.05, hue: 0, sat: { dark: 50, light: 50 }, lightness: { dark: 40, light: 45 } },
-  // Meh
-  { maxExclusive: 3.0, hue: 220, sat: { dark: 20, light: 25 }, lightness: { dark: 45, light: 55 } },
-  // Decent. Hue 55 only reads as yellow while it stays light, so tone it down
-  // through saturation, never lightness.
-  { maxExclusive: 4.0, hue: 55, sat: { dark: 88, light: 85 }, lightness: { dark: 56, light: 40 } },
-  // Good
-  { maxExclusive: 5.0, hue: 95, sat: { dark: 75, light: 70 }, lightness: { dark: 48, light: 35 } },
-  // Best ever
-  {
-    maxExclusive: Number.POSITIVE_INFINITY,
-    hue: 280,
-    sat: { dark: 95, light: 90 },
-    lightness: { dark: 62, light: 45 },
-  },
+const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
+
+// 0 at the bottom of the domain, 1 at the top. Clamped, so a 0.5 looks like a 2.
+const domainPosition = (rating: number): number =>
+  (clamp(rating, DOMAIN_MIN, DOMAIN_MAX) - DOMAIN_MIN) / (DOMAIN_MAX - DOMAIN_MIN);
+
+// A rating at the domain floor still has to read as a bar, not an empty track.
+const BAR_MIN_FRACTION = 0.08;
+
+// 0 to 1, for the width of the rating bar under a grid tile. Length carries what
+// hue cannot: a 3.2 and a 3.8 are all but the same color, but a fifth of the
+// tile apart as bar widths.
+export const ratingBarFraction = (rating: number): number => Math.max(BAR_MIN_FRACTION, domainPosition(rating));
+
+// The top of the domain, which the grid frames rather than only coloring.
+export const isPerfectRating = (rating: number | null | undefined): boolean => (rating ?? 0) >= DOMAIN_MAX;
+
+// Red through yellow to green, shared by the bar and the rating pill so the two
+// cannot drift apart. Saturation and lightness climb with the hue: the point is
+// that a high rating pops and a low one stays quiet, which hue alone does not do.
+//
+// Stops rather than a straight hue sweep, because equal hue steps are not equal
+// perceptual steps. Yellow only reads as yellow while it stays light, and each
+// hue needs its own lightness per theme to hold up against the page.
+type PerTheme = { dark: number; light: number };
+type RatingStop = { at: number; hue: number; sat: PerTheme; lightness: PerTheme };
+
+// Spans the domain exactly, so a clamped rating always falls between two stops.
+const RATING_STOPS: RatingStop[] = [
+  // Horrible: red, muted enough that it does not shout across the grid.
+  { at: 2.0, hue: 0, sat: { dark: 45, light: 48 }, lightness: { dark: 38, light: 46 } },
+  // Meh: orange.
+  { at: 3.0, hue: 28, sat: { dark: 62, light: 64 }, lightness: { dark: 45, light: 43 } },
+  // Decent: yellow.
+  { at: 3.6, hue: 52, sat: { dark: 85, light: 84 }, lightness: { dark: 52, light: 40 } },
+  // Good: yellow-green.
+  { at: 4.3, hue: 82, sat: { dark: 80, light: 76 }, lightness: { dark: 49, light: 36 } },
+  // Best ever: full green, the loudest thing on the page.
+  { at: 5.0, hue: 118, sat: { dark: 88, light: 82 }, lightness: { dark: 47, light: 32 } },
 ];
-
-// Travel from one end of a band to the other, so a 3.0 is a dimmed 3.9. Zero for
-// flat bands.
-const INTRA_BAND_SAT_SPREAD = 12;
-const INTRA_BAND_LIGHTNESS_SPREAD = 14;
-
-const clampPercent = (value: number): number => Math.min(100, Math.max(0, Math.round(value)));
-
-// A band's lower bound is the previous band's upper bound. `t` is the position
-// within the band, 0 at the bottom edge and 1 at the top.
-const ratingBandAt = (rating: number): { band: RatingBand; t: number } => {
-  let min = 0;
-  for (const band of RATING_BANDS) {
-    if (rating < band.maxExclusive) {
-      const span = band.maxExclusive - min;
-      // The open ended top band has no position, so it sits at its middle.
-      const t = Number.isFinite(span) ? Math.min(1, Math.max(0, (rating - min) / span)) : 0.5;
-      return { band, t };
-    }
-    min = band.maxExclusive;
-  }
-  return { band: RATING_BANDS[RATING_BANDS.length - 1], t: 0.5 };
-};
 
 type Hsl = { hue: number; sat: number; lightness: number };
 
 const ratingHsl = (rating: number, isDark: boolean): Hsl => {
-  const { band, t } = ratingBandAt(rating);
   const mode = isDark ? 'dark' : 'light';
-  const spread = (mid: number, amount: number) => mid - amount / 2 + amount * t;
+  const value = clamp(rating, DOMAIN_MIN, DOMAIN_MAX);
+  const upper = Math.max(
+    1,
+    RATING_STOPS.findIndex((stop) => stop.at >= value)
+  );
+  const from = RATING_STOPS[upper - 1];
+  const to = RATING_STOPS[upper];
+  const t = (value - from.at) / (to.at - from.at);
+  const lerp = (a: number, b: number) => Math.round(a + (b - a) * t);
   return {
-    hue: band.hue,
-    sat: clampPercent(spread(band.sat[mode], INTRA_BAND_SAT_SPREAD)),
-    lightness: clampPercent(spread(band.lightness[mode], INTRA_BAND_LIGHTNESS_SPREAD)),
+    hue: lerp(from.hue, to.hue),
+    sat: lerp(from.sat[mode], to.sat[mode]),
+    lightness: lerp(from.lightness[mode], to.lightness[mode]),
   };
 };
 
@@ -89,7 +90,7 @@ const relativeLuminance = (hsl: Hsl): number => {
 const contrast = (a: number, b: number): number => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 
 // --on-color-light (#ffffff) and --on-color-dark (#111111). Extremes on purpose:
-// a band landing near 50% lightness has little headroom either way.
+// the ramp crosses 50% lightness, where neither neutral has much headroom.
 const ON_COLOR_LIGHT_LUMINANCE = 1;
 const ON_COLOR_DARK_LUMINANCE = 0.0056;
 
@@ -98,8 +99,8 @@ export const ratingColor = (rating: number, isDark: boolean): string => {
   return `hsl(${hue}, ${sat}%, ${lightness}%)`;
 };
 
-// Computed rather than stored per band: the winner depends on hue as much as
-// lightness, and the intra-band ramp moves some bands across the crossover.
+// Computed rather than stored per stop: the winner depends on hue as much as
+// lightness, and the ramp crosses the switchover point mid-stop.
 export const ratingTextColor = (rating: number, isDark: boolean): string => {
   const luminance = relativeLuminance(ratingHsl(rating, isDark));
   return contrast(luminance, ON_COLOR_LIGHT_LUMINANCE) >= contrast(luminance, ON_COLOR_DARK_LUMINANCE)

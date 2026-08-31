@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, expect, it } from 'vitest';
-import { isValidRating, ratingColor, ratingTextColor } from './rating';
+import { isPerfectRating, isValidRating, ratingBarFraction, ratingColor, ratingTextColor } from './rating';
 
 describe('isValidRating', () => {
   const cases = [
@@ -21,6 +21,20 @@ describe('isValidRating', () => {
 
   it.each(cases)('%s => %s', (input, expected) => {
     expect(isValidRating(input)).toBe(expected);
+  });
+});
+
+describe('isPerfectRating', () => {
+  const cases: Array<[number | null | undefined, boolean]> = [
+    [5, true],
+    [4.9, false],
+    [0, false],
+    [null, false],
+    [undefined, false],
+  ];
+
+  it.each(cases)('%s => %s', (input, expected) => {
+    expect(isPerfectRating(input)).toBe(expected);
   });
 });
 
@@ -52,67 +66,89 @@ describe('rating colors', () => {
   };
   const EVERY_RATING = Array.from({ length: 51 }, (_, i) => i / 10);
 
-  describe('bands', () => {
-    it('places a rating in the right band, by hue', () => {
-      const cases: Array<[number, number]> = [
-        [0, 0], // crimson
-        [1, 0],
-        [1.1, 220], // slate
-        [2.9, 220],
-        [3, 55], // yellow
-        [3.9, 55],
-        [4, 95], // lime
-        [4.9, 95],
-        [5, 280], // violet
-      ];
-      for (const [rating, hue] of cases) {
-        expect(ratingColor(rating, true)).toContain(`hsl(${hue},`);
+  describe('the ramp', () => {
+    it('anchors the ends of the domain', () => {
+      expect(ratingColor(2, true)).toBe('hsl(0, 45%, 38%)');
+      expect(ratingColor(5, true)).toBe('hsl(118, 88%, 47%)');
+      expect(ratingColor(2, false)).toBe('hsl(0, 48%, 46%)');
+      expect(ratingColor(5, false)).toBe('hsl(118, 82%, 32%)');
+    });
+
+    it('clamps everything below the domain floor to the bottom color', () => {
+      for (const rating of [0, 0.5, 1, 1.9]) {
+        expect(ratingColor(rating, true)).toBe(ratingColor(2, true));
       }
     });
 
-    it('assigns each boundary value to the band above it', () => {
-      expect(ratingColor(3, true)).toContain('hsl(55,');
-      expect(ratingColor(4, true)).toContain('hsl(95,');
-      expect(ratingColor(5, true)).toContain('hsl(280,');
+    it('travels red to yellow to green', () => {
+      expect(parseHsl(ratingColor(2, true)).hue).toBeLessThan(15);
+      expect(parseHsl(ratingColor(3.6, true)).hue).toBeCloseTo(52, 0);
+      expect(parseHsl(ratingColor(5, true)).hue).toBeGreaterThan(100);
     });
 
-    it('treats 1.0 as the top of the crimson band, not the slate band', () => {
-      expect(ratingColor(1, true)).toContain('hsl(0,');
-      expect(ratingColor(1.1, true)).toContain('hsl(220,');
+    it('raises the hue monotonically across the domain, in both themes', () => {
+      for (const isDark of [true, false]) {
+        const hues = EVERY_RATING.filter((r) => r >= 2).map((r) => parseHsl(ratingColor(r, isDark)).hue);
+        for (let i = 1; i < hues.length; i++) {
+          expect(hues[i]).toBeGreaterThan(hues[i - 1]);
+        }
+      }
+    });
+
+    it('makes the top of the scale pop harder than the middle or the bottom', () => {
+      for (const isDark of [true, false]) {
+        const sat = (rating: number) => parseHsl(ratingColor(rating, isDark)).sat;
+        expect(sat(5)).toBeGreaterThan(sat(3.5));
+        expect(sat(3.5)).toBeGreaterThan(sat(2));
+      }
+    });
+
+    it('has no visible step between two neighboring ratings', () => {
+      for (const isDark of [true, false]) {
+        const stops = EVERY_RATING.map((r) => parseHsl(ratingColor(r, isDark)));
+        for (let i = 1; i < stops.length; i++) {
+          expect(Math.abs(stops[i].hue - stops[i - 1].hue)).toBeLessThanOrEqual(6);
+          expect(Math.abs(stops[i].sat - stops[i - 1].sat)).toBeLessThanOrEqual(6);
+          expect(Math.abs(stops[i].lightness - stops[i - 1].lightness)).toBeLessThanOrEqual(6);
+        }
+      }
     });
   });
 
-  describe('intra-band variation', () => {
-    it('dims the bottom of a band and brightens the top', () => {
-      expect(ratingColor(3, true)).toBe('hsl(55, 82%, 49%)');
-      expect(ratingColor(3.9, true)).toBe('hsl(55, 93%, 62%)');
+  describe('bar fraction', () => {
+    it('fills the bar at the top of the domain and half fills it at the middle', () => {
+      expect(ratingBarFraction(5)).toBe(1);
+      expect(ratingBarFraction(3.5)).toBeCloseTo(0.5, 5);
     });
 
-    it('returns the configured value at the middle of a band', () => {
-      expect(ratingColor(3.5, true)).toBe('hsl(55, 88%, 56%)');
-    });
-
-    it('brightens monotonically across a band in the dark theme', () => {
-      const values = [3, 3.2, 3.5, 3.8, 3.9].map((r) => parseHsl(ratingColor(r, true)).lightness);
-      for (let i = 1; i < values.length; i++) {
-        expect(values[i]).toBeGreaterThan(values[i - 1]);
+    it('keeps a visible stub at and below the domain floor', () => {
+      for (const rating of [0, 1, 2, 2.1]) {
+        expect(ratingBarFraction(rating)).toBeGreaterThanOrEqual(0.08);
       }
     });
 
-    it('renders the open-ended top band at its configured color', () => {
-      expect(ratingColor(5, true)).toBe('hsl(280, 95%, 62%)');
-      expect(ratingColor(5, false)).toBe('hsl(280, 90%, 45%)');
+    it('never overflows the track', () => {
+      for (const rating of EVERY_RATING) {
+        expect(ratingBarFraction(rating)).toBeLessThanOrEqual(1);
+      }
+    });
+
+    it('grows with the rating over the useful range', () => {
+      const widths = EVERY_RATING.filter((r) => r >= 2.5).map(ratingBarFraction);
+      for (let i = 1; i < widths.length; i++) {
+        expect(widths[i]).toBeGreaterThan(widths[i - 1]);
+      }
     });
   });
 
   describe('text color', () => {
-    // WCAG AA for this text size is 4.5:1, and 96 of these 102 values clear it.
-    // The exceptions are the slate band, whose ramp sweeps through the mid
-    // lightness where neither neutral has much headroom, plus one lime value in
-    // the light theme; they land between 4.36 and 4.48. Pulling them clear means
-    // making those colors lighter, which costs border contrast against a light
-    // page, and the border is the thing this color exists for. 4.3 is the floor
-    // we actually hold, and it holds for every rating in both themes.
+    // WCAG AA for this text size is 4.5:1, and all but a handful of these 102
+    // values clear it. The exceptions sit in the orange stretch around 3.0,
+    // where the ramp crosses the mid lightness at which neither neutral has much
+    // headroom; they land between 4.35 and 4.48. Pulling them clear means making
+    // those colors lighter, which costs bar contrast against a light page, and
+    // the bar is the thing this color exists for. 4.3 is the floor we actually
+    // hold, and it holds for every rating in both themes.
     it('stays readable on its own color for every rating, in both themes', () => {
       for (const isDark of [true, false]) {
         for (const rating of EVERY_RATING) {
@@ -137,9 +173,9 @@ describe('rating colors', () => {
     });
 
     it('picks by luminance, not by lightness alone', () => {
-      // A yellow at 49% lightness needs dark text, a crimson at 33% needs light.
-      expect(ratingTextColor(3, true)).toBe('var(--on-color-dark)');
-      expect(ratingTextColor(0, true)).toBe('var(--on-color-light)');
+      // A yellow at 51% lightness needs dark text, a red at 38% needs light.
+      expect(ratingTextColor(3.5, true)).toBe('var(--on-color-dark)');
+      expect(ratingTextColor(2, true)).toBe('var(--on-color-light)');
     });
   });
 });

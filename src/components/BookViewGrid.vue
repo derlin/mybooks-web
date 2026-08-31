@@ -9,8 +9,8 @@
         v-for="book in books"
         :key="book._key"
         class="tile"
-        :class="{ selected: book._key === selectedBookKey }"
-        :style="{ borderColor: tileBorderColor(book), '--cover-width': '100%' }"
+        :class="{ selected: book._key === selectedBookKey, perfect: isPerfectRating(book.rating) }"
+        :style="tileStyle(book)"
         :title="`${book.title} - ${book.author}`"
         tabindex="0"
         role="button"
@@ -20,6 +20,9 @@
       >
         <div v-if="book.dnf" class="dnf-marker">DNF</div>
         <BookCover :title="book.title" :cover-image="book.cover_image" :isbn="book.isbn" :width="240" />
+        <div class="rating-track">
+          <div v-if="book.rating != null" class="rating-fill"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -28,7 +31,7 @@
 <script setup lang="ts">
 import { useTheme } from '../composables/useTheme';
 import type { Book } from '../types';
-import { ratingColor } from '../utils/rating';
+import { isPerfectRating, ratingBarFraction, ratingColor } from '../utils/rating';
 import BookCover from './BookCover.vue';
 import SortDropdown from './SortDropdown.vue';
 
@@ -45,9 +48,17 @@ const emit = defineEmits<{
 
 const { isDark } = useTheme();
 
-const tileBorderColor = (book: Book): string => {
-  if (book.rating === null || book.rating === undefined) return 'var(--border)';
-  return ratingColor(book.rating, isDark.value);
+// Color says roughly where on the scale the rating sits, width separates two
+// ratings that share a color. A perfect rating also gets the frame, since it is
+// the one value worth spotting from across the grid.
+const tileStyle = (book: Book): Record<string, string> => {
+  const style = { '--cover-width': '100%' };
+  if (book.rating == null) return style;
+  return {
+    ...style,
+    '--rating-color': ratingColor(book.rating, isDark.value),
+    '--rating-width': `${ratingBarFraction(book.rating) * 100}%`,
+  };
 };
 
 const handleSortChange = (newSort: { id: string; desc: boolean }) => {
@@ -88,9 +99,10 @@ const openDrawer = (book: Book) => {
 
 .tile {
   position: relative;
-  border-style: solid;
-  border-width: 0 0 9px 0;
-  border-color: var(--border);
+  /* Room for the absolutely positioned rating track. */
+  padding-bottom: 9px;
+  /* Transparent rather than absent, so the perfect frame costs no layout shift. */
+  border: 1px solid transparent;
   border-radius: 4px;
   cursor: pointer;
   content-visibility: auto;
@@ -101,6 +113,28 @@ const openDrawer = (book: Book) => {
 .tile:focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
+}
+
+.rating-track {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 9px;
+  background-color: var(--border);
+  border-radius: 0 0 4px 4px;
+  /* Clips the fill to the track's rounded corners. */
+  overflow: hidden;
+}
+
+.rating-fill {
+  height: 100%;
+  width: var(--rating-width);
+  background-color: var(--rating-color);
+}
+
+.tile.perfect {
+  border-color: var(--rating-color);
 }
 
 .dnf-marker {
