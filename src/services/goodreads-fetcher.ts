@@ -12,6 +12,15 @@ export type BookMetadata = {
   coverImage: string;
 };
 
+export type GoodreadsSearchResult = {
+  id: string;
+  title: string;
+  authors: string[];
+  url: string;
+  pubDate: string | null;
+  coverImage: string | null;
+};
+
 async function fetchFromProxy(proxyUrl: string): Promise<any> {
   const headers: Record<string, string> = {
     'X-Api-Key': GOODREADS_FETCHER_API_KEY,
@@ -33,8 +42,18 @@ async function fetchFromProxy(proxyUrl: string): Promise<any> {
   }
 }
 
+export async function searchGoodreads(query: string, n: number = 5): Promise<GoodreadsSearchResult[]> {
+  const proxyUrl = `${GOODREADS_FETCHER_URL}/goodreads/search?query=${encodeURIComponent(query)}&n=${n}`;
+  return fetchFromProxy(proxyUrl);
+}
+
+export async function searchAndFetchGoodreads(query: string): Promise<BookMetadata> {
+  const proxyUrl = `${GOODREADS_FETCHER_URL}/goodreads/search-and-fetch?query=${encodeURIComponent(query)}`;
+  return fetchFromProxy(proxyUrl);
+}
+
 export async function fetchGoodreadsBookMetadata(url: string): Promise<BookMetadata> {
-  const proxyUrl = `${GOODREADS_FETCHER_URL}/goodreads/metadata?url=${url}`;
+  const proxyUrl = `${GOODREADS_FETCHER_URL}/goodreads/metadata?url=${encodeURIComponent(url)}`;
   return fetchFromProxy(proxyUrl);
 }
 
