@@ -37,3 +37,17 @@ export const isIsbn13 = (code: string): boolean => {
 
 /** Accepts either ISBN form, hyphenated or not. */
 export const isIsbn = (value: string): boolean => isValidIsbn10(cleanIsbn(value)) || isIsbn13(value);
+
+/**
+ * Whether a value looks like an ISBN-13 with its last three digits chopped off.
+ * Worth a separate check because such a value passes `isIsbn` about one time in
+ * eleven, when the truncation happens to satisfy the ISBN-10 checksum.
+ *
+ * 978 and 979 are also the ISBN-10 group codes for Nigeria and Indonesia, so
+ * this knowingly rejects those two groups to catch the far more common
+ * truncation.
+ */
+export const isTruncatedIsbn13 = (value: string): boolean => {
+  const cleaned = cleanIsbn(value);
+  return cleaned.length === 10 && (cleaned.startsWith('978') || cleaned.startsWith('979'));
+};

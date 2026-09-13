@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isIsbn, isIsbn13 } from './isbn';
+import { isIsbn, isIsbn13, isTruncatedIsbn13 } from './isbn';
 
 describe('isIsbn13', () => {
   const valid = [
@@ -44,5 +44,33 @@ describe('isIsbn', () => {
   ];
   it.each(invalid)('rejects %s', (code) => {
     expect(isIsbn(code)).toBe(false);
+  });
+});
+
+describe('isTruncatedIsbn13', () => {
+  const truncated = [
+    '9781250275', // Mickey7, chopped from 9781250275030; passes the ISBN-10 checksum
+    '9780008532', // Yellowface, chopped from 9780008532... ; fails it
+    '978-1-25023-6', // hyphenated
+    '9791028109', // 979 prefix
+  ];
+  it.each(truncated)('flags %s', (code) => {
+    expect(isTruncatedIsbn13(code)).toBe(true);
+  });
+
+  const fine = [
+    '9780306406157', // full ISBN-13
+    '0306406152', // ISBN-10
+    '155860832X', // ISBN-10 with X check digit
+    '978030640615', // 12 digits, wrong length for a truncation
+    '',
+  ];
+  it.each(fine)('passes %s', (code) => {
+    expect(isTruncatedIsbn13(code)).toBe(false);
+  });
+
+  it('catches what the ISBN-10 checksum lets through', () => {
+    expect(isIsbn('9781250275')).toBe(true);
+    expect(isTruncatedIsbn13('9781250275')).toBe(true);
   });
 });

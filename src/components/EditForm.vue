@@ -121,7 +121,16 @@
 
             <label class="form-label form-label-inline">
               <span class="label-text">ISBN</span>
-              <input v-model="formData.isbn" type="text" placeholder="ISBN" class="form-input" />
+              <input
+                v-model="formData.isbn"
+                type="text"
+                placeholder="ISBN"
+                class="form-input"
+                @blur="validateIsbnInput"
+              />
+              <div v-if="isbnError" class="error-message">
+                {{ isbnError }}
+              </div>
             </label>
 
             <label class="form-label form-label-inline">
@@ -298,6 +307,7 @@ import { fetchStorygraphMetadata } from '../services/goodreads-fetcher';
 import type { Book } from '../types';
 import { bookToFormData, type FormData, formDataToBook } from '../utils/book-form';
 import * as validation from '../utils/helpers';
+import { isIsbn, isTruncatedIsbn13 } from '../utils/isbn';
 import { isValidRating } from '../utils/rating';
 import { TagsUtil } from '../utils/tags';
 import BookCover from './BookCover.vue';
@@ -321,6 +331,7 @@ const originalData = ref<typeof formData.value>();
 const showAuthorDropdown = ref(false);
 const durationError = ref<string | null>(null);
 const ratingError = ref<string | null>(null);
+const isbnError = ref<string | null>(null);
 const goodreadsModalOpen = ref(false);
 const storygraphLoading = ref(false);
 
@@ -346,6 +357,7 @@ const isValid = computed(() => {
   if (!formData.value.title.trim() || !formData.value.author.trim()) return false;
   if (durationError.value) return false;
   if (ratingError.value) return false;
+  if (isbnError.value) return false;
 
   for (const link of formData.value.links) {
     const fields = [link.name, link.id, link.url].map((f) => f.trim());
@@ -392,6 +404,14 @@ const validateRatingInput = () => {
   }
 };
 
+const validateIsbnInput = () => {
+  const isbn = formData.value.isbn?.trim();
+  // an ISBN13 truncated to 10 digits may still have a valid checksum by
+  // pure luck, hence the truncated check
+  const isOk = !isbn || (isIsbn(isbn) && !isTruncatedIsbn13(isbn));
+  isbnError.value = isOk ? null : 'Not a valid ISBN-10 or ISBN-13';
+};
+
 const closeAuthorDropdown = () => {
   setTimeout(() => {
     showAuthorDropdown.value = false;
@@ -407,6 +427,7 @@ const handleGoodreadsData = (metadata: BookMetadata) => {
   formData.value.title = metadata.title;
   formData.value.author = metadata.authors[0];
   formData.value.isbn = metadata.isbn || '';
+  validateIsbnInput();
   formData.value.cover_image = metadata.coverImage || '';
   if (metadata.pages) {
     formData.value.pages = metadata.pages;
@@ -476,6 +497,8 @@ watch(
     originalData.value = JSON.parse(JSON.stringify(formData.value));
     durationError.value = null;
     ratingError.value = null;
+    // Flagged on load, not just on blur, so an already-broken ISBN is visible.
+    validateIsbnInput();
   },
   { immediate: true, deep: true }
 );
